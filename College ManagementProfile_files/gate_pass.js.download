@@ -1,0 +1,765 @@
+angular.module("User").controller('gate_pass', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+	$scope.gate_pass = {};
+	$scope.gate_pass_list = {};
+	$scope.gate_pass_student = {};
+	$scope.admission_list = {};
+	$scope.gate_pass_student.exist = false;
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	$scope.isclicked = false;	
+	
+	$scope.session_list	= {};
+	$scope.course_list	= {};
+	$scope.stream_list = {};
+	$scope.return_gate_pass_list = [];
+	$scope.uc_return_gate_pass_list = [];
+	$scope.lc_return_gate_pass_list = [];
+	
+	$scope.formatAMPM = function() {
+		var date = new Date();
+		var hours = date.getHours();
+		var minutes = date.getMinutes();
+		var ampm = hours >= 12 ? 'PM' : 'AM';
+		hours = hours % 12;
+		hours = hours ? hours : 12; // the hour '0' should be '12'
+		minutes = minutes < 10 ? '0'+minutes : minutes;
+		var strTime = hours + ':' + minutes + ' ' + ampm;
+		return strTime;
+	}
+	
+	$scope.search_admission = function(admission_no){
+		if($.trim(admission_no) != ''){
+			loading.start();
+			$http({
+				method: "post",
+				url: "gate_pass/search_admission",
+				data: {'admission_no': admission_no }
+			}).success(function(response) {
+				loading.finish();			
+				if(response[0] == 'success') {
+					if(response[2] == 1){
+						$scope.gate_pass_student = response[1][0];
+						$scope.gate_pass_student.visit_type = 'Market';
+						$scope.admission_list = {};	
+						$scope.gate_pass_student.exist = true;
+						$scope.gate_pass_student.from_time = $scope.formatAMPM();
+					}else if(response[2] > 1){
+						$scope.admission_list = response[1];						
+						$scope.gate_pass_student.exist = false;
+						$scope.gate_pass_student.from_time = $scope.formatAMPM();
+					}else if(response[2] == 0){
+						alert('No match found.');
+						$scope.admission_list = {};	
+						$scope.gate_pass_student.exist = false;
+						$scope.gate_pass_student.from_time = $scope.formatAMPM();
+					}
+				} else if(response[0] == 'error') {
+					alert(response[1]);
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+	
+	$scope.call_gate_pass = function(admission){
+		$scope.admission_list = {};	
+		$scope.gate_pass_student = admission;
+		$scope.gate_pass_student.exist = true;	
+		$scope.gate_pass_student.visit_type = 'Market';
+	}
+	
+	$scope.save_print_gate_pass = function(gate_pass_student, base_url){	//console.log(gate_pass_student);
+		$scope.error = {};
+		$scope.error.error_time_invalid = false;
+		$scope.error.error_date1_invalid = false;
+		if(!gate_pass_student.visit_type || gate_pass_student.visit_type == ''){
+			$scope.error.visit_type = true; return false;	
+		}
+		loading.start();
+		$scope.isclicked = true;			
+		$http({
+			method: "post",
+			url: "gate_pass/save_gate_pass",
+			data: {'admission_id': gate_pass_student.admission_id, 'admission_no':gate_pass_student.admission_no, 'from_date':gate_pass_student.from_date, 'to_date':gate_pass_student.to_date, 'from_time':gate_pass_student.from_time, 'to_time':gate_pass_student.to_time, 'visit_type':gate_pass_student.visit_type}
+		}).success(function(response) { //console.log(response);
+			loading.finish();			
+			if(response[0] == "success") {
+				//$location.path('/view_gate_pass/'+ gate_pass_student.admission_id + '/' + response[1]);
+				admission_id = gate_pass_student.admission_id;
+				$scope.admission_no = '';
+				$scope.gate_pass_student = {};
+				$scope.openGatePassForPrinting(base_url, admission_id, response[1]);
+			} else if(response[0] == 'error') {
+				alert(response[1]);
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}else if(response[0] == 'validation') {
+				if(gate_pass_student.visit_type != 'Home'){
+					$scope.error.error_time_invalid = true;  
+				}else{
+					$scope.error.error_date1_invalid = true;  
+				}
+			}
+			$scope.isclicked = false;
+		});
+	}	
+	
+	$scope.save_gate_pass = function(gate_pass_student){//console.log(gate_pass_student);
+		$scope.error = {};
+		$scope.error.error_time_invalid = false;
+		$scope.error.error_date1_invalid = false;
+		if(!gate_pass_student.visit_type || gate_pass_student.visit_type == ''){
+			$scope.error.visit_type = true; return false;	
+		}
+		$scope.isclicked = true;	
+		loading.start();
+		$http({
+			method: "post",
+			url: "gate_pass/save_gate_pass",
+			data: {'admission_id': gate_pass_student.admission_id, 'admission_no':gate_pass_student.admission_no, 'from_date':gate_pass_student.from_date, 'to_date':gate_pass_student.to_date, 'from_time':gate_pass_student.from_time, 'to_time':gate_pass_student.to_time, 'visit_type':gate_pass_student.visit_type}
+		}).success(function(response) { //console.log(response);
+			loading.finish();			
+			if(response[0] == 'success') {
+				alert('Gate Pass successfully applied. Kindly collect your gate pass from Warden Office.');
+				$location.path("/gate_pass_list");
+			} else if(response[0] == 'error') {
+				alert(response[1]);
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}else if(response[0] == 'validation') {
+				if(gate_pass_student.visit_type != 'Home'){
+					$scope.error.error_time_invalid = true;  
+				}else{
+					$scope.error.error_date1_invalid = true;  
+				}
+			}
+			loading.finish();
+			$scope.isclicked = false;
+		});
+	}
+		
+	$scope.change_gate_pass_status = function(gate_pass_id, status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "gate_pass/change_gate_pass_status",
+			data: {'gate_pass_id':gate_pass_id, 'status': status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.gate_pass_list[index].status = status;
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.openGatePassForPrinting = function(base_url, admission_id, gate_pass_id) {
+		window.open(base_url + 'gate_pass/print_gate_pass/' + admission_id + '/' + gate_pass_id);
+	}
+	
+	$scope.search_uc_admission = function(admission_no){
+		if($.trim(admission_no) != ''){
+			loading.start();
+			$http({
+				method: "post",
+				url: "ucgate_pass/search_admission",
+				data: {'admission_no': admission_no }
+			}).success(function(response) {
+				loading.finish();			
+				if(response[0] == 'success') {
+					if(response[2] == 1){
+						$scope.gate_pass_student = response[1][0];
+						$scope.gate_pass_student.visit_type = 'Market';
+						$scope.admission_list = {};	
+						$scope.gate_pass_student.exist = true;
+						$scope.gate_pass_student.from_time = $scope.formatAMPM();
+					}else if(response[2] > 1){
+						$scope.admission_list = response[1];						
+						$scope.gate_pass_student.exist = false;
+						$scope.gate_pass_student.from_time = $scope.formatAMPM();
+					}else if(response[2] == 0){
+						alert('No match found.');
+						$scope.admission_list = {};	
+						$scope.gate_pass_student.exist = false;
+						$scope.gate_pass_student.from_time = $scope.formatAMPM();
+					}
+				}else if(response[0] == 'error') {
+					alert(response[1]);
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+		
+	$scope.save_print_uc_gate_pass = function(gate_pass_student, base_url){	//console.log(gate_pass_student);
+		$scope.error = {};
+		$scope.error.error_time_invalid = false;
+		$scope.error.error_date1_invalid = false;
+		if(!gate_pass_student.visit_type || gate_pass_student.visit_type == ''){
+			$scope.error.visit_type = true; return false;	
+		}
+		$scope.isclicked = true;
+		loading.start();
+		$http({
+			method: "post",
+			url: "ucgate_pass/save_gate_pass",
+			data: {'admission_id': gate_pass_student.admission_id, 'admission_no':gate_pass_student.admission_no, 'from_date':gate_pass_student.from_date, 'to_date':gate_pass_student.to_date, 'from_time':gate_pass_student.from_time, 'to_time':gate_pass_student.to_time, 'visit_type':gate_pass_student.visit_type}
+		}).success(function(response) { //console.log(response);
+			loading.finish();			
+			if(response[0] == "success") {
+				admission_id = gate_pass_student.admission_id;
+				$scope.admission_no = '';
+				$scope.gate_pass_student = {};
+				$scope.openUCGatePassForPrinting(base_url, admission_id, response[1]);
+				
+			}  else if(response[0] == 'error') {
+				alert(response[1]);
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}else if(response[0] == 'validation') {
+				if(gate_pass_student.visit_type != 'Home'){
+					$scope.error.error_time_invalid = true;  
+				}else{
+					$scope.error.error_date1_invalid = true;  
+				}
+			}
+			$scope.isclicked = false;
+		});
+	}
+		
+	$scope.openUCGatePassForPrinting = function(base_url, admission_id, gate_pass_id) {
+		window.open(base_url + 'ucgate_pass/print_gate_pass/' + admission_id + '/' + gate_pass_id);
+	}
+	
+	$scope.change_uc_gate_pass_status = function(gate_pass_id, status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "ucgate_pass/change_gate_pass_status",
+			data: {'gate_pass_id':gate_pass_id, 'status': status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.gate_pass_list[index].status = status;
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.return_gate_pass = function(barcode){
+		barcode = $.trim(barcode);
+		if(barcode.length > 3) {
+			loading.start();
+			$http({
+				method: "post",
+				url: "gate_pass/return_gate_pass",
+				data: {'barcode': barcode}
+			}).success(function(response){ //console.log(response);
+				loading.finish();
+				$scope.barcode = '';
+				if(response[0] == "success") {
+					$scope.return_gate_pass_list.unshift(response[1]);
+				} else {
+					alert(response[0]);
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+	
+	$scope.return_uc_gate_pass = function(barcode){
+		barcode = $.trim(barcode);
+		if(barcode.length > 3) {
+			loading.start();
+			$http({
+				method: "post",
+				url: "ucgate_pass/return_gate_pass",
+				data: {'barcode': barcode}
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				$scope.barcode = '';
+				if(response[0] == "success") {
+					$scope.uc_return_gate_pass_list.unshift(response[1]);
+				} else {
+					alert(response[0]);
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+	$scope.admission = {};
+	$scope.search_gatepass = function(admission){//	console.log(admission_id);
+		loading.start();
+		$http({
+			method: "post",
+			url: "gate_pass/search_gatepass",
+			data: admission
+		}).success(function(response){ //console.log(response);
+			loading.finish();
+			if(response[0] == '1'){
+				$scope.gate_pass_list = response[1];
+			}else{
+				alert(response[1]);
+				$scope.gate_pass_list = {};
+			}
+		});	
+	}
+	
+	$scope.search_uc_gatepass = function(admission){//	console.log(admission_id);
+		loading.start();
+		$http({
+			method: "post",
+			url: "ucgate_pass/search_uc_gatepass",
+			data: admission
+		}).success(function(response){ //console.log(response);
+			loading.finish();
+			if(response[0] == '1'){
+				$scope.gate_pass_list = response[1];
+			}else{
+				alert(response[1]);
+				$scope.gate_pass_list = {};
+			}
+		});	
+	}
+		
+	$scope.export_gate_pass_list = function(admission, base_url){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';		
+		returned = admission.returned ? admission.returned : '-';
+		not_returned = admission.not_returned ? admission.not_returned : '-';
+		visit_type = admission.visit_type ? admission.visit_type : '-';
+		window.open(base_url + 'gate_pass/export_gate_pass_list/' + admission_no + "/" + from_date + "/" + to_date + "/" + returned + "/" + not_returned + "/" + visit_type);
+	}	
+		
+	$scope.export_uc_gate_pass_list = function(admission, base_url){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';		
+		returned = admission.returned ? admission.returned : '-';
+		not_returned = admission.not_returned ? admission.not_returned : '-';
+		visit_type = admission.visit_type ? admission.visit_type : '-';
+		window.open(base_url + 'ucgate_pass/export_uc_gate_pass_list/' + admission_no + "/" + from_date + "/" + to_date + "/" + returned + "/" + not_returned + "/" + visit_type);
+	}
+	
+	$scope.search_gate_pass = function(admission_no){
+		if($.trim(admission_no) != ''){ 
+			loading.start();
+			$http({
+				method: "post",
+				url: "gate_pass/search_gate_pass",
+				data: {'admission_no': admission_no }
+			}).success(function(response) { //console.log(response);
+				loading.finish();			
+				if(response[0] == 'success') {
+					$scope.gate_pass_student = response[1][0];
+					//$scope.gate_pass_student.exist = true;
+					$scope.gate_pas_popup = true;
+				} else if(response[0] == 'error') {
+					alert(response[1]);
+					$scope.gate_pass_student.exist = false;
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				} else if(response[0] == 'need_login') {
+					alert(response[1]);
+					window.location.href = response[2];
+				} else {
+					alert('Student genrated Gate Pass not found. Kindly contact Warden or System Admin.');
+					$scope.gate_pass_student.exist = false;
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+	$scope.gate_pas_popup = false;	
+	$scope.hide_gate_pas_popup = function(){
+		$scope.gate_pass_student = {};
+		$scope.gate_pass_student.exist = false;
+		$scope.gate_pas_popup = false;
+		$scope.admission_no = '';
+	}
+	
+	$scope.printDiv = function(divName, gate_pass_id, admission_id){
+		if($.trim(gate_pass_id) > 0){
+			loading.start();
+			$http({
+				method: "post",
+				url: "gate_pass/change_gate_pass_print_status",
+				data: {'gate_pass_id': gate_pass_id , 'admission_id': admission_id}
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				loading.finish();
+				if($.trim(response) == 0) {
+					alert('Unable to print gate-pass. Contact System Administrator.');
+					return false;
+				} 
+			});
+			 
+			var mywindow = window.open('', 'PRINT', 'height=800,width=800');		
+			var html = '<html><head><title></title></head><body>' + document.getElementById(divName).innerHTML + '</body></html>';
+			//console.log(html);       
+			mywindow.document.write(html);		
+			mywindow.document.close(); 
+			mywindow.focus(); 
+	
+			mywindow.print();
+			mywindow.close();
+			
+			/*
+			//var mywindow = window.open('', 'PRINT');
+			mywindow.document.innerHTML = printContents;
+		  //  mywindow.document.close(); // necessary for IE >= 10
+			mywindow.focus(); // necessary for IE >= 10
+			mywindow.print();
+			mywindow.close();
+			
+			
+			 
+			 var originalContents = document.body.innerHTML;	
+			 document.body.innerHTML = printContents;	
+			 window.print();
+			 window.close();
+			 */
+			// document.body.innerHTML = originalContents;
+			 $scope.gate_pass_student = {};
+			 $scope.gate_pass_student.exist = false;
+			 $scope.gate_pas_popup = false;
+			 $scope.admission_no = '';
+			 return true;
+		}
+	}
+	
+	$scope.getStream = function(financial_year_id, course_id) {
+		if(financial_year_id != '' && course_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id},
+			}).success(function(response) { //console.log(response);
+				$scope.stream_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_list	=	{};
+		}
+	}	
+	
+	$scope.getSection = function(financial_year_id, course_id, stream_id, year) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '') {			
+			loading.start();
+			$http({
+				method: "post",
+				url: "gate_pass/get_section",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) { //console.log(response);
+				loading.finish();								
+				$scope.section_list = response;
+			});	
+		} else {
+			$scope.section_list = {};
+		}
+	}	
+	
+	$scope.call_apply_gate_pass = function(admission_id) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "gate_pass/call_apply_gate_pass",
+			data: {'admission_id':admission_id}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response[0] == 1) {
+				$location.path("/apply_gate_pass");	
+			} else if(response[0] == 0) {
+				alert(response[1])
+			}
+		});
+	}
+	
+	$scope.add_print_setting = function(print_setting) { //console.log(print_setting);
+		$scope.error = {};	
+		var noOfErrors = 0;
+		if(!print_setting.course_id || print_setting.course_id == '') {
+			$scope.error.course_id = true;
+			noOfErrors++;
+		}
+		if(!print_setting.stream_id || print_setting.stream_id == '') {
+			$scope.error.stream_id = true;
+			noOfErrors++;
+		}
+		if(!print_setting.year || print_setting.year == '') {
+			$scope.error.year = true;
+			noOfErrors++;
+		}
+		if(!print_setting.section || print_setting.section == ''){
+			$scope.error.section = true;
+			noOfErrors++;
+		}
+		if(!print_setting.start_time || print_setting.start_time == ''){
+			$scope.error.start_time = true;
+			noOfErrors++;
+		}
+		if(!print_setting.end_time || print_setting.end_time == '') {
+			$scope.error.end_time = true;
+			noOfErrors++;
+		}
+		if(noOfErrors > 0) return false;
+		else {
+			$scope.isclicked = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "gate_pass/add_print_setting",
+				data: print_setting
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if($.trim(response) == 'success'){
+					$location.path("/print_setting");	
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+					alert($.trim(response));
+				}
+				$scope.isclicked = false;	
+			});			
+		}
+	}	
+	
+	$scope.change_gate_pass_print_setting_status = function(id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "gate_pass/change_gate_pass_print_setting_status",
+			data: {'id':id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();			
+			if($.trim(response) == '') {
+				$scope.print_setting_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	$scope.print_setting = {};	
+	$scope.add_uc_print_setting = function(print_setting) { //console.log(print_setting);
+		$scope.error = {};	
+		var noOfErrors = 0;
+		if(!print_setting.course_id || print_setting.course_id == '') {
+			$scope.error.course_id = true;
+			noOfErrors++;
+		}
+		if(!print_setting.year || print_setting.year == '') {
+			$scope.error.year = true;
+			noOfErrors++;
+		}
+		if(!print_setting.start_time || print_setting.start_time == ''){
+			$scope.error.start_time = true;
+			noOfErrors++;
+		}
+		if(!print_setting.end_time || print_setting.end_time == '') {
+			$scope.error.end_time = true;
+			noOfErrors++;
+		}
+		if(noOfErrors > 0) return false;
+		else {
+			$scope.isclicked = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "ucgate_pass/add_print_setting",
+				data: print_setting
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if($.trim(response) == 'success'){
+					$location.path("/ucprint_setting");	
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+					alert($.trim(response));
+				}
+				$scope.isclicked = false;	
+			});			
+		}
+	}	
+	
+	$scope.change_uc_gate_pass_print_setting_status = function(id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "ucgate_pass/change_gate_pass_print_setting_status",
+			data: {'id':id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();			
+			if($.trim(response) == '') {
+				$scope.print_setting_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	/*For Lalkuan start here*/
+	
+	$scope.search_lc_gatepass = function(admission){//	console.log(admission_id);
+		loading.start();
+		$http({
+			method: "post",
+			url: "lcgate_pass/search_lc_gatepass",
+			data: admission
+		}).success(function(response){ //console.log(response);
+			loading.finish();
+			if(response[0] == '1'){
+				$scope.gate_pass_list = response[1];
+			}else{
+				alert(response[1]);
+				$scope.gate_pass_list = {};
+			}
+		});	
+	}
+		
+	$scope.export_lc_gate_pass_list = function(admission, base_url){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';		
+		returned = admission.returned ? admission.returned : '-';
+		not_returned = admission.not_returned ? admission.not_returned : '-';
+		visit_type = admission.visit_type ? admission.visit_type : '-';
+		window.open(base_url + 'lcgate_pass/export_lc_gate_pass_list/' + admission_no + "/" + from_date + "/" + to_date + "/" + returned + "/" + not_returned + "/" + visit_type);
+	}
+	
+	$scope.search_lc_admission = function(admission_no){
+		if($.trim(admission_no) != ''){
+			loading.start();
+			$http({
+				method: "post",
+				url: "lcgate_pass/search_admission",
+				data: {'admission_no': admission_no }
+			}).success(function(response) {
+				loading.finish();			
+				if(response[0] == 'success') {
+					if(response[2] == 1){
+						$scope.gate_pass_student = response[1][0];
+						$scope.gate_pass_student.visit_type = 'Market';
+						$scope.admission_list = {};	
+						$scope.gate_pass_student.exist = true;
+						$scope.gate_pass_student.from_time = $scope.formatAMPM();
+					}else if(response[2] > 1){
+						$scope.admission_list = response[1];						
+						$scope.gate_pass_student.exist = false;
+						$scope.gate_pass_student.from_time = $scope.formatAMPM();
+					}else if(response[2] == 0){
+						alert('No match found.');
+						$scope.admission_list = {};	
+						$scope.gate_pass_student.exist = false;
+						$scope.gate_pass_student.from_time = $scope.formatAMPM();
+					}
+				}else if(response[0] == 'error') {
+					alert(response[1]);
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+			
+	$scope.save_print_lc_gate_pass = function(gate_pass_student, base_url){	//console.log(gate_pass_student);
+		$scope.error = {};
+		$scope.error.error_time_invalid = false;
+		$scope.error.error_date1_invalid = false;
+		if(!gate_pass_student.visit_type || gate_pass_student.visit_type == ''){
+			$scope.error.visit_type = true; return false;	
+		}
+		$scope.isclicked = true;
+		loading.start();
+		$http({
+			method: "post",
+			url: "lcgate_pass/save_gate_pass",
+			data: {'admission_id': gate_pass_student.admission_id, 'admission_no':gate_pass_student.admission_no, 'from_date':gate_pass_student.from_date, 'to_date':gate_pass_student.to_date, 'from_time':gate_pass_student.from_time, 'to_time':gate_pass_student.to_time, 'visit_type':gate_pass_student.visit_type}
+		}).success(function(response) { //console.log(response);
+			loading.finish();			
+			if(response[0] == "success") {
+				admission_id = gate_pass_student.admission_id;
+				$scope.admission_no = '';
+				$scope.gate_pass_student = {};
+				$scope.openLCGatePassForPrinting(base_url, admission_id, response[1]);
+				
+			}  else if(response[0] == 'error') {
+				alert(response[1]);
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}else if(response[0] == 'validation') {
+				if(gate_pass_student.visit_type != 'Home'){
+					$scope.error.error_time_invalid = true;  
+				}else{
+					$scope.error.error_date1_invalid = true;  
+				}
+			}
+			$scope.isclicked = false;
+		});
+	}
+	
+	$scope.return_lc_gate_pass = function(barcode){
+		barcode = $.trim(barcode);
+		if(barcode.length > 3) {
+			loading.start();
+			$http({
+				method: "post",
+				url: "lcgate_pass/return_gate_pass",
+				data: {'barcode': barcode}
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				$scope.barcode = '';
+				if(response[0] == "success") {
+					$scope.lc_return_gate_pass_list.unshift(response[1]);
+				} else {
+					alert(response[0]);
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}	
+	$scope.openLCGatePassForPrinting = function(base_url, admission_id, gate_pass_id) {
+		window.open(base_url + 'lcgate_pass/print_gate_pass/' + admission_id + '/' + gate_pass_id);
+	}
+	
+	$scope.change_lc_gate_pass_status = function(gate_pass_id, status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "lcgate_pass/change_gate_pass_status",
+			data: {'gate_pass_id':gate_pass_id, 'status': status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.gate_pass_list[index].status = status;
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	/*End here for Lalkuan*/
+}]);

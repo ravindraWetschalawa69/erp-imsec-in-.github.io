@@ -1,0 +1,120 @@
+angular.module("User").controller('stream', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+
+	$scope.stream = {};
+
+	$scope.stream_list = {};
+
+	$scope.error = {};
+
+	$scope.flashMessageType = "success";
+
+	$scope.flashMessage = "";
+
+	
+
+	$scope.save = function(stream) {
+
+		var noOfErrors = 0;
+
+		if(!stream.course_id || stream.course_id == '') {
+
+			$scope.error.course_id = true;
+
+			noOfErrors++;
+
+		}
+
+		if(!stream.stream_name || stream.stream_name == '') {
+
+			$scope.error.stream_name = true;
+
+			noOfErrors++;
+
+		}
+
+		if(!stream.stream_name_abbr || stream.stream_name_abbr == '') {
+
+			$scope.error.stream_name_abbr = true;
+
+			noOfErrors++;
+
+		}
+		if(!stream.open_for_enquiry || stream.open_for_enquiry == '') {
+
+			$scope.error.open_for_enquiry = true;
+
+			noOfErrors++;
+
+		}
+
+		if(noOfErrors > 0) return false;
+
+		else {
+
+			loading.start();
+
+			$http({
+
+				method: "post",
+
+				url: "stream/add_stream",
+
+				data: stream
+
+			}).success(function(response) {
+
+				$location.path("/stream_list");				
+
+				if(response != '') {
+
+					$scope.flashMessageType = "error";
+
+					$scope.flashMessage = response;	
+
+				}
+
+				loading.finish();				
+
+			});
+
+		}
+
+	}	
+
+	
+
+	$scope.change_status = function(stream_id, current_status, index) {
+
+		loading.start();
+
+		$http({
+
+			method: "post",
+
+			url: "stream/change_status",
+
+			data: {'stream_id':stream_id, 'current_status':current_status}
+
+		}).success(function(response) {
+
+			loading.finish();
+
+			
+
+			if(response == '') {
+
+				$scope.stream_list[index].status = current_status == '1' ? '0' : '1';
+
+			} else {
+
+				$scope.flashMessageType = "error";
+
+				$scope.flashMessage = response;	
+
+			}
+
+		});
+
+	}
+
+}]);

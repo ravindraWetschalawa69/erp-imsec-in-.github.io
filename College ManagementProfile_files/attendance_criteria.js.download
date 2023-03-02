@@ -1,0 +1,173 @@
+angular.module("User").controller('attendance_criteria', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+    $scope.attendance_criteria = {};
+	$scope.attendance_criteria_list = {};
+    $scope.error = {};
+	$scope.flashMessageType = "success";
+    $scope.flashMessage = "";
+	$scope.isClicked = false;
+	$scope.canAdd = true;
+	
+	
+	$scope.maxCriteriaLimit = 0;	
+	$scope.addCriteriaLimit = function() {
+		$scope.maxCriteriaLimit++;
+	}	
+	
+	$scope.setTime = function(time) {
+		
+		if(!time || time == '' || time < 1) 
+		{
+			alert('Please file valid time!!');
+			return false;
+		} 
+		loading.start();
+		$http({
+			method: "post",
+			url: "attendance_criteria/update_Time",
+			data: {'time':time}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				alert('Time updated!!');
+			} else {
+				alert(response);
+			}
+		});
+	}
+	$scope.setPermission = function(isYes)
+	{	
+	//alert(isYes);
+		loading.start();
+		$http({
+			method: "post",
+			url: "attendance_criteria/yesToattend",
+			data: {'isYes':isYes}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				alert('Setting updated!!');
+			} else {
+				alert(response);
+			}
+		});
+	}
+	
+	$scope.setShowPermission = function(isShowYes)
+	{	
+	//alert(isShowYes);
+		loading.start();
+		$http({
+			method: "post",
+			url: "attendance_criteria/yesToShowattend",
+			data: {'isShowYes':isShowYes}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				alert('Setting updated!!');
+			} else {
+				alert(response);
+			}
+		});
+	}
+	
+	$scope.setpShowPermission = function(ispShowYes)
+	{	
+		//alert(ispShowYes);
+		loading.start();
+		$http({
+			method: "post",
+			url: "attendance_criteria/yesToShowpayment",
+			data: {'ispShowYes':ispShowYes}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				alert('Setting updated!!');
+			} else {
+				alert(response);
+			}
+		});
+	}
+	
+	$scope.setFPermission = function(isOwnFeedback)
+	{	
+		//alert(ispShowYes);
+		loading.start();
+		$http({
+			method: "post",
+			url: "attendance_criteria/yesOwnFeedback",
+			data: {'isOwnFeedback':isOwnFeedback}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				alert('Setting updated!!');
+			} else {
+				alert(response);
+			}
+		});
+	}
+
+	
+	
+	
+	
+	$scope.save_attendance_criteria = function(attendance_criteria){	//console.log(attendance_criteria);		
+		if(!attendance_criteria.criteria) {
+			alert('Criteria is required.');
+		} else {
+			var count = attendance_criteria.length;
+			var error = 0;		
+			for(var i = 0; i <= $scope.maxCriteriaLimit; i++) {			
+				if(!attendance_criteria.criteria[i]){
+					error++;
+					alert('Criteria is required.');
+					break;					
+				}else if(!attendance_criteria.criteria[i].criteria_range || !attendance_criteria.criteria[i].criteria_expression || attendance_criteria.criteria[i].criteria_range == '' || attendance_criteria.criteria[i].criteria_expression == '') {
+					error++;
+					alert('Criteria is required.');
+					break;
+				} 
+			}			
+			if(error == 0) {
+				if(confirm('Are you sure to proceed? After saving this, you can not allow to edit this criteria.')){
+					$scope.isClicked = true;	
+					loading.start();
+					$http({
+						method: "post",
+						url: "attendance_criteria/add_attendance_criteria",
+						data: attendance_criteria,
+					}).success(function(response) { //console.log(response);
+						loading.finish();
+						$scope.isClicked = false;
+						response = $.trim(response);						
+						if(response == '0') {
+							alert('Criteria Saved Successfully!!!');
+							$location.path("/attendance_criteria_list");
+						} else {
+							alert('Some error occured. Please try again!!!');
+						}
+					});
+				}
+			}
+		}
+	}
+	
+	$scope.change_attendance_criteria_status = function(attendance_criteria_id, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "attendance_criteria/change_attendance_criteria_status",
+			data: {'attendance_criteria_id':attendance_criteria_id}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.attendance_criteria_list[index].status = '0';
+				$scope.canAdd = true;
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+	
+		
+}]);

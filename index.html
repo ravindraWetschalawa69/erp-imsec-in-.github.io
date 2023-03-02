@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<!-- saved from url=(0047)http://erp.imsec.ac.in/academic#/view_admission -->
+<html ng-app="User" lang="en" class="ng-scope"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style type="text/css">@charset "UTF-8";[ng\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\:form{display:block;}</style>
+	
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1,maximum-scale=1">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="description" content="">
+	<meta name="keywords" content="">
+	<meta name="author" content="">
+
+	<title>College Management</title>
+	
+	<style>.file-input-wrapper { overflow: hidden; position: relative; cursor: pointer; z-index: 1; }.file-input-wrapper input[type=file], .file-input-wrapper input[type=file]:focus, .file-input-wrapper input[type=file]:hover { position: absolute; top: 0; left: 0; cursor: pointer; opacity: 0; filter: alpha(opacity=0); z-index: 99; outline: 0; }.file-input-name { margin-left: 8px; }</style><link href="./College ManagementProfile_files/jquery-ui-1.10.4.custom.min.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/bootstrap.min.css" rel="stylesheet">
+
+	<link href="./College ManagementProfile_files/dataTables.bootstrap.min.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/font-awesome.min.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/fontello.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/animate.min.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/ios7-switch.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/style.css" rel="stylesheet" type="text/css">
+	<link href="./College ManagementProfile_files/style-responsive.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/ngProgress.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/pagination.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/popup.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/table.css" rel="stylesheet">	
+	<link href="./College ManagementProfile_files/textAngular.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/component.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/magnific-popup.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/pace.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/sortable-theme-bootstrap.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/datepicker.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/all.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/github.css" rel="stylesheet">
+	
+	<link href="https://cdn.datatables.net/fixedcolumns/3.3.2/css/fixedColumns.dataTables.min.css">
+	
+	<link href="./College ManagementProfile_files/default.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/default.date.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/default.time.css" rel="stylesheet">
+	<link href="./College ManagementProfile_files/angular-chart.css" rel="stylesheet">
+	
+	<link rel="stylesheet" href="./College ManagementProfile_files/vendor.css">
+    <link rel="stylesheet" href="./College ManagementProfile_files/main.css">
+  
+<link type="text/css" href="./College ManagementProfile_files/select2.css" rel="stylesheet">
+<link type="text/css" href="./College ManagementProfile_files/ng-tags-input.min.css" rel="stylesheet">
+	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+	<!--[if lt IE 9]>
+	/* <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script> */
+	/* <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script> */
+	<![endif]-->
+	
+
+<style type="text/css">
+.mendatory { color: #CC0D0D; }
+.error { color: #CC0D0D; }
+.content-page2{ margin:0px}
+sidebar-menu > ul{ max-height:88vh; overflow-y:auto}
+.attendanceAgr table{ margin-bottom:0}
+  .table-bordered>tbody>tr>td{ vertical-align:middle; text-align:center}
+  .collap{ display:none}
+  .gradeCount{ cursor:pointer}
+  .resetTop{ margin-top:0px!important}
+@media(max-width:991px){
+#wrapper.enlarged .left.side-menu #sidebar-menu ul ul li:hover > ul {left: 0px; margin-top:0px; width: 100%; display:block; position:relative}
+#wrapper.enlarged .left.side-menu #sidebar-menu ul ul li > ul, #wrapper.enlarged .left.side-menu #sidebar-menu ul > li > ul a,#wrapper.enlarged .left.side-menu #sidebar-menu ul > li:hover > ul {width: 100%}
+.has_sub ul {background:#FFF!important;}
+.has_sub{ border-bottom:solid 1px #CCC!important}
+#wrapper.enlarged .left.side-menu #sidebar-menu ul > li:hover > ul a{ width:100%; display:block; background-color:#FFF; padding-left:25px}
+.left.side-menu {width: 100%!important; position:fixed; left:-1000px}
+#wrapper.enlarged .left.side-menu #sidebar-menu ul > li > a span { display: initial;}
+#mobileMenu{ position:fixed; top:5px; color:#FFFFFF; left:15px}
+#wrapper.enlarged .left.side-menu #sidebar-menu ul > li:hover > a {width: 100%;}
+#wrapper.enlarged .left.side-menu #sidebar-menu ul > li:hover > ul {right: 0; left:auto; width:100%; position:relative}
+#wrapper .content-page { padding-left:0px}
+.content-page > .content{ padding-left:5px; padding-right:5px}
+.sidebar-inner{ overflow:auto!important;}
+/*.left.side-menu #sidebar-menu ul > li > ul{ display:block!important}*/
+#sidebar-menu ul ul ul a { padding-left: 35px!important; }
+#sidebar-menu > ul > li:nth-child(odd) { border-bottom:solid 1px #DDD; background:#F4F4F4}
+#sidebar-menu > ul > li { border-bottom:solid 1px #DDD;}
+	#wrapper.enlarged .left.side-menu #sidebar-menu ul > li > ul, #sidebar-menu ul ul{ display:block}
+.easyWizardSteps li{ font-size: 16px }
+}
+	</style>
+	<link rel="shortcut icon" href="http://erp.imsec.ac.in/assets/img/favicon.ico">
+	<link rel="apple-touch-icon" href="http://erp.imsec.ac.in/assets/img/apple-touch-icon.png">
+	<link rel="apple-touch-icon" sizes="57x57" href="http://erp.imsec.ac.in/assets/img/apple-touch-icon-57x57.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="http://erp.imsec.ac.in/assets/img/apple-touch-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="http://erp.imsec.ac.in/assets/img/apple-touch-icon-76x76.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="http://erp.imsec.ac.in/assets/img/apple-touch-icon-114x114.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="http://erp.imsec.ac.in/assets/img/apple-touch-icon-120x120.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="http://erp.imsec.ac.in/assets/img/apple-touch-icon-144x144.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="http://erp.imsec.ac.in/assets/img/apple-touch-icon-152x152.png">
+	<link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+</script>
+<style type="text/css">.jqstooltip { position: absolute;left: 0px;top: 0px;visibility: hidden;background: rgb(0, 0, 0) transparent;background-color: rgba(0,0,0,0.6);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#99000000, endColorstr=#99000000);-ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#99000000, endColorstr=#99000000)";color: white;font: 10px arial, san serif;text-align: left;white-space: nowrap;padding: 5px;border: 1px solid white;z-index: 10000;}.jqsfield { color: white;font: 10px arial, san serif;text-align: left;}</style></head>
+
+<body class="ng-scope widescreen fixed-left" ng-controller="MainCtrl">
+<div id="wrapper" class="">
+
+	<div class="topbar" style="display: flex; justify-content:space-between;align-items: center;">
+		<div class="topbar-left"><i class="fa fa-navicon fa-2x visible-xs visible-sm" style="margin-left:15px; margin-top:10px; color:#FFF" id="navMenu"></i>
+			<div class="logo">
+			<!-- <h1><a href="http://erp.imsec.ac.in/user"><img src="./College ManagementProfile_files/logo_IMSEC.png" alt="Logo"></a></h1> -->
+			</div>
+		</div>
+		<div class="navbar navbar-default" role="navigation">
+			<div class="container">
+				<div class="navbar-collapse2" style="cursor:pointer;color: white; margin-top: 15%;">
+				
+
+					<div style="display: flex;"><strong >A2022MCA8990  </strong>
+						 <i style="margin-left: 4px;" class="fa fa-caret-down" aria-hidden="true"></i>
+						 
+						
+						</div>
+					
+
+				</div>
+			</div>
+		</div>
+	</div>
+		<div class="left side-menu">
+		<div class="sidebar-inner" style="max-height:90vh; overflow-y:auto"><p style="text-align:right; margin:0px"><i class="fa fa-navicon fa-2x" id="mobileMenu"></i></p>
+			<div id="sidebar-menu">
+				<ul>		<li><a ng-class="{active: isActive(&#39;/notice_list&#39;) || isActive(&#39;/view_notice&#39;)}" href="http://erp.imsec.ac.in/academic#/notice_list" class=""><i class="icon-article-alt"></i><span>DashBoard </span> </a></li>
+	<li><a ng-class="{active: isActive(&#39;/view_admission&#39;)}" href="http://erp.imsec.ac.in/academic#/view_admission" class="active"><i class="icon-user-add"></i><span>Admission</span> </a></li>
+	<li><a ng-class="{active: isActive(&#39;/admission_project&#39;)}" href="http://erp.imsec.ac.in/academic#/admission_project"><i class="icon-user-add"></i><span>My Project</span> </a></li><!---->
+	<li><a ng-class="{active: isActive(&#39;/training_material_list&#39;)}" href="http://erp.imsec.ac.in/academic#/training_material_list"><i class="icon-user-add"></i><span>Notes</span> </a></li>
+	<li><a ng-class="{active: isActive(&#39;/student_event&#39;)}" href="http://erp.imsec.ac.in/academic#/student_event"><i class="icon-user-add"></i><span>Sport &amp; Cultural Event</span> </a></li>
+	<!--Temporary block by Amit Tyagi
+	<li><a ng-class="{active: isActive('/bank_detail')}" href="#/bank_detail"><i class='icon-user-add'></i><span>Bank Account Details</span> </a></li>-->
+	<!--<li><a ng-class="{active: isActive('/edit_admission')}" href="#/edit_admission"><i class='icon-user-add'></i><span>Student Registration</span> </a></li>-->
+	<li class="has_sub">
+		<a href="javascript:void(0);"><i class="icon-water"></i><span>Attendence Reports</span> <span class="pull-right"><i class="fa fa-angle-down"></i></span></a>
+		<ul>
+			<li><a ng-class="{active: isActive(&#39;/attendence_edr&#39;)}" href="http://erp.imsec.ac.in/academic#/attendence_edr"><i class="icon-location-3"></i><span>EDR</span> </a></li>
+			<!--<li><a ng-class="{active: isActive('/attendence_agpr')}" href="#/attendence_agpr"><i class='icon-location-3'></i><span>Faculty Grade Report</span> </a></li>-->
+			<li><a ng-class="{active: isActive(&#39;/subject_wise_attendence&#39;)}" href="http://erp.imsec.ac.in/academic#/subject_wise_attendence"><i class="icon-location-3"></i><span>Subject Wise</span> </a></li>
+			<li><a ng-class="{active: isActive(&#39;/schedule_wise_attendence&#39;)}" href="http://erp.imsec.ac.in/academic#/schedule_wise_attendence"><i class="icon-location-3"></i><span>Schedule Wise</span> </a></li>
+			<!--<li><a ng-class="{active: isActive('/section_wise_attendence')}" href="#/section_wise_attendence"><i class='icon-location-3'></i><span>Section Wise</span> </a></li>-->
+		</ul>
+		
+	</li>
+	
+	<li class="has_sub">
+		<a href="javascript:void(0);"><i class="icon-water"></i><span>Examination</span> <span class="pull-right"><i class="fa fa-angle-down"></i></span></a>
+		<ul>
+			<li><a ng-class="{active: isActive(&#39;/admitCard&#39;) || isActive(&#39;/admitCard&#39;) || isActive(&#39;/admitCard&#39;)}" href="http://erp.imsec.ac.in/academic#/admitCard"><i class="icon-stumbleupon-1"></i><span>Admit Card</span> </a></li>
+		</ul>
+				
+	</li>
+			<li><a ng-class="{active: isActive(&#39;/assignment_list&#39;)}" href="http://erp.imsec.ac.in/academic#/assignment_list"><i class="icon-user-add"></i><span>Assignment</span> </a></li>	
+	<li><a ng-class="{active: isActive(&#39;/assignment_report&#39;)}" href="http://erp.imsec.ac.in/academic#/assignment_report"><i class="icon-user-add"></i><span>Assignment Report</span> </a></li>
+	<li><a ng-class="{active: isActive(&#39;/testmarks&#39;)}" href="http://erp.imsec.ac.in/academic#/testmarks"><i class="icon-water"></i><span>Test Marks</span> </a></li>
+	<li><a ng-class="{active: isActive(&#39;/gp_marks&#39;)}" href="http://erp.imsec.ac.in/academic#/gp_marks"><i class="icon-location-3"></i><span>GP Marks</span> </a></li>
+				<li><a ng-class="{active: isActive(&#39;/feedback&#39;)}" href="http://erp.imsec.ac.in/academic#/feedback"><i class="icon-user-add"></i><span>Feedback</span> </a></li>
+				<li><a ng-class="{active: isActive(&#39;/complaint_list&#39;)}" href="http://erp.imsec.ac.in/academic#/complaint_list"><i class="icon-user-add"></i><span>Complaint</span> </a></li>
+		
+	<li><a ng-class="{active: isActive(&#39;/rfid_request&#39;)}" href="http://erp.imsec.ac.in/academic#/rfid_request"><i class="icon-article-alt"></i><span>RFID Request</span> </a></li>	
+	<li><a ng-class="{active: isActive(&#39;/birthday_list&#39;)}" href="http://erp.imsec.ac.in/academic#/birthday_list"><i class="icon-article-alt"></i><span>Birthday</span> </a></li>
+	<li><a ng-class="{active: isActive(&#39;/faculty_birthday_list&#39;)}" href="http://erp.imsec.ac.in/academic#/faculty_birthday_list"><i class="icon-article-alt"></i><span>Faculty Birthday</span> </a></li>
+	<li class="has_sub">
+		<a href="javascript:void(0);"><i class="icon-water"></i><span>Download Forms</span> <span class="pull-right"><i class="fa fa-angle-down"></i></span></a>
+		<ul>
+			<li><a target="_blank" href="http://erp.imsec.ac.in/assets/forms/Admission%20withdrawal%20form%20No%20dues%20form.pdf"><i class="icon-location-3"></i><span>Admission Withdrawal / No Dues</span> </a></li>
+			<li><a target="_blank" href="http://erp.imsec.ac.in/assets/forms/Hostel%20Withdrawal%20Form.pdf"><i class="icon-location-3"></i><span>Hostel Withdrawal</span> </a></li>
+			<li><a target="_blank" href="http://erp.imsec.ac.in/assets/forms/Duplicate%20Marksheet%20issue%20Form.pdf"><i class="icon-location-3"></i><span>Duplicate Marksheet Issue</span> </a></li>
+			<li><a target="_blank" href="http://erp.imsec.ac.in/assets/forms/Migration%20withdrawal%20Format.pdf"><i class="icon-location-3"></i><span>Migration Withdrawal</span> </a></li>
+			<li><a target="_blank" href="http://erp.imsec.ac.in/assets/forms/Original%20Documents%20withdrawal%20Form.pdf"><i class="icon-location-3"></i><span>Original Documents Withdrawal</span> </a></li>
+					</ul>
+	</li>
+	
+	<li><a ng-class="{active: isActive(&#39;/academic_payment&#39;)}" href="http://erp.imsec.ac.in/academic#/academic_payment"><i class="icon-user-add"></i><span>Fee / Payment Details</span> </a></li>	
+	<li><a ng-class="{active: isActive(&#39;/online_txn&#39;)}" href="http://erp.imsec.ac.in/academic#/online_txn"><i class="icon-user-add"></i><span>Online Transactions</span> </a></li>	
+	<li><a ng-class="{active: ( isActive(&#39;/no_dues_list&#39;) ||  isActive(&#39;/no_dues&#39;))}" href="http://erp.imsec.ac.in/academic#/no_dues_list"><i class="icon-user-add"></i><span>No Dues</span> </a></li>	
+	<li><a ng-class="{active: isActive(&#39;/scholarship&#39;)}" href="http://erp.imsec.ac.in/academic#/scholarship"><i class="icon-water"></i><span>Scholarship</span> </a></li>
+		<li class="has_sub">
+		<a href="javascript:void(0);"><i class="icon-water"></i><span>Hostel  </span> <span class="pull-right"><i class="fa fa-angle-down"></i></span></a>
+		<ul>
+						<!--<li><a ng-class="{active: isActive('/hostel_request')}" href="#/hostel_request"><i class='icon-location-3'></i><span>Hostel Registration</span> </a></li>-->
+						<li><a ng-class="{active: isActive(&#39;/hostel_registration&#39;)}" href="http://erp.imsec.ac.in/academic#/hostel_registration"><i class="icon-location-3"></i><span>Hostel Allotment</span> </a></li>
+						<a ng-class="{active: isActive(&#39;/hostel_request&#39;)}" href="http://erp.imsec.ac.in/academic#/hostel_request"><i class="icon-location-3"></i><span>Hostel Registration</span> </a>
+		</ul>
+	</li>
+		
+	<li><a ng-class="{active: isActive(&#39;/gate_pass_list&#39;)}" href="http://erp.imsec.ac.in/academic#/gate_pass_list"><i class="icon-water"></i><span>Gate Pass</span> </a></li>	
+	<li><a ng-class="{active: isActive(&#39;/wi_fi_services&#39;)}" href="http://erp.imsec.ac.in/academic#/wi_fi_services"><i class="icon-water"></i><span>Wi-fi Services</span> </a></li>	
+	<li><a ng-class="{active: isActive(&#39;/library_book&#39;)}" href="http://erp.imsec.ac.in/academic#/library_book"><i class="icon-water"></i><span>Library</span> </a></li>
+	</ul>				<div class="clearfix"></div>
+			</div>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+	
+	<div class="content-page">
+		<div class="content"><p style="margin-top:-20px"><i class="fa fa-navicon fa-2x" id="collapse" style="display:none"></i></p>
+			<!-- ngView:  --><div ng-view="" class="ng-scope">
+
+
+<div class="box-messages ng-scope" ng-init="aws.bucket=&quot;imsecerp&quot;; aws.AWSAccessKeyId=&quot;AKIAJI4LAE3WE6W67KYQ&quot;; aws.AWSSecretKeyId=&quot;eQI4aLBPgje7W5g/qPPRLq7iinw6UcVkIkWEfpSW&quot;;acl={&quot;access&quot;:1,&quot;add&quot;:1,&quot;edit&quot;:1,&quot;block&quot;:1,&quot;delete&quot;:0};admission={&quot;admission_id&quot;:&quot;8990&quot;,&quot;user_id&quot;:&quot;634&quot;,&quot;lateral_entry&quot;:&quot;0&quot;,&quot;semester&quot;:&quot;1&quot;,&quot;admission_status&quot;:&quot;Regular&quot;,&quot;current_financial_year_id&quot;:&quot;19&quot;,&quot;form_no&quot;:&quot;&quot;,&quot;admission_no&quot;:&quot;A2022MCA8990&quot;,&quot;enquiry_no&quot;:&quot;&quot;,&quot;financial_year_id&quot;:&quot;19&quot;,&quot;course_id&quot;:&quot;9&quot;,&quot;stream_id&quot;:&quot;16&quot;,&quot;first_name&quot;:&quot;VISHAL&quot;,&quot;middle_name&quot;:&quot;&quot;,&quot;last_name&quot;:&quot;PRAJAPATI&quot;,&quot;student_name&quot;:&quot;VISHAL  PRAJAPATI&quot;,&quot;to_sort&quot;:&quot;VISHAL PRAJAPATI&quot;,&quot;gender&quot;:&quot;M&quot;,&quot;date_of_birth&quot;:&quot;01-07-2001&quot;,&quot;full_date_of_birth&quot;:&quot;2001-07-01&quot;,&quot;admission_date&quot;:&quot;30-11-2022&quot;,&quot;religion_id&quot;:&quot;1&quot;,&quot;nationality&quot;:&quot;1&quot;,&quot;blood_group&quot;:&quot;0&quot;,&quot;background&quot;:&quot;1&quot;,&quot;state_of_domicile&quot;:&quot;Uttar Pradesh&quot;,&quot;category_id&quot;:&quot;3&quot;,&quot;student_mobile&quot;:&quot;9628851563&quot;,&quot;photo&quot;:&quot;student\/8990\/1669797091.jpg&quot;,&quot;email&quot;:&quot;imvishal449@gmail.com&quot;,&quot;local_address&quot;:&quot;VILLAGE DEVMI POST-BANKATI DIST-BASTI&quot;,&quot;local_pincode&quot;:&quot;272123&quot;,&quot;local_city_id&quot;:&quot;568&quot;,&quot;local_state_id&quot;:&quot;31&quot;,&quot;permanent_address&quot;:&quot;VILLAGE DEVMI POST-BANKATI DIST-BASTI&quot;,&quot;permanent_pincode&quot;:&quot;272123&quot;,&quot;permanent_state_id&quot;:&quot;31&quot;,&quot;permanent_city_id&quot;:&quot;568&quot;,&quot;local_telephone&quot;:&quot;&quot;,&quot;permanent_telephone&quot;:&quot;&quot;,&quot;father_name&quot;:&quot;SITARAM&quot;,&quot;father_occupation_id&quot;:&quot;6&quot;,&quot;father_occupation&quot;:&quot;Agriculture&quot;,&quot;father_email&quot;:&quot;&quot;,&quot;father_mobile&quot;:&quot;9161120589&quot;,&quot;father_home_telephone&quot;:&quot;&quot;,&quot;father_work_telephone&quot;:&quot;&quot;,&quot;mother_name&quot;:&quot;DURGAWATI DEVI&quot;,&quot;mother_occupation_id&quot;:&quot;4&quot;,&quot;mother_occupation&quot;:&quot;House Wife&quot;,&quot;mother_email&quot;:&quot;&quot;,&quot;mother_mobile&quot;:&quot;9628851563&quot;,&quot;mother_home_telephone&quot;:&quot;&quot;,&quot;mother_work_telephone&quot;:&quot;&quot;,&quot;parent_income&quot;:&quot;0.78&quot;,&quot;ten_board&quot;:&quot;CBSE&quot;,&quot;ten_year_passing&quot;:&quot;2017&quot;,&quot;ten_school_name&quot;:&quot;SARASWATI VIDYA MANDIR S S SCH RAMBAGH BASTI&quot;,&quot;ten_roll_no&quot;:&quot;5047668&quot;,&quot;ten_obt_marks&quot;:&quot;6.6&quot;,&quot;ten_max_marks&quot;:&quot;10&quot;,&quot;ten_percent_marks&quot;:&quot;66&quot;,&quot;twelve_board&quot;:&quot;UP BOARD&quot;,&quot;twelve_year_passing&quot;:&quot;2019&quot;,&quot;twelve_school_name&quot;:&quot;SAVITRI VIDYA VIHAR I COLLEGE RAMJIPURAM BASTI&quot;,&quot;twelve_roll_no&quot;:&quot;2343538&quot;,&quot;twelve_obt_marks&quot;:&quot;352&quot;,&quot;twelve_max_marks&quot;:&quot;500&quot;,&quot;ten_cgp&quot;:&quot;6.6&quot;,&quot;twelve_state_id&quot;:&quot;31&quot;,&quot;twelve_cgp&quot;:&quot;&quot;,&quot;is_pcm_pcb&quot;:&quot;PCB&quot;,&quot;physics_marks&quot;:&quot;80&quot;,&quot;chemistry_marks&quot;:&quot;60&quot;,&quot;math_bio_marks&quot;:&quot;66&quot;,&quot;english_marks&quot;:&quot;71&quot;,&quot;twelve_percent_marks&quot;:&quot;70.4&quot;,&quot;pcm_percent&quot;:&quot;68.67&quot;,&quot;is_apply_improvement_paper&quot;:&quot;0&quot;,&quot;improvement_paper_subject&quot;:&quot;&quot;,&quot;improvement_paper_result&quot;:&quot;&quot;,&quot;is_any_grace&quot;:&quot;0&quot;,&quot;grace_marks_details&quot;:&quot;&quot;,&quot;shift&quot;:&quot;I&quot;,&quot;tfw&quot;:&quot;0&quot;,&quot;admission_type_id&quot;:&quot;1&quot;,&quot;is_hostel_required&quot;:&quot;0&quot;,&quot;hostel_type&quot;:&quot;0&quot;,&quot;room_type&quot;:&quot;0&quot;,&quot;room_no&quot;:&quot;0&quot;,&quot;is_transport_required&quot;:&quot;0&quot;,&quot;fare_slab_id&quot;:&quot;0&quot;,&quot;stoppage_id&quot;:&quot;0&quot;,&quot;is_entrance_exam_appeared&quot;:&quot;1&quot;,&quot;guardian_name&quot;:&quot;&quot;,&quot;guardian_contact_no&quot;:&quot;&quot;,&quot;guardian_relationship&quot;:&quot;&quot;,&quot;guardian_photo&quot;:&quot;&quot;,&quot;father_photo&quot;:&quot;&quot;,&quot;mother_photo&quot;:&quot;&quot;,&quot;guardian_address&quot;:&quot;&quot;,&quot;guardian_telephone&quot;:&quot;&quot;,&quot;guardian_pincode&quot;:&quot;0&quot;,&quot;guardian_state_id&quot;:&quot;0&quot;,&quot;guardian_city_id&quot;:&quot;0&quot;,&quot;remarks&quot;:&quot;&quot;,&quot;status&quot;:&quot;1&quot;,&quot;remark&quot;:&quot;&quot;,&quot;university_roll_no&quot;:&quot;&quot;,&quot;enrollment_no&quot;:&quot;&quot;,&quot;local_state_name&quot;:&quot;UTTAR PRADESH&quot;,&quot;local_city_name&quot;:&quot;Basti&quot;,&quot;permanent_state_name&quot;:&quot;UTTAR PRADESH&quot;,&quot;permanent_city_name&quot;:&quot;Basti&quot;,&quot;guardian_state_name&quot;:null,&quot;guardian_city_name&quot;:null,&quot;course_name&quot;:&quot;MCA&quot;,&quot;stream_name&quot;:&quot;MCA&quot;,&quot;category_name&quot;:&quot;OBC&quot;,&quot;religion&quot;:&quot;Hindu&quot;,&quot;country_name&quot;:&quot;India&quot;,&quot;financial_year_name&quot;:&quot;2022-2023&quot;,&quot;admitted_year&quot;:&quot;1&quot;,&quot;college_id&quot;:&quot;1&quot;,&quot;section&quot;:&quot;MCA1&quot;,&quot;sub_section&quot;:&quot;B2&quot;,&quot;aadhaar_card_no&quot;:&quot;665516231421&quot;,&quot;aadhaar_card_file_name&quot;:&quot;&quot;,&quot;password&quot;:&quot;Vishal@8990&quot;,&quot;hostel_id&quot;:&quot;0&quot;,&quot;thumb_code&quot;:&quot;&quot;,&quot;bank_name&quot;:&quot;&quot;,&quot;bank_branch_name&quot;:&quot;&quot;,&quot;bank_account_no&quot;:&quot;&quot;,&quot;ifsc_code&quot;:&quot;&quot;,&quot;benificiary_name&quot;:&quot;&quot;,&quot;contact_no&quot;:&quot;0&quot;,&quot;is_edit_bank_detail&quot;:&quot;0&quot;,&quot;ten_state_id&quot;:&quot;31&quot;,&quot;ten_state_name&quot;:&quot;UTTAR PRADESH&quot;,&quot;twelve_state_name&quot;:&quot;UTTAR PRADESH&quot;,&quot;tfw_ews_option&quot;:&quot;tfw&quot;,&quot;ews&quot;:&quot;0&quot;,&quot;medical_policy_validity&quot;:&quot;00-00-0000&quot;,&quot;medical_policy_no&quot;:&quot;&quot;,&quot;uhid_no&quot;:&quot;&quot;,&quot;medical_policy_download_url&quot;:&quot;&quot;}; admission_qualification_list = [];  admission_entrance_exam_list=[]; student_registration=[{&quot;id&quot;:&quot;34307&quot;,&quot;admission_id&quot;:&quot;8990&quot;,&quot;financial_year_id&quot;:&quot;19&quot;,&quot;course_id&quot;:&quot;9&quot;,&quot;stream_id&quot;:&quot;16&quot;,&quot;admitted_year&quot;:&quot;1&quot;,&quot;semester&quot;:&quot;1&quot;,&quot;section&quot;:&quot;MCA1&quot;,&quot;is_approved&quot;:&quot;1&quot;,&quot;registration_datetime&quot;:&quot;09-12-2022&quot;}];">
+
+	
+	<!-- end ngIf: admission.is_entrance_exam_appeared == 1 -->				
+	<!-- ngIf: admission.guardian_name != '' -->
+	<!-- ngIf: admission.remark != '' -->
+</div> 	<style type="text/css" class="ng-scope">
+.control-label { padding-right: 0; }
+.btn-info1 {
+    background-color: red;
+    border-color: #65BBD6;
+    color: #FFFFFF;
+	font-size:x-large;
+}
+</style>
+<div class="box-messages ng-scope" ng-init="aws.bucket=&quot;imsecerp&quot;; aws.AWSAccessKeyId=&quot;AKIAJI4LAE3WE6W67KYQ&quot;; aws.AWSSecretKeyId=&quot;eQI4aLBPgje7W5g/qPPRLq7iinw6UcVkIkWEfpSW&quot;;acl={&quot;access&quot;:1,&quot;add&quot;:1,&quot;edit&quot;:1,&quot;block&quot;:1,&quot;delete&quot;:0};admission={&quot;admission_id&quot;:&quot;8990&quot;,&quot;user_id&quot;:&quot;634&quot;,&quot;lateral_entry&quot;:&quot;0&quot;,&quot;semester&quot;:&quot;1&quot;,&quot;admission_status&quot;:&quot;Regular&quot;,&quot;current_financial_year_id&quot;:&quot;19&quot;,&quot;form_no&quot;:&quot;&quot;,&quot;admission_no&quot;:&quot;A2022MCA8990&quot;,&quot;enquiry_no&quot;:&quot;&quot;,&quot;financial_year_id&quot;:&quot;19&quot;,&quot;course_id&quot;:&quot;9&quot;,&quot;stream_id&quot;:&quot;16&quot;,&quot;first_name&quot;:&quot;VISHAL&quot;,&quot;middle_name&quot;:&quot;&quot;,&quot;last_name&quot;:&quot;PRAJAPATI&quot;,&quot;student_name&quot;:&quot;VISHAL  PRAJAPATI&quot;,&quot;to_sort&quot;:&quot;VISHAL PRAJAPATI&quot;,&quot;gender&quot;:&quot;M&quot;,&quot;date_of_birth&quot;:&quot;01-07-2001&quot;,&quot;full_date_of_birth&quot;:&quot;2001-07-01&quot;,&quot;admission_date&quot;:&quot;30-11-2022&quot;,&quot;religion_id&quot;:&quot;1&quot;,&quot;nationality&quot;:&quot;1&quot;,&quot;blood_group&quot;:&quot;0&quot;,&quot;background&quot;:&quot;1&quot;,&quot;state_of_domicile&quot;:&quot;Uttar Pradesh&quot;,&quot;category_id&quot;:&quot;3&quot;,&quot;student_mobile&quot;:&quot;9628851563&quot;,&quot;photo&quot;:&quot;student\/8990\/1669797091.jpg&quot;,&quot;email&quot;:&quot;imvishal449@gmail.com&quot;,&quot;local_address&quot;:&quot;VILLAGE DEVMI POST-BANKATI DIST-BASTI&quot;,&quot;local_pincode&quot;:&quot;272123&quot;,&quot;local_city_id&quot;:&quot;568&quot;,&quot;local_state_id&quot;:&quot;31&quot;,&quot;permanent_address&quot;:&quot;VILLAGE DEVMI POST-BANKATI DIST-BASTI&quot;,&quot;permanent_pincode&quot;:&quot;272123&quot;,&quot;permanent_state_id&quot;:&quot;31&quot;,&quot;permanent_city_id&quot;:&quot;568&quot;,&quot;local_telephone&quot;:&quot;&quot;,&quot;permanent_telephone&quot;:&quot;&quot;,&quot;father_name&quot;:&quot;SITARAM&quot;,&quot;father_occupation_id&quot;:&quot;6&quot;,&quot;father_occupation&quot;:&quot;Agriculture&quot;,&quot;father_email&quot;:&quot;&quot;,&quot;father_mobile&quot;:&quot;9161120589&quot;,&quot;father_home_telephone&quot;:&quot;&quot;,&quot;father_work_telephone&quot;:&quot;&quot;,&quot;mother_name&quot;:&quot;DURGAWATI DEVI&quot;,&quot;mother_occupation_id&quot;:&quot;4&quot;,&quot;mother_occupation&quot;:&quot;House Wife&quot;,&quot;mother_email&quot;:&quot;&quot;,&quot;mother_mobile&quot;:&quot;9628851563&quot;,&quot;mother_home_telephone&quot;:&quot;&quot;,&quot;mother_work_telephone&quot;:&quot;&quot;,&quot;parent_income&quot;:&quot;0.78&quot;,&quot;ten_board&quot;:&quot;CBSE&quot;,&quot;ten_year_passing&quot;:&quot;2017&quot;,&quot;ten_school_name&quot;:&quot;SARASWATI VIDYA MANDIR S S SCH RAMBAGH BASTI&quot;,&quot;ten_roll_no&quot;:&quot;5047668&quot;,&quot;ten_obt_marks&quot;:&quot;6.6&quot;,&quot;ten_max_marks&quot;:&quot;10&quot;,&quot;ten_percent_marks&quot;:&quot;66&quot;,&quot;twelve_board&quot;:&quot;UP BOARD&quot;,&quot;twelve_year_passing&quot;:&quot;2019&quot;,&quot;twelve_school_name&quot;:&quot;SAVITRI VIDYA VIHAR I COLLEGE RAMJIPURAM BASTI&quot;,&quot;twelve_roll_no&quot;:&quot;2343538&quot;,&quot;twelve_obt_marks&quot;:&quot;352&quot;,&quot;twelve_max_marks&quot;:&quot;500&quot;,&quot;ten_cgp&quot;:&quot;6.6&quot;,&quot;twelve_state_id&quot;:&quot;31&quot;,&quot;twelve_cgp&quot;:&quot;&quot;,&quot;is_pcm_pcb&quot;:&quot;PCB&quot;,&quot;physics_marks&quot;:&quot;80&quot;,&quot;chemistry_marks&quot;:&quot;60&quot;,&quot;math_bio_marks&quot;:&quot;66&quot;,&quot;english_marks&quot;:&quot;71&quot;,&quot;twelve_percent_marks&quot;:&quot;70.4&quot;,&quot;pcm_percent&quot;:&quot;68.67&quot;,&quot;is_apply_improvement_paper&quot;:&quot;0&quot;,&quot;improvement_paper_subject&quot;:&quot;&quot;,&quot;improvement_paper_result&quot;:&quot;&quot;,&quot;is_any_grace&quot;:&quot;0&quot;,&quot;grace_marks_details&quot;:&quot;&quot;,&quot;shift&quot;:&quot;I&quot;,&quot;tfw&quot;:&quot;0&quot;,&quot;admission_type_id&quot;:&quot;1&quot;,&quot;is_hostel_required&quot;:&quot;0&quot;,&quot;hostel_type&quot;:&quot;0&quot;,&quot;room_type&quot;:&quot;0&quot;,&quot;room_no&quot;:&quot;0&quot;,&quot;is_transport_required&quot;:&quot;0&quot;,&quot;fare_slab_id&quot;:&quot;0&quot;,&quot;stoppage_id&quot;:&quot;0&quot;,&quot;is_entrance_exam_appeared&quot;:&quot;1&quot;,&quot;guardian_name&quot;:&quot;&quot;,&quot;guardian_contact_no&quot;:&quot;&quot;,&quot;guardian_relationship&quot;:&quot;&quot;,&quot;guardian_photo&quot;:&quot;&quot;,&quot;father_photo&quot;:&quot;&quot;,&quot;mother_photo&quot;:&quot;&quot;,&quot;guardian_address&quot;:&quot;&quot;,&quot;guardian_telephone&quot;:&quot;&quot;,&quot;guardian_pincode&quot;:&quot;0&quot;,&quot;guardian_state_id&quot;:&quot;0&quot;,&quot;guardian_city_id&quot;:&quot;0&quot;,&quot;remarks&quot;:&quot;&quot;,&quot;status&quot;:&quot;1&quot;,&quot;remark&quot;:&quot;&quot;,&quot;university_roll_no&quot;:&quot;&quot;,&quot;enrollment_no&quot;:&quot;&quot;,&quot;local_state_name&quot;:&quot;UTTAR PRADESH&quot;,&quot;local_city_name&quot;:&quot;Basti&quot;,&quot;permanent_state_name&quot;:&quot;UTTAR PRADESH&quot;,&quot;permanent_city_name&quot;:&quot;Basti&quot;,&quot;guardian_state_name&quot;:null,&quot;guardian_city_name&quot;:null,&quot;course_name&quot;:&quot;MCA&quot;,&quot;stream_name&quot;:&quot;MCA&quot;,&quot;category_name&quot;:&quot;OBC&quot;,&quot;religion&quot;:&quot;Hindu&quot;,&quot;country_name&quot;:&quot;India&quot;,&quot;financial_year_name&quot;:&quot;2022-2023&quot;,&quot;admitted_year&quot;:&quot;1&quot;,&quot;college_id&quot;:&quot;1&quot;,&quot;section&quot;:&quot;MCA1&quot;,&quot;sub_section&quot;:&quot;B2&quot;,&quot;aadhaar_card_no&quot;:&quot;665516231421&quot;,&quot;aadhaar_card_file_name&quot;:&quot;&quot;,&quot;password&quot;:&quot;Vishal@8990&quot;,&quot;hostel_id&quot;:&quot;0&quot;,&quot;thumb_code&quot;:&quot;&quot;,&quot;bank_name&quot;:&quot;&quot;,&quot;bank_branch_name&quot;:&quot;&quot;,&quot;bank_account_no&quot;:&quot;&quot;,&quot;ifsc_code&quot;:&quot;&quot;,&quot;benificiary_name&quot;:&quot;&quot;,&quot;contact_no&quot;:&quot;0&quot;,&quot;is_edit_bank_detail&quot;:&quot;0&quot;,&quot;ten_state_id&quot;:&quot;31&quot;,&quot;ten_state_name&quot;:&quot;UTTAR PRADESH&quot;,&quot;twelve_state_name&quot;:&quot;UTTAR PRADESH&quot;,&quot;tfw_ews_option&quot;:&quot;tfw&quot;,&quot;ews&quot;:&quot;0&quot;,&quot;medical_policy_validity&quot;:&quot;00-00-0000&quot;,&quot;medical_policy_no&quot;:&quot;&quot;,&quot;uhid_no&quot;:&quot;&quot;,&quot;medical_policy_download_url&quot;:&quot;&quot;}; admission_qualification_list = [];  admission_entrance_exam_list=[]; student_registration=[{&quot;id&quot;:&quot;34307&quot;,&quot;admission_id&quot;:&quot;8990&quot;,&quot;financial_year_id&quot;:&quot;19&quot;,&quot;course_id&quot;:&quot;9&quot;,&quot;stream_id&quot;:&quot;16&quot;,&quot;admitted_year&quot;:&quot;1&quot;,&quot;semester&quot;:&quot;1&quot;,&quot;section&quot;:&quot;MCA1&quot;,&quot;is_approved&quot;:&quot;1&quot;,&quot;registration_datetime&quot;:&quot;09-12-2022&quot;}];">
+
+	<div></div>
+	<div class="row">
+		<div class="col-md-3">
+			<div class="list-group">
+				<!-- ngIf: admission.photo == '' -->
+				<!-- ngIf: admission.photo != '' --><img ng-if="admission.photo != &#39;&#39;" src="image.jpg" width="100%" class="ng-scope"><!-- end ngIf: admission.photo != '' -->
+			</div>
+		</div>
+		<div class="col-md-9">
+			<div class="widget">
+				<div class="col-sm-12">	
+					<div class="row">
+						<div class="col-sm-4">
+							<h4 class="semibold ng-binding">VISHAL&nbsp;&nbsp;PRAJAPATI</h4>
+						</div>
+												<div class="col-sm-4 pull-right">
+						
+					
+														
+	  						<h4 class="semibold">
+
+								<a href="http://erp.imsec.ac.in/academic#/edit_self_profile" class="btn btn-info btn-sm">
+									<span class="glyphicon glyphicon-edit"></span> Edit
+								</a>
+	  						</h4>
+							
+						</div>
+											</div>				
+					<div class="row">
+						<div class="col-sm-6">
+							<div class="mail-sender-details">
+								<small class="ng-binding">
+									<b>College ID:</b>&nbsp;A2022MCA8990<br>
+									<b>Form No:</b>&nbsp;NA<br>
+									<b>Admission Through:</b>&nbsp;
+									<!-- ngIf: admission.admission_type_id == 0 -->
+									<!-- ngIf: admission.admission_type_id == 1 --><span ng-if="admission.admission_type_id == 1" class="ng-scope">DIRECT</span><!-- end ngIf: admission.admission_type_id == 1 -->
+									<!-- ngIf: admission.admission_type_id == 2 -->
+									<!-- ngIf: admission.admission_type_id == 3 -->
+									<!-- ngIf: admission.admission_type_id == 4 -->
+									<!-- ngIf: admission.admission_type_id == 5 -->
+								</small>
+							</div>
+						</div>	
+						<div class="col-sm-6 text-right">
+							<div class="btn-group spaced">
+																<!--<a class="btn btn-success" href="#/edit_admission" style="margin-right:17px;"> Edit</a>-->
+															</div>
+						</div>						
+					</div>
+					<hr>
+					<div class="row">
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Roll No.</label>
+								<span class="col-sm-6 ng-binding"></span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Enrollment No.</label>
+								<span class="col-sm-6 ng-binding"></span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Course</label>
+								<span class="col-sm-6 ng-binding">MCA</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Branch/Stream</label>
+								<span class="col-sm-6 ng-binding">MCA</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Admission Year</label>
+								<span class="col-sm-6 ng-binding">1 Year</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Semester</label>
+								<span class="col-sm-6 ng-binding">1 Semester</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Shift</label>
+								<span class="col-sm-6 ng-binding">I</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">EWS / TFW</label>
+								<span class="col-sm-6 ng-binding">No / No</span>
+								<span class="col-sm-6"></span>
+							</div>
+						</div>
+						
+												
+					</div>
+					<hr>
+					<div class="row">
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Gender</label>
+								<span class="col-sm-6 ng-binding">Male</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Category</label>
+								<span class="col-sm-6 ng-binding">OBC</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Religion</label>
+								<span class="col-sm-6 ng-binding">Hindu</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Date of Birth</label>
+								<span class="col-sm-6 ng-binding">01-07-2001</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Nationality</label>
+								<span class="col-sm-6 ng-binding">India</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Blood Group</label>
+								<!-- ngIf: admission.blood_group == 0 --><span class="col-sm-6 ng-scope" ng-if="admission.blood_group == 0">Don't Know</span><!-- end ngIf: admission.blood_group == 0 -->			
+								<!-- ngIf: admission.blood_group == 1 -->			
+								<!-- ngIf: admission.blood_group == 2 -->
+								<!-- ngIf: admission.blood_group == 3 -->
+								<!-- ngIf: admission.blood_group == 4 -->
+								<!-- ngIf: admission.blood_group == 5 -->
+								<!-- ngIf: admission.blood_group == 6 -->
+								<!-- ngIf: admission.blood_group == 7 -->
+								<!-- ngIf: admission.blood_group == 8 -->
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Student Mobile No.</label>
+								<span class="col-sm-6 ng-binding">9628851563</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Student Email ID</label>
+								<span class="col-sm-6 ng-binding">imvishal449@gmail.com</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Policy No./USID No.</label>
+								<span class="col-sm-6 ng-binding"> / <br><!-- ngIf: admission.medical_policy_no --></span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Policy Validity</label>
+								<span class="col-sm-6 ng-binding">00-00-0000</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Background</label>
+								<span class="col-sm-6 ng-binding">Rural</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">State of Domicile</label>
+								<span class="col-sm-6 ng-binding">Uttar Pradesh</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Hostel</label>
+								<span class="col-sm-6 ng-binding">No</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label" style="padding-left:0; padding-right:0;">Transport</label>
+								<span class="col-sm-6 ng-binding">No</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">
+							<div class="col-sm-6">
+								<!-- ngIf: admission.is_hostel_required == '1' -->	
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<!-- ngIf: admission.is_transport_required == '1' -->	
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>	
+	</div>
+	<div class="row">
+		<div class="col-md-12">	
+			<div class="widget col-sm-12 padding-bottom">
+				<div class="widget-header transparent">
+					<h2>Contact Information</h2>
+				</div>
+				<div class="col-sm-12 margin_top no_padding">	
+					<div class="col-sm-6">
+						<label class="col-sm-4 control-label">Correspondence Address</label>
+						<span class="col-sm-8 ng-binding"><span ng-bind-html="admission.local_address | nl2br" class="ng-binding">VILLAGE DEVMI POST-BANKATI DIST-BASTI</span><br>UTTAR PRADESH<br>Basti<br>272123</span>
+					</div>								
+					<div class="col-sm-6 no_padding">
+						<label class="col-sm-4 control-label">Permanent Address</label>
+						<span class="col-sm-8 ng-binding"><span ng-bind-html="admission.permanent_address | nl2br" class="ng-binding">VILLAGE DEVMI POST-BANKATI DIST-BASTI</span><br>UTTAR PRADESH<br>Basti<br>272123</span>
+					</div>
+				</div>	
+				<div class="col-sm-12 margin_top no_padding">	
+					<div class="col-sm-6">
+						<label class="col-sm-4 control-label">Telephone</label>
+						<span class="col-sm-8 ng-binding"></span>
+					</div>								
+					<div class="col-sm-6 no_padding">
+						<label class="col-sm-4 control-label">Telephone</label>
+						<span class="col-sm-8 ng-binding"></span>
+					</div>
+				</div>	
+				<div class="col-sm-12 margin_top no_padding">	
+					<div class="col-sm-6">
+						<label class="col-sm-4 control-label">Aadhaar Card No</label>
+						<span class="col-sm-8 ng-binding">665516231421</span>				
+					</div>								
+					<div class="col-sm-6 no_padding">
+						<label class="col-sm-4 control-label">Aadhaar Card File</label>
+						<span class="col-sm-8"><!-- ngIf: admission.aadhaar_card_file_name != '' --></span>
+						<!-- ngIf: admission.aadhaar_card_file_name == '' --><span class="col-sm-8 ng-scope" ng-if="admission.aadhaar_card_file_name == &#39;&#39;">NA</span><!-- end ngIf: admission.aadhaar_card_file_name == '' -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-12">	
+			<div class="widget col-sm-12 padding-bottom">
+				<div class="widget-header transparent">
+					<h2>Bank Account Information</h2>
+				</div>
+				<div class="col-sm-12 margin_top no_padding">	
+					<div class="col-sm-6">
+						<label class="col-sm-4 control-label">Benificiary Name</label>
+						<span class="col-sm-8 ng-binding">NA</span>
+					</div>								
+					<div class="col-sm-6 no_padding">
+						<label class="col-sm-4 control-label">Account No.</label>
+						<span class="col-sm-8 ng-binding">NA</span>
+					</div>
+				</div>
+				<div class="col-sm-12 margin_top no_padding">	
+					<div class="col-sm-6">
+						<label class="col-sm-4 control-label">Bank Name</label>
+						<span class="col-sm-8 ng-binding">NA</span>
+					</div>								
+					<div class="col-sm-6 no_padding">
+						<label class="col-sm-4 control-label">IFSC Code</label>
+						<span class="col-sm-8 ng-binding">NA</span>
+					</div>
+				</div>
+				<div class="col-sm-12 margin_top no_padding">	
+					<div class="col-sm-6">
+						<label class="col-sm-4 control-label">Branch Name</label>
+						<span class="col-sm-8 ng-binding">NA</span>
+					</div>
+					<div class="col-sm-6 no_padding">
+						<label class="col-sm-4 control-label">Contact No.</label>
+						<span class="col-sm-8 ng-binding">0</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-12">	
+			<div class="widget col-sm-12 padding-bottom">
+				<div class="widget-header transparent">
+					<h2>Parents Detail</h2>
+				</div>
+				<div class="col-sm-12 margin_top no_padding">	
+					<div class="col-sm-2">
+						<div class="list-group" style="overflow:hidden; height:100px; width:150px;">
+							<!-- ngIf: admission.father_photo == '' --><img ng-if="admission.father_photo == &#39;&#39;" src="./College ManagementProfile_files/default-user.png" width="100%" class="ng-scope"><!-- end ngIf: admission.father_photo == '' -->
+							<!-- ngIf: admission.father_photo != '' -->
+						</div>
+					</div>								
+					<div class="col-sm-10 no_padding">
+						<div class="col-sm-12 margin_top no_padding">	
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label">Father Name</label>
+								<span class="col-sm-8 ng-binding">SITARAM</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label">Occupation</label>
+								<span class="col-sm-8 ng-binding">Agriculture</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">	
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label">E-mail ID</label>
+								<span class="col-sm-8 ng-binding"></span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label">Mobile No.</label>
+								<span class="col-sm-8 ng-binding">9161120589</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">	
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label">Home Tel.</label>
+								<span class="col-sm-8 ng-binding"></span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label">Work Tel.</label>
+								<span class="col-sm-8 ng-binding"></span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12 margin_top no_padding"><hr></div>
+				<div class="col-sm-12 margin_top no_padding">	
+					<div class="col-sm-2">
+						<div class="list-group" style="overflow:hidden; height:100px; width:150px;">
+							<!-- ngIf: admission.mother_photo == '' --><img ng-if="admission.mother_photo == &#39;&#39;" src="./College ManagementProfile_files/default-user.png" width="100%" class="ng-scope"><!-- end ngIf: admission.mother_photo == '' -->
+							<!-- ngIf: admission.mother_photo != '' -->
+						</div>
+					</div>								
+					<div class="col-sm-10 no_padding">
+						<div class="col-sm-12 margin_top no_padding">	
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label">Mother Name</label>
+								<span class="col-sm-8 ng-binding">DURGAWATI DEVI</span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label">Occupation</label>
+								<span class="col-sm-8 ng-binding">House Wife</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">	
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label">E-mail ID</label>
+								<span class="col-sm-8 ng-binding"></span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label">Mobile No.</label>
+								<span class="col-sm-8 ng-binding">9628851563</span>
+							</div>
+						</div>
+						<div class="col-sm-12 margin_top no_padding">	
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label">Home Tel.</label>
+								<span class="col-sm-8 ng-binding"></span>
+							</div>								
+							<div class="col-sm-6 no_padding">
+								<label class="col-sm-4 control-label">Work Tel.</label>
+								<span class="col-sm-8 ng-binding"></span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12 margin_top no_padding"><hr></div>
+				<div class="col-sm-12 margin_top no_padding">
+					<div class="col-sm-12 no_padding">
+						<div class="col-sm-12 margin_top no_padding">	
+							<div class="col-sm-6">
+								<label class="col-sm-4 control-label">Parent Income</label>
+								<span class="col-sm-8 ng-binding">0.78 Lacs/PA</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-12 ">	
+			<div class="widget col-sm-12 padding-bottom">
+				<div class="widget-header transparent">
+					<h2>Academic Qualification</h2>
+				</div>					
+				<div class="table-responsive form-group" style="padding:20px; padding-top:0px;">
+					<table id="tbl_academic" class="table table-striped">
+						<thead>
+							<tr class="new_row">
+								<th>Qualifications</th>
+								<th width="20%">Board / University</th>
+								<th width="14%">Year of Passing</th>
+								<th width="20%">School Name</th>
+								<th width="12%">Roll No</th>
+								<th width="8%">Obt. Marks</th>
+								<th width="8%">Max. Marks</th>												
+								<th width="9%">Marks %</th>												
+								<th width="9%">CGP</th>
+								<th width="9%">State</th>	
+							</tr>
+						</thead>
+						<tbody>
+							<tr class="new_row">
+								<td class="new_cell">High School</td>
+								<td class="new_cell ng-binding">CBSE</td>
+								<td class="new_cell ng-binding">2017</td>
+								<td class="new_cell ng-binding">SARASWATI VIDYA MANDIR S S SCH RAMBAGH BASTI</td>												
+								<td class="new_cell ng-binding">5047668</td>
+								<td class="new_cell ng-binding">6.6</td>
+								<td class="new_cell ng-binding">10</td>
+								<td class="new_cell ng-binding">66%</td>	
+								<td class="new_cell ng-binding">6.6</td>	
+								<td class="new_cell ng-binding">UTTAR PRADESH</td>					
+							</tr>
+							<tr class="new_row">
+								<td class="new_cell">Intermediate</td>
+								<td class="new_cell" colspan="9" style="padding-left:0; padding-right:0; padding-top:0; padding-bottom:0;">
+									<table style="width:100%; background:transparent; border:0px solid; box-shadow:none;" class="table table-striped">
+										<tbody><tr>
+											<td class="new_cell ng-binding" width="20%">UP BOARD</td>
+											<td class="new_cell ng-binding" width="14%">2019</td>
+											<td class="new_cell ng-binding" width="20%">SAVITRI VIDYA VIHAR I COLLEGE RAMJIPURAM BASTI</td>												
+											<td class="new_cell ng-binding" width="12%">2343538</td>
+											<td class="new_cell ng-binding" width="8%">352</td>
+											<td class="new_cell ng-binding" width="8%">500</td>
+											<td class="new_cell ng-binding" width="9%">70.4%</td>
+											<td class="new_cell ng-binding" width="9%"></td>
+											<td class="new_cell ng-binding" width="9%">UTTAR PRADESH</td>				
+										</tr>
+										<tr>
+											<td class="new_cell" colspan="9" style="padding-left:0; padding-right:0; padding-top:0; padding-bottom:0;">
+												<table style="width:100%; background:transparent; border:0px solid; box-shadow:none;" class="table table-striped">
+													<tbody><tr>
+														<td class="new_cell" width="20%">
+															<label class="col-sm-12 control-label">Physics Marks: <span style="font-weight:normal;" class="ng-binding">80</span></label>
+														</td>
+														<td class="new_cell" width="20%">
+															<label class="col-sm-12 control-label">Chemistry Marks: <span style="font-weight:normal;" class="ng-binding">60</span></label>
+														</td>
+														<td class="new_cell" width="20%">
+															<!-- ngIf: admission.is_pcm_pcb == 'PCM' -->
+															<!-- ngIf: admission.is_pcm_pcb == 'PCB' --><label class="col-sm-12 control-label ng-scope" ng-if="admission.is_pcm_pcb == &#39;PCB&#39;">Biology Marks: <span style="font-weight:normal;" class="ng-binding">66</span></label><!-- end ngIf: admission.is_pcm_pcb == 'PCB' -->
+														</td>
+														<td class="new_cell" width="20%">
+															<label class="col-sm-12 control-label">English Marks: <span style="font-weight:normal;" class="ng-binding">71</span></label>
+														</td>
+														<td class="new_cell" width="20%">
+															<!-- ngIf: admission.is_pcm_pcb == 'PCM' -->
+															<!-- ngIf: admission.is_pcm_pcb == 'PCB' --><label class="col-sm-12 control-label ng-scope" ng-if="admission.is_pcm_pcb == &#39;PCB&#39;">PCB Percent: <span style="font-weight:normal;" class="ng-binding">
+															68.67%</span></label><!-- end ngIf: admission.is_pcm_pcb == 'PCB' -->
+														</td>
+													</tr>
+												</tbody></table>
+											</td>			
+										</tr>	
+									</tbody></table>
+								</td>			
+							</tr>
+							<!-- ngRepeat: admission_qualification in admission_qualification_list -->			
+						</tbody>
+					</table>
+				</div>
+				<div class="col-sm-12 margin_top no_padding"><hr></div>
+				<div class="col-sm-12 no_padding_left">									
+					<div class="col-sm-12 no_padding_left">
+						<label class="col-sm-4 control-label">Have you applied for any improvement paper</label>
+						<span class="col-sm-8 ng-binding">No</span>						
+					</div>					
+				</div>
+				<!-- ngIf: admission.is_apply_improvement_paper == '1' -->
+				<div class="col-sm-12 margin_top no_padding"><hr></div>
+				<div class="col-sm-12 no_padding_left">		
+					<div class="col-sm-12 no_padding_left">
+						<label class="col-sm-4 control-label">If any grace in qualifying exam</label>
+						<span class="col-sm-8 ng-binding">No</span>						
+					</div>
+				</div>
+				<!-- ngIf: admission.is_any_grace_in_qualify_exam != '0' --><div class="col-sm-12 no_padding_left ng-scope" ng-if="admission.is_any_grace_in_qualify_exam != &#39;0&#39;">		
+					<div class="col-sm-12 no_padding_left">
+						<label class="col-sm-2 control-label">Details</label>
+						<span class="col-sm-10 ng-binding"></span>						
+					</div>
+				</div><!-- end ngIf: admission.is_any_grace_in_qualify_exam != '0' -->				
+			</div>
+		</div>
+	</div>
+		<div class="row">
+		<div class="col-md-12">	
+			<div class="widget col-sm-12 padding-bottom">
+				<div class="widget-header transparent">
+					<h2>Registration  Detail</h2>
+				</div>
+				<div class="table-responsive form-group" style="padding:20px; padding-top:0px;">
+					<table id="tbl_academic" class="table table-striped">
+						<thead>
+							<tr class="new_row">
+								<th width="15%">Year </th>
+								<th width="22%">Semester</th>
+								<th width="22%">Section</th>
+								<th width="20%">Registered Date </th>
+							</tr>
+						</thead>
+						<tbody>
+							<!-- ngRepeat: entrance_exam in student_registration --><tr class="new_row ng-scope" ng-repeat=" entrance_exam in student_registration">
+								<td class="new_cell ng-binding">1&nbsp; Year  </td>
+								<td class="new_cell ng-binding">1 &nbsp; semester </td>
+								<td class="new_cell ng-binding">MCA1 </td>
+								<td class="new_cell ng-binding">09-12-2022 </td>
+							
+							</tr><!-- end ngRepeat: entrance_exam in student_registration -->								
+						</tbody>
+					</table>
+				</div>		
+			</div>
+		</div>
+	</div>	
+	<!-- ngIf: admission.is_entrance_exam_appeared == 1 --><div class="row ng-scope" ng-if="admission.is_entrance_exam_appeared == 1">
+		<div class="col-md-12">	
+			<div class="widget col-sm-12 padding-bottom">
+				<div class="widget-header transparent">
+					<h2>Entrance Exam Detail</h2>
+				</div>
+				<div class="table-responsive form-group" style="padding:20px; padding-top:0px;">
+					<table id="tbl_academic" class="table table-striped">
+						<thead>
+							<tr class="new_row">
+								<th width="15%">Exam Name</th>
+								<th width="12%">Roll No</th>
+								<th width="12%">State Rank</th>
+								<th width="12%">Category Rank</th>
+								<th width="20%">Verification Center</th>
+								<th width="8%">Amount Deposit</th>	
+							</tr>
+						</thead>
+						<tbody>
+							<!-- ngRepeat: entrance_exam in admission_entrance_exam_list -->								
+						</tbody>
+					</table>
+				</div>		
+			</div>
+		</div>
+	</div><!-- end ngIf: admission.is_entrance_exam_appeared == 1 -->				
+	<!-- ngIf: admission.guardian_name != '' -->
+	<!-- ngIf: admission.remark != '' -->
+</div>		
+
+<style type="text/css" class="ng-scope">
+tr.new_row{
+	padding-left:0px; padding-right:0px;
+}
+td.new_cell{
+	padding-left:0px; padding-right:0px;
+}
+blockquote {
+padding: 0px 20px;
+margin: 0 0 20px;
+border-left: 5px solid #eee;
+}
+hr {
+ margin-top: 10px; 
+ margin-bottom: 0px; 
+border: 0;
+border-top: 1px solid #eee;
+}
+.margin_top{
+	margin-top: 10px;
+}
+.margin_bottom{
+	margin-bottom: 10px;
+}
+</style></div>
+			<footer> Halwasiya IT Solutions © 2022-2023				<div class="footer-links pull-right"> <a href="http://halwits.com/about/" target="_blank">About</a><a href="http://halwits.com/contact/" target="_blank">Contact Us</a></div>
+			</footer>
+		</div>
+	</div>
+	</div>
+<!-- <script> -->
+</script>
+<!-- <script src="./College ManagementProfile_files/jquery-1.11.1.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/bootstrap.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/jquery-ui-1.10.4.custom.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/jquery.ui.touch-punch.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/detect.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/ios7.switch.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/fastclick.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/jquery.slimscroll.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/jquery-sparkline.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/bootstrap.file-input.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/icheck.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/bootstrap-select.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/prettify.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/init.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/inputmask.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/raphael-min.js.download"></script> -->
+
+<script src="./College ManagementProfile_files/angular.js.download"></script>
+<!-- <script src="./College ManagementProfile_files/angular-route.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/angular-sanitize.js.download"></script>  -->
+<!-- <script src="./College ManagementProfile_files/ngProgress.js.download"></script> -->
+
+<!--schedular-->
+<!-- <script src="./College ManagementProfile_files/ui-bootstrap-tpls-0.9.0.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/angular-animate.js.download"></script>-->
+<!-- <script src="./College ManagementProfile_files/angular-strap.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/angular-strap.tpl.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/moment.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/angular-moment.js.download"></script>	 -->
+<!-- <script src="./College ManagementProfile_files/vendor.js.download"></script> -->
+<!--end-->
+
+<!-- <script src="./College ManagementProfile_files/angular-file-upload.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/angular-file-upload.js(1).download"></script> -->
+<!-- <script src="./College ManagementProfile_files/angular-datepicker.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/Chart.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/angular-chart.js.download"></script> -->
+
+<!-- <script src="./College ManagementProfile_files/textAngular-rangy.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/textAngular-sanitize.min1.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/textAngular.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/select2.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/select2.js(1).download"></script> -->
+<!-- <script src="./College ManagementProfile_files/ng-tags-input.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/bootstrap-datetimepicker.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/sortable.js.download"></script> -->
+
+<!-- <script src="./College ManagementProfile_files/jquery.dataTables.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/dataTables.bootstrap.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/dataTables.fixedHeader.min.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/dataTables.fixedColumns.min.js.download"></script> -->
+
+
+<!-- <script src="./College ManagementProfile_files/common.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/academic_route.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/financial_year.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/course.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/stream.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/batch.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/section.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/room.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/project.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/subject.js.download"></script> -->
+
+<!-- <script src="./College ManagementProfile_files/admission.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/schedule.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/testmarks.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/gracemarks.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/complaint.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/notice.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/assignment.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/faculty.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/certificate.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/scholarship.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/hostel_warden.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/gate_pass.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/hostel.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/wi_fi.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/attendance_criteria.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/admission_fee_due.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/nodues.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/library_fee.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/committee.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/notes_route.js.download"></script> -->
+<!-- <script src="./College ManagementProfile_files/training_material.js.download"><script src="http://erp.imsec.ac.in/js/angular-file-upload-master/examples/image-preview/directives.js"></script> --> 
+
+ <script>
+
+</script>
+
+
+<script src="./College ManagementProfile_files/aws-sdk-2.1.27.min.js.download"></script>
+ <script>
+if(screen.width > 991){
+	$(function(){
+		$('.fa-navicon').on('click',function(){
+			if($('.side-menu').css('left')=='0px'){
+				$('.side-menu').animate({left: '-250px'});
+				$(".content-page").css("margin-left", "0px");
+				$("#collapse").css("display", "block");
+			}else{
+				$('.side-menu').animate({left: '0px'});
+				$(".content-page").css("margin-left", "250px");
+				$("#collapse").css("display", "none");
+			}
+		});
+	});
+}
+/*$("body").click(function(e){
+    if(e.target.className !="list-group" && e.target.className !="mini-submenu" && e.target.className !="icon-bar")
+    {
+      $(".list-group").animate({top: '-1000px'});
+
+    }
+
+  });*/
+if(screen.width < 991){
+
+
+$('#navMenu, #sidebar-menu ul > li > a').click(function(){
+  if($(this).attr('href') !='javascript:void(0);'){
+  	if($('.side-menu').css('left')=='-1000px'){
+		$('.side-menu').animate({left: '0px'});
+	}else  if($('.side-menu').css('left')=='0px'){
+		$('.side-menu').animate({left: '-1000px'});
+	}
+  } else{
+  	$(this).siblings('ul').slideToggle();
+  }
+});
+
+
+}
+</script>
+
+ <script>
+setTimeout(function()
+{
+
+	$('.gradeCount').click(function(){
+		$('.activeC').toggleClass('resetTop')
+		$('.collap').toggle();
+	})
+}, 3000);
+
+
+</script>
+<div id="ngProgress-container" class="ng-scope"><div id="ngProgress" style="height: 5px; background-color: rgb(129, 215, 66); color: rgb(129, 215, 66); width: 0%; opacity: 1;"></div></div><input id="textAngular-editableFix-010203040506070809" class="ta-hidden-input" aria-hidden="true" unselectable="on" tabindex="-1"></body></html>

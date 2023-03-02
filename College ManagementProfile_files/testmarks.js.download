@@ -1,0 +1,152 @@
+angular.module("User").controller('testmarks', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+    $scope.test_data = {};
+    $scope.error = {};
+	
+	$scope.getStream = function(financial_year_id, course_id) {	
+		if(financial_year_id != '' && course_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_stream",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				console.log(response);
+				loading.finish();				
+				$scope.stream_list = response;
+			});	
+		} else {
+			$scope.stream_list = [];
+			$scope.year_list = [];
+		}
+	}
+	
+	$scope.getScheduledYear = function(financial_year_id, course_id, stream_id) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_scheduled_year",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id},
+			}).success(function(response) {
+				console.log(response);
+				loading.finish();				
+				$scope.year_list = response;
+			});	
+		} else {
+			$scope.year_list = [];
+		}
+	}
+	
+	$scope.getSectionAndSubject = function(financial_year_id, course_id, stream_id, year) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_section_and_subject",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) {
+				console.log(response);
+				loading.finish();								
+				$scope.section_list = response[0];
+				$scope.subject_list = response[1];
+			});	
+		} else {
+			$scope.subject_list = [];
+			$scope.section_list = [];
+		}
+	}
+	
+	$scope.getTestmarks = function(financial_year_id, course_id, stream_id, year, subject_id, section) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '' && subject_id && subject_id != '' && section && section != '') {
+			$location.path("/testmarks/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + subject_id + "/" + section);
+		}
+	}
+	
+	$scope.save = function() {
+		
+		confirm("Are you sure to save, will not able edit once save ?")
+		{
+			if(!$scope.test_data.financial_year_id || $scope.test_data.financial_year_id == '') 
+			{
+				alert('Financial Year is required');
+			} else if(!$scope.test_data.course_id || $scope.test_data.course_id == '') {
+				alert('Course is required');
+			} else if(!$scope.test_data.stream_id || $scope.test_data.stream_id == '') {
+				alert('Stream is required');
+			} else if(!$scope.test_data.year || $scope.test_data.year == '') {
+				alert('Year is required');
+			} else if(!$scope.test_data.section || $scope.test_data.section == '') {
+				alert('Section is required');
+			} else if(!$scope.test_data.subject_id || $scope.test_data.subject_id == '') {
+				alert('Subject is required');
+			} else {
+				var test1_max = $scope.test_data.test1_max ? $scope.test_data.test1_max : 0;
+				var test2_max = $scope.test_data.test2_max ? $scope.test_data.test2_max : 0;
+				var test3_max = $scope.test_data.test3_max ? $scope.test_data.test3_max : 0;
+				
+				var error1 = 0;
+				var error2 = 0;
+				var error3 = 0;
+				for(var i in $scope.test_data.data) {
+					var obj = $scope.test_data.data[i];
+					
+					if(obj.test1 && obj.test1 != '') 
+					{
+						if(test1_max == 0)
+						{
+							alert("Please set Max marks First!!");return false;
+						}
+						else if(parseFloat(obj.test1) < 0 || parseFloat(obj.test1) > test1_max) 
+						{
+							error1++;
+							alert(obj.name + "'s Test 1 Marks should be between 0 to " + test1_max);
+							break;
+						}
+					}
+					if(obj.test2 && obj.test2 != '') {
+						if(test2_max == 0)
+						{
+							alert("Please set Max marks First!!");return false;
+						}
+						else if(parseFloat(obj.test2) < 0 || parseFloat(obj.test2) > test2_max) {
+							error2++;
+							alert(obj.name + "'s Test 2 Marks should be between 0 to " + test2_max);
+							break;
+						}
+					}
+					if(obj.test3 && obj.test3 != '') {
+						if(test3_max == 0)
+						{
+							alert("Please set Max marks First!!");return false;
+						}
+						else if(parseFloat(obj.test3) < 0 || parseFloat(obj.test3) > test3_max) {
+							error3++;
+							alert(obj.name + "'s Test 3 Marks should be between 0 to " + test3_max);
+							break;
+						}
+					}
+				}
+				if(error1 == 0 && error2 == 0 && error3 == 0) {
+					var data = angular.copy($scope.test_data);
+					loading.start();
+					$http({
+						method: "post",
+						url: "testmarks/savetestmarks",
+						data: data
+					}).success(function(response) {
+						loading.finish();console.log(response);
+						response = $.trim(response);
+						
+						if(response == '') {
+							alert('Test Marks Updated Successfully!!!');
+						} else {
+							$scope.flashMessageType = "error";
+							$scope.flashMessage = response;
+							alert(response);
+						}
+					});
+				}
+			}
+		}
+    }
+}]);

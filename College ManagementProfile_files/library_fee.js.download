@@ -1,0 +1,585 @@
+angular.module("User").controller('library_fee', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+	$scope.error = {};
+	$scope.book_transactions = {};
+	$scope.return_book_list = {};
+	$scope.book_transactions_list = [];
+	$scope.library_fee_list = {};
+	$scope.library_fee = {};
+	$scope.admission = {};
+	$scope.faculty = {};
+	$scope.issue_book_list = {};
+	$scope.library_fee.demand_draft = [];  
+	$scope.isClicked = false;
+	$scope.isReturn = false;
+	$scope.isPaying = false;
+	$scope.accession_length = 1;
+	$scope.accession_no = '';
+	
+	$scope.maxDemandDraftLimit = 0;	
+	$scope.addDemandDraftLimit = function() {
+		$scope.maxDemandDraftLimit++;
+	}
+	
+	$scope.openFeeReceiptForPrinting = function(base_url, library_fee_id) {
+		window.open(base_url + 'library_fee/print_library_fee_receipt/' + library_fee_id);
+	}
+	
+	$scope.call_function = function (keyEvent, param){
+		if(keyEvent.which == 13){
+			if(param == 'student'){ 
+		console.log(keyEvent.which);
+				$scope.search_user_detail($scope.book_transactions.user_type, $scope.book_transactions.admission_no);
+			}else{
+				$scope.search_book_by_accession_no_byClick($scope.accession_no);
+			}
+		}
+		//$event.keyCode == 13 ? search_user_detail(book_transactions.user_type, book_transactions.admission_no) : null
+	}
+	$scope.getStream = function(financial_year_id, course_id) {
+		if(financial_year_id != '' && course_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				$scope.stream_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_list	=	{};
+		}
+	}
+	$scope.search_user_detail = function(user_type, admission_no, faculty_email){//	console.log(admission_no);
+		admission_no = $.trim(admission_no);
+		faculty_email = $.trim(faculty_email);
+		if((admission_no != '' && admission_no != '0') || (faculty_email != '' && faculty_email != '0')){
+			loading.start();
+			$http({
+				method: "post",
+				url: "library_fee/search_user_detail",
+				data: {'user_type':user_type, 'admission_no':admission_no, 'faculty_email':faculty_email}
+			}).success(function(response){ console.log(response);
+				if(response == 'Admission Not Found.' || response == 'Admission does not found as Library Member.' || response == 'Employee does not found as Library Member.'){
+					$scope.book_transactions.admission_no = '';
+					alert(response);
+					$scope.admission = {};
+					$scope.faculty = {};
+				}else if(response != ''){
+					$scope.admission = response[0];
+					$scope.faculty = response[1];
+					$scope.issue_book_list = response[2];
+					$scope.book_issue_type_list = response[3];
+				}else{
+					$scope.admission = {};
+					$scope.faculty = {};
+					$scope.issue_book_list = {};
+					//alert('No detail found.');
+				}
+				loading.finish();
+			});	
+		}
+	}
+		
+	$scope.book_search_popup = false;	
+	$scope.book_stock 	= {};		
+	$scope.books 	= {};	
+	$scope.book_list = {};
+	$scope.book_return 	= {};		
+	
+	$scope.hideBookSearchPopup = function(){
+		$scope.error		= {};
+		$scope.book_list 	= {};	
+		$scope.book_stock 	= {};		
+		$scope.book_search_popup = false;
+	}
+	
+	$scope.showBookSearchPopup = function(){
+		$scope.book_search_popup = true;
+	}
+	
+	$scope.search_book = function(book_stock){ //console.log(book_stock);			
+		loading.start();
+		$http({
+			method: "post",
+			url: "library_fee/search_book",
+			data: book_stock
+		}).success(function(response) {	// console.log(response);
+			loading.finish();
+			if(response != '') {
+				$scope.book_list = response;
+			}else $scope.book_list = {};
+		});
+	}
+	$scope.student_search_book = function(book_stock){ //console.log(book_stock);			
+		loading.start();
+		$http({
+			method: "post",
+			url: "library_fee/student_search_book",
+			data: book_stock
+		}).success(function(response) {	// console.log(response);
+			loading.finish();
+			if(response != '') {
+				$scope.book_list = response;
+			}else $scope.book_list = {};
+		});
+	}
+	var i;	
+	$scope.coun = '';
+	$scope.search_book_by_accession_no = function(accession_no){ 
+		//alert($scope.accession_length);
+		if($.trim(accession_no) != '' && accession_no.length >= $scope.accession_length){
+			loading.start();
+			$http({
+				method: "post",
+				url: "library_fee/search_book",
+				data: { 'accession_no' : accession_no}
+			}).success(function(response) {	 console.log(response);
+				loading.finish();
+				if($.trim(response) != '') {
+					//$scope.book_transactions_list = [];
+					var book_exist = false;
+					coun = $scope.book_transactions_list.length;
+					for(i=0; i<coun; i++){
+						if($scope.book_transactions_list[i].accession_no == accession_no){
+							book_exist = true; i = coun;
+						}
+					}
+					if(!book_exist){
+						$scope.isPaying = false;
+						$scope.book_transactions_list.push(response[0]);
+						$scope.accession_no = '';
+						coun = $scope.book_transactions_list.length;
+						for(i=0; i<coun; i++){
+							if($scope.book_transactions_list[i].available_qty =='0'){
+								$scope.isPaying = true; i = coun;
+								return false;
+							}
+						}
+					}
+				}else{
+					alert('No Book Found.');
+					$scope.accession_no = '';
+				}
+			});
+		}
+	}
+	$scope.search_book_by_accession_no_byClick = function(accession_no){
+		if(accession_no !='')
+		{
+			 $scope.search_book_by_accession_no(accession_no);
+		}
+		
+	}
+	
+	$scope.return_book_by_accession_no = function(accession_no){ 
+		if($.trim(accession_no) != '' && accession_no.length >= $scope.accession_length){
+			loading.start();
+			$http({
+				method: "post",
+				url: "library_fee/return_book_by_accession_no",
+				data: { 'accession_no' : accession_no}
+			}).success(function(response) {	 //console.log(response);
+				loading.finish();
+				if(response[0]  == '1') {
+					location.reload();
+					//$scope.book_transactions_list.push(response[1]);
+					//$scope.accession_no = '';
+				}else if(response[0]  == '0') {
+					alert(response[1]);
+					$scope.accession_no = '';
+				}
+			});
+		}
+	}
+	
+	$scope.addBookForIssue = function(book_id, index){ 
+		$scope.book_transactions_list.push($scope.book_list[index]);
+		$scope.book_list.splice(index,1);
+		//console.log($scope.book_transactions_list);
+	}
+	
+	$scope.removeBookForIssue = function(index, book_id){
+		$scope.book_transactions.check_book[book_id]['id'] = false; 
+		$scope.book_transactions_list.splice(index,1);
+		coun = $scope.book_transactions_list.length;
+		for(i=0;i<coun;i++)
+		{
+			if($scope.book_transactions_list[i].available_qty =='0')
+			{
+				$scope.isPaying = true;
+				return false;
+			}
+			else
+			{
+				
+				$scope.isPaying = false;
+			}
+		}
+	}	
+	
+	$scope.add_book_transaction = function(book_transactions) { //console.log(book_transactions);
+		$scope.error = {};
+		var error = 0;
+		
+		if($scope.admission.admission_id){
+			if($scope.admission.availabl_book_issue > 0){
+				if($scope.book_transactions_list.length > $scope.admission.availabl_book_issue){
+					alert('Only Issue '+$scope.admission.availabl_book_issue+' Books.'); error++; return;
+				}
+			}else{
+				alert('Student has already issued maximum books.'); error++; return;
+			}
+		}
+		if($scope.faculty.faculty_id){
+			if($scope.faculty.availabl_book_issue > 0){
+				if($scope.book_transactions_list.length > $scope.faculty.availabl_book_issue){
+					alert('Only Issue '+$scope.faculty.availabl_book_issue+' Books.'); error++; return;
+				}
+			}else{
+				alert('Employee has already issued maximum books.'); error++; return;
+			}
+		}
+		if(!book_transactions.book_issue_type_id || book_transactions.book_issue_type_id == '') {
+			$scope.error.book_issue_type_id = true;
+			error++;
+		}
+		if(!book_transactions.issue_date || book_transactions.issue_date == '') {
+			$scope.error.issue_date = true;
+			error++;
+		}
+		if(!book_transactions.expected_return_date || book_transactions.expected_return_date == '') {
+			$scope.error.expected_return_date = true;
+			error++;
+		}
+		if(book_transactions.issue_date != '' && book_transactions.expected_return_date != '' && book_transactions.expected_return_date != undefined){			
+			var todayArr = book_transactions.today.split("-");
+			var issue_dateArr = book_transactions.issue_date.split("-");
+			var expected_return_dateArr = book_transactions.expected_return_date.split("-");
+			
+			var today = new Date(todayArr[2], todayArr[1]-1, todayArr[0]);
+			var issue_date = new Date(issue_dateArr[2], issue_dateArr[1]-1, issue_dateArr[0]);
+			var return_date =  new Date(expected_return_dateArr[2], expected_return_dateArr[1]-1, expected_return_dateArr[0]);
+			if(today < issue_date){			
+				$scope.error.invalid_issue_date = true;
+				error++;
+			}			
+			if(return_date <= issue_date){			
+				$scope.error.invalid_expected_return_date = true;
+				error++;
+			}
+		}
+		if(error == 0) { 
+			$scope.isPaying = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "library_fee/add_book_transaction",
+				data: book_transactions
+			}).success(function(response) {	 //console.log(response);
+				loading.finish();
+				$scope.isPaying = false;
+				if(response == 'Some error occured. Please try again.') {
+					alert(response);
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+				} else {
+					faculty_id = response[2] ? response[2] : '-';
+					admission_id = response[1] ? response[1] : '-';
+					$location.path("/view_book_transactions/" + response[0]+ "/"+admission_id+ "/"+faculty_id);
+				}							
+			});
+		}
+	}
+		
+	$scope.change_library_fee_status = function(library_fee_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "lib_library_fee/change_library_fee_status",
+			data: {'library_fee_id':library_fee_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			if(response == '') {
+				$scope.library_fee_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+	
+	$scope.getSessionwise_Course = function(session_id){	
+		if(session_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_sessionwise_Course",
+				data: {'session_id':session_id},
+			}).success(function(response) { 	//console.log(response);
+				loading.finish();
+				$scope.course_list	=	response;
+			});	
+		}
+	}		
+	
+	$scope.search_book_transactions = function(book_transactions){
+		accession_no = book_transactions.accession_no ? book_transactions.accession_no : '-';
+		admission_no = book_transactions.admission_no ? book_transactions.admission_no : '-';
+		from_date = book_transactions.from_date ? book_transactions.from_date : '-';
+		to_date = book_transactions.to_date ? book_transactions.to_date : '-';
+		faculty_email = book_transactions.faculty_email ? book_transactions.faculty_email : '-';
+		financial_year_id = book_transactions.financial_year_id ? book_transactions.financial_year_id : '-';		
+		course_id = book_transactions.course_id ? book_transactions.course_id : '-';
+		stream_id = book_transactions.stream_id ? book_transactions.stream_id : '-';
+		admitted_year = book_transactions.admitted_year ? book_transactions.admitted_year : '-';
+		semester = book_transactions.semester ? book_transactions.semester : '-';
+		session_id = book_transactions.session_id ? book_transactions.session_id : '-';
+		name = book_transactions.name ? book_transactions.name : '-';
+		sort_by = book_transactions.sort_by ? book_transactions.sort_by : '-';
+		book_status = book_transactions.book_status ? book_transactions.book_status : '-';
+		issued_to = book_transactions.issued_to ? book_transactions.issued_to : '-';
+		book_issue_type_id = book_transactions.book_issue_type_id ? book_transactions.book_issue_type_id : '-';
+		department_id = book_transactions.department_id ? book_transactions.department_id : '-';
+		rank_id = book_transactions.rank_id ? book_transactions.rank_id : '-';
+		
+		$location.path("/book_transactions/" + accession_no + "/" + admission_no + "/" + from_date + "/" + to_date + "/" + faculty_email + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + session_id + "/" +  name + "/" +  sort_by + "/" +  book_status + "/" +  issued_to + "/" +  book_issue_type_id + "/" +  department_id + "/" +  rank_id + "/page1");		
+	}	
+		
+	$scope.click_for_return = function(){
+		$scope.isReturn = false;
+		angular.forEach($scope.book_return['current'], function(value, key) {
+			if(value.id == true){
+				$scope.isReturn = true;
+			}
+			//console.log(key + ': ' + value.id);	
+		});
+	}
+	
+	$scope.return_book_transaction = function(book_return){  //console.log(book_return); return false;
+		$scope.error = {};	var error = 0;
+		if(book_return.fine_setup_id){
+			if(!book_return.payment_date || book_return.payment_date == '') {
+				$scope.error.payment_date = true;
+				error++;
+			}
+			if(!book_return.charges){
+				$scope.error.charges = true;
+				error++;
+			}else if(!book_return.amount){
+				$scope.error.amount = true;
+				error++;
+			}/*else if(book_return.charges != book_return.amount){
+				$scope.error.invalid_amount = true;
+				error++;
+			}*/
+		}
+		if(error == 0){
+			$scope.isClicked = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "library_fee/return_book_transaction",
+				data: book_return
+			}).success(function(response) {	// console.log(response);
+				loading.finish();
+				$scope.isClicked = false;
+				//return false;
+				if(response == 'Some error occured. Please try again.') {
+					alert(response);
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+				} else if(response[0]  == '1'){
+					alert('Books Successfully Returned.');
+					$location.path("/book_transactions");
+				}	else if(response[0]  == 2){
+					faculty_id = response[3] ? response[3] : '-';
+					admission_id = response[2] ? response[2] : '-';
+					$location.path("/view_library_fee/" + response[1] + "/" + admission_id + "/" + faculty_id);
+				}							
+			});
+		}
+	}
+	
+		
+	$scope.delete_lib_transaction = function(lib_transaction_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "library_fee/delete_lib_transaction",
+			data: {'lib_transaction_id':lib_transaction_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			if(response == '') {
+				$scope.book_transactions_list[index].is_deleted = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+	
+	$scope.exportReport = function(library_fee, base_url) {
+		admission_no = library_fee.admission_no ? library_fee.admission_no : '-';
+		from_date = library_fee.from_date ? library_fee.from_date : '-';
+		to_date = library_fee.to_date ? library_fee.to_date : '-';
+		financial_year_id = library_fee.financial_year_id ? library_fee.financial_year_id : '-';
+		course_id = library_fee.course_id ? library_fee.course_id : '-';
+		stream_id = library_fee.stream_id ? library_fee.stream_id : '-';
+		admitted_year = library_fee.admitted_year ? library_fee.admitted_year : '-';
+		semester = library_fee.semester ? library_fee.semester : '-';
+		account_head_id = library_fee.account_head_id ? library_fee.account_head_id : '-';
+		session_id = library_fee.session_id ? library_fee.session_id : '-';
+		name = library_fee.name ? library_fee.name : '-';
+		
+		window.open(base_url + 'library_fee/' + admission_no + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + account_head_id + "/" + session_id + "/" + name);
+	}
+	
+		$scope.exportBook_Issue_Report = function(book_transactions, base_url) {
+		
+		accession_no = book_transactions.accession_no ? book_transactions.accession_no : '-';
+		admission_no = book_transactions.admission_no ? book_transactions.admission_no : '-';
+		from_date = book_transactions.from_date ? book_transactions.from_date : '-';
+		to_date = book_transactions.to_date ? book_transactions.to_date : '-';
+		faculty_email = book_transactions.faculty_email ? book_transactions.faculty_email : '-';
+		financial_year_id = book_transactions.financial_year_id ? book_transactions.financial_year_id : '-';		
+		course_id = book_transactions.course_id ? book_transactions.course_id : '-';
+		stream_id = book_transactions.stream_id ? book_transactions.stream_id : '-';
+		admitted_year = book_transactions.admitted_year ? book_transactions.admitted_year : '-';
+		semester = book_transactions.semester ? book_transactions.semester : '-';
+		account_head_id = book_transactions.account_head_id ? book_transactions.account_head_id : '-';
+		session_id = book_transactions.session_id ? book_transactions.session_id : '-';
+		name = book_transactions.name ? book_transactions.name : '-';
+		sort_by = book_transactions.sort_by ? book_transactions.sort_by : '-';
+		book_status = book_transactions.book_status ? book_transactions.book_status : '-';
+		issued_to = book_transactions.issued_to ? book_transactions.issued_to : '-';
+		book_issue_type_id = book_transactions.book_issue_type_id ? book_transactions.book_issue_type_id : '-';
+		department_id = book_transactions.department_id ? book_transactions.department_id : '-';
+		rank_id = book_transactions.rank_id ? book_transactions.rank_id : '-';
+		
+		window.open(base_url + 'library_fee/export_book_issue_excel/' + accession_no + "/" + admission_no + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + account_head_id + "/" + session_id + "/" + name + "/" + book_status + "/" + issued_to  + "/" + faculty_email + "/" + book_issue_type_id + "/" + department_id + "/" + rank_id);
+	}
+	
+	$scope.calc_fine = function(book_return, admission_id, lib_transaction_id) {
+		if(book_return.fine_setup_id && book_return.fine_setup_id!=''){
+			loading.start();
+			$http({
+				method: "post",
+				url: "library_fee/calc_fine_setup",
+				data: {'book_return':book_return, 'admission_id':admission_id, 'lib_transaction_id':lib_transaction_id}
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.book_return.charges = response.charges;
+					$scope.book_return.amount = response.amount;
+					$scope.book_return.wave_off = response.wave_off;
+					$scope.book_return.amount_without_wave_off = response.amount_without_wave_off;
+				} else {
+					$scope.book_return.charges = '';
+					$scope.book_return.amount = '';	
+				}
+			});
+		}
+	}
+	$scope.issue_list = {};
+	$scope.get_issue_book_list = function(list_of) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "library_fee/list_of_issue_book",
+			data: {'list_of':list_of}
+		}).success(function(response) {
+			loading.finish();
+			if(response[0] == '1') {
+				$scope.issue_list = response[1];
+				$scope.list_of = list_of;
+			} else {
+				$scope.issue_list = {};
+			}
+		});
+	}
+	$scope.export_issue_book_list = function(list_of, base_url) {
+		window.open(base_url + 'library_fee/export_issue_book_list/' + list_of);
+	}
+	$scope.view_book_transactions = function(lib_transaction_id, admission_id, faculty_id) {
+		admission_id = admission_id ? admission_id : '-';
+		faculty_id = faculty_id ? faculty_id : '-';
+		$location.path("/view_book_transactions/" + lib_transaction_id + "/" + admission_id + "/" + faculty_id);
+	}
+	
+	$scope.change_expected_return_date = function(book_issue_type_id) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "library_fee/change_expected_return_date",
+			data: {'book_issue_type_id':book_issue_type_id}
+		}).success(function(response) {
+			loading.finish();
+			$scope.book_transactions.expected_return_date = response[1];	
+		});
+	}
+	$scope.student_list = {};
+	$scope.search_student_by_name = function(){
+		$scope.search_name = '';
+		$scope.search_type = '';
+		$scope.student_list = {};
+		$scope.show_search_student = true;
+	}
+	$scope.hide_search_student_by_name = function(){
+		$scope.show_search_student = false;
+	}
+	$scope.change_type = function(){
+		$scope.student_list = {};
+	}
+	$scope.view_student_data = function(user_type, admission_no){
+		$scope.show_search_student = false;
+		$scope.book_transactions.admission_no = admission_no;
+		$scope.search_user_detail(user_type, admission_no);
+	}
+	$scope.search_by_name = function(search_name, search_type) {
+		if(!search_type || search_type == '') {
+			$scope.error.search_type = true;
+			return false;
+		}
+		if(!search_name || search_name == '') {
+			$scope.error.search_name = true;
+			return false;
+		}
+		loading.start();
+		$http({
+			method: "post",
+			url: "library_fee/search_by_name",
+			data: {'search_type':search_type,'search_name':search_name}
+		}).success(function(response) {
+			loading.finish();
+			$scope.student_list = response;
+				
+		});
+	}
+	
+	$scope.hidemoreissued_book_popup = function(){
+				
+		$scope.moreissued_book_popup = false;
+	}
+	$scope.more_issued_book_list = {};
+	$scope.showmoreissued_book_popup = function(book){
+		$scope.more_issued_book_list = {};
+		$scope.studentname = '';
+		$scope.employeename = '';
+		$scope.studentname = book.student_name;
+		$scope.employeename = book.emp_name;
+		/*$scope.more_issued_book_list = book.moreissued;*/
+		$scope.moreissued_book_popup = true;
+		loading.start();
+		$http({
+			method: "post",
+			url: "library_fee/more_issue",
+			data: {'member_id':book.member_id}
+		}).success(function(response) {
+			loading.finish();
+			$scope.more_issued_book_list = response;
+				
+		});
+	}
+		
+}]);

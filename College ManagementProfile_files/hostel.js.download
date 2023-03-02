@@ -1,0 +1,485 @@
+angular.module("User").controller('hostel', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+	$scope.hostel = {};
+	$scope.hostel_allocate = {};
+	$scope.gate_pass_list = {};
+	$scope.hostel_list = {};
+	$scope.charges_list = {};
+	$scope.hostel_allocate_list = {};
+	$scope.course_coordinator_list = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	
+	$scope.course_list	= {};
+	$scope.stream_list = {};
+	
+	$scope.save = function(hostel) {
+		$scope.error = {};
+		$error  = 0;
+		if(!hostel.name || hostel.name == '') {
+			$error++; 
+			$scope.error.name = true;
+		} 
+		if(!hostel.location || hostel.location == '') {
+			$error++;
+			$scope.error.location = true;
+		} 
+		if(!hostel.no_of_floor || hostel.no_of_floor == '') {
+			$error++;
+			$scope.error.no_of_floor = true;
+		} 
+		if(!hostel.hostel_type || hostel.hostel_type == '') {
+			$error++;
+			$scope.error.hostel_type = true;
+		}
+		if(hostel.no_of_floor){
+			$count = hostel.no_of_floor;
+			for(var index = 0; index< $count; index++){
+				if(!hostel.floors[index].no_of_room || parseInt(hostel.floors[index].no_of_room) == 0){
+					$error++;
+					$scope.error.floor_detail = true;
+				}
+			}
+		}
+		if($error > 0){
+			return false;	
+		}else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel/add_hostel",
+				data: hostel
+			}).success(function(response) {
+				loading.finish();
+				if(response == 'Hostel already exist.'){
+					alert('Hostel already exist.'); return false;
+				}else if(response != '') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+				}
+				$location.path("/hostel_list");	
+			});
+		}
+	}	
+	
+	$scope.change_status = function(hostel_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel/change_status",
+			data: {'hostel_id':hostel_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			
+			if(response == '') {
+				$scope.hostel_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.save_charges = function(charges) {
+		if(!charges.room_capacity || charges.room_capacity == '') {
+			$scope.error.room_capacity = true;
+		} else if(!charges.room_condition || charges.room_condition == '') {
+			$scope.error.room_condition = true;
+		} else if(!charges.charges || charges.charges == '') {
+			$scope.error.charges = true;
+		} else if(!charges.security_deposit || charges.security_deposit == '') {
+			$scope.error.security_deposit = true;
+		} else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "room_charges/add_charges",
+				data: charges
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response == '1'){
+					alert('Room Charges already exist.'); return false;
+				}else if(response != '') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+					$location.path("/charges_list");	
+				}else{
+					$location.path("/charges_list");	
+				}				
+			});
+		}
+	}
+	
+	$scope.change_charge_status = function(charges_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "room_charges/change_charge_status",
+			data: {'charges_id':charges_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			
+			if(response == '') {
+				$scope.charges_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+		
+	$scope.get_hostel_floor_detail= function(hostel_id) {		
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel/get_hostel_floor_detail",
+			data: {'hostel_id':hostel_id},
+		}).success(function(response) {console.log(response);
+			$scope.hostel_floor_list	=	response;				
+			loading.finish();
+		});	
+	}
+
+	$scope.hostel_allocate.no_of_year = 0;
+	$scope.get_course_year_detail= function(course_id) {
+		if(course_id != ''){	
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel/get_course_year_detail",
+				data: {'course_id':course_id},
+			}).success(function(response) { //console.log(response);
+				$scope.hostel_allocate.no_of_year	=	response;
+				$scope.hostel_allocate.maxLimit = response;
+				loading.finish();
+			});	
+		}else{
+			$scope.hostel_allocate.no_of_year	=	0;
+		}
+	}
+	
+	$scope.hostel_allocate.maxLimit = 0;	
+	$scope.addMaxLimit = function() {
+		$scope.hostel_allocate.maxLimit++;
+	}
+	
+	$scope.save_hostel_allocate = function(hostel_allocate) {console.log(hostel_allocate);
+		$scope.error = {};
+		$error  = 0;
+		if(!hostel_allocate.financial_year_id || hostel_allocate.financial_year_id == '') {
+			$error++;
+			$scope.error.financial_year_id = true;
+		} 
+		if(!hostel_allocate.hostel_id || hostel_allocate.hostel_id == '') {
+			$error++;
+			$scope.error.hostel_id = true;
+		} 
+		if(!hostel_allocate.course_id || hostel_allocate.course_id == '') {
+			$error++;
+			$scope.error.course_id = true;
+		} 
+		/*if(hostel_allocate.no_of_year){
+			$count = hostel_allocate.no_of_year;
+			$maxAllocation = false; $minAllocation = false; $noAllocation = true;
+			for(var index = 0; index< $count; index++){
+				$maxValue = $scope.hostel_allocate.floors[index].no_of_room;				
+				if($maxValue){
+					$ac1_Value = $ac2_Value = $ac3_Value = $non_ac1_Value = $non_ac2_Value = $non_ac3_Value = 0;
+					if($scope.hostel_allocate.floors[index].single_ac){
+						$ac1_Value	=	parseInt($scope.hostel_allocate.floors[index].single_ac);	
+					}
+					if($scope.hostel_allocate.floors[index].double_ac){
+						$ac2_Value	=	parseInt($scope.hostel_allocate.floors[index].double_ac);		
+					}
+					if($scope.hostel_allocate.floors[index].triple_ac){
+						$ac3_Value	=	parseInt($scope.hostel_allocate.floors[index].triple_ac);		
+					}
+					if($scope.hostel_allocate.floors[index].single_standard){
+						$non_ac1_Value	=	parseInt($scope.hostel_allocate.floors[index].single_standard);	
+					}
+					if($scope.hostel_allocate.floors[index].double_standard){
+						$non_ac2_Value	=	parseInt($scope.hostel_allocate.floors[index].double_standard);	
+					}
+					if($scope.hostel_allocate.floors[index].triple_standard){
+						$non_ac3_Value	=	parseInt($scope.hostel_allocate.floors[index].triple_standard);	
+					}					
+					$total = $ac1_Value + $ac2_Value + $ac3_Value + $non_ac1_Value + $non_ac2_Value + $non_ac3_Value;
+					//alert($total);
+					if($total > $maxValue){
+						$error++;	
+						$maxAllocation = true;
+					}else if($total == 0){
+						$error++;	
+						$minAllocation = true;
+					}
+					$noAllocation = false;
+				}
+			}
+			if($error > 0){
+				if($maxAllocation){
+					$scope.error.maxRoomAllocation = true;
+				}else if($minAllocation){
+					$scope.error.minRoomAllocation = true;	
+				}
+			}else if($noAllocation){
+				$error++;
+				$scope.error.minRoomAllocation = true;		
+			}
+		}*/
+		if($error > 0){
+			return false;
+		}else{
+			loading.start();
+			$http({
+				method: "post",
+				url: "room_settings/add_hostel_allocate",
+				data: hostel_allocate
+			}).success(function(response) {
+				$location.path("/hostel_allocate_list");
+				if(response != '') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+				}
+				loading.finish();				
+			});
+		}
+	}	
+	
+	$scope.change_hostel_allocate_status = function(hostel_allocate_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "room_settings/change_hostel_allocate_status",
+			data: {'hostel_allocate_id':hostel_allocate_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();			
+			if(response == '') {
+				$scope.hostel_allocate_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.get_floor_room_no = function(index){
+		floor_index = parseInt($scope.hostel_allocate.floors[index].floor_no) - 1;
+		$scope.hostel_allocate.floors[index].no_of_room = $scope.hostel_floor_list[floor_index].no_of_room;
+		$scope.hostel_allocate.floors[index].total_room = $scope.hostel_floor_list[floor_index].total_room;
+	}
+	
+	$scope.check_room_availability = function(index, no_of_room, type){
+		floor_index = parseInt($scope.hostel_allocate.floors[index].floor_no) - 1;
+		if(no_of_room) {
+			var remain_rooms = parseInt($scope.hostel_floor_list[floor_index].no_of_room) - parseInt(no_of_room);
+			if(remain_rooms >=0) {
+				$scope.hostel_floor_list[floor_index].no_of_room = remain_rooms;
+				$scope.hostel_allocate.floors[index].no_of_room = $scope.hostel_floor_list[floor_index].no_of_room;
+			} else {
+				alert('Maximum ' + $scope.hostel_floor_list[floor_index].no_of_room + ' rooms can be alloted');
+				if(type == 'single_ac') $scope.hostel_allocate.floors[index].single_ac = $scope.hostel_floor_list[floor_index].no_of_room;
+				else if(type == 'double_ac') $scope.hostel_allocate.floors[index].double_ac = $scope.hostel_floor_list[floor_index].no_of_room;
+				else if(type == 'triple_ac') $scope.hostel_allocate.floors[index].triple_ac = $scope.hostel_floor_list[floor_index].no_of_room;
+				else if(type == 'single_standard') $scope.hostel_allocate.floors[index].single_standard = $scope.hostel_floor_list[floor_index].no_of_room;
+				else if(type == 'double_standard') $scope.hostel_allocate.floors[index].double_standard = $scope.hostel_floor_list[floor_index].no_of_room;
+				else if(type == 'triple_standard') $scope.hostel_allocate.floors[index].triple_standard = $scope.hostel_floor_list[floor_index].no_of_room;
+				$scope.hostel_floor_list[floor_index].no_of_room = 0;
+				$scope.hostel_allocate.floors[index].no_of_room = $scope.hostel_floor_list[floor_index].no_of_room;
+			} 
+		}
+	}
+	
+	$scope.room_availability = function(index, no_of_room){
+		floor_index = parseInt($scope.hostel_allocate.floors[index].floor_no) - 1;
+		if(no_of_room) {
+			$scope.hostel_floor_list[floor_index].no_of_room = parseInt($scope.hostel_floor_list[floor_index].no_of_room) + parseInt(no_of_room);
+			$scope.hostel_allocate.floors[index].no_of_room = $scope.hostel_floor_list[floor_index].no_of_room;
+		}
+	}
+	
+	$scope.search_admission = function(admission){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';		
+		hostel_id = admission.hostel_id ? admission.hostel_id : '-';
+		hostel_type = admission.hostel_type ? admission.hostel_type : '-';
+		room_type = admission.room_type ? admission.room_type : '-';
+		
+		$location.path("/hostel_student_list/" + admission_no + "/" + financial_year_id +  "/" + course_id + "/" + stream_id + "/" + admitted_year + "/"+ hostel_id + "/" + hostel_type + "/" + room_type + "/page1");
+	}
+	
+	$scope.save_student_hostel_allocate = function(admission){
+		if(!admission.room_no || admission.room_no == '' || admission.room_no == 0){
+			$scope.error.room_no = true; return false;	
+		}
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel/save_student_hostel_allocate",
+			data: {'admission_id':admission.admission_id, 'room_no':admission.room_no}
+		}).success(function(response) {
+			loading.finish();			
+			if(response == '') {
+				$location.path("/hostel_student_list");
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	//get only those course list which not added in particual batch
+	$scope.getCourse = function(financial_year_id) {		
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel/get_course",
+			data: {'financial_year_id':financial_year_id}
+		}).success(function(response) {
+			$scope.course_list	=	response;				
+			loading.finish();
+		});	
+	}
+	
+	$scope.getStream = function(financial_year_id, course_id) {		
+		if(financial_year_id != '' && course_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id}
+			}).success(function(response){
+				$scope.stream_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_list	=	{};
+		}
+	}
+	
+	$scope.save_extra_charges = function(charges) {
+		$scope.error = {};	
+		if(!charges.cooler_charges || charges.cooler_charges == '') {
+			$scope.error.cooler_charges = true;
+		} else if(!charges.parking_charges || charges.parking_charges == '') {
+			$scope.error.parking_charges = true;
+		} else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "room_charges/save_extra_charges",
+				data: charges
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				alert(response);
+				$location.path("/extra_charges");
+			});
+		}
+	}
+	
+	$scope.getSection = function(financial_year_id, course_id, stream_id, year) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '') {			
+			loading.start();
+			$http({
+				method: "post",
+				url: "gate_pass/get_section",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) { //console.log(response);
+				loading.finish();								
+				$scope.section_list = response;
+			});	
+		} else {
+			$scope.section_list = {};
+		}
+	}	
+		
+	$scope.save_course_coordinator = function(course_coordinator) { //console.log(course_coordinator);
+		$scope.error = {};	
+		var noOfErrors = 0;
+		if(!course_coordinator.faculty_id || course_coordinator.faculty_id == '') {
+			$scope.error.faculty_id = true;
+			noOfErrors++;
+		}
+		if(!course_coordinator.course_id || course_coordinator.course_id == '') {
+			$scope.error.course_id = true;
+			noOfErrors++;
+		}
+		if(!course_coordinator.stream_id || course_coordinator.stream_id == '') {
+			$scope.error.stream_id = true;
+			noOfErrors++;
+		}
+		if(!course_coordinator.year || course_coordinator.year == '') {
+			$scope.error.year = true;
+			noOfErrors++;
+		}
+		if(!course_coordinator.section || course_coordinator.section == ''){
+			$scope.error.section = true;
+			noOfErrors++;
+		}
+		if(noOfErrors > 0) return false;
+		else {
+			$scope.isclicked = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel/add_course_coordinators",
+				data: course_coordinator
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if($.trim(response) == 'success'){
+					$location.path("/coordinator_list");	
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+					alert($.trim(response));
+				}
+				$scope.isclicked = false;	
+			});			
+		}
+	}	
+		
+	$scope.change_hostel_course_coordinator_status = function(course_cordinator_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel/change_course_coordinator_status",
+			data: {'course_cordinator_id':course_cordinator_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();			
+			if($.trim(response) == '') {
+				$scope.course_coordinator_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+	
+	$scope.search_gatepass = function(admission){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';		
+		section = admission.section ? admission.section : '-';
+		$location.path("/course_coordinator_gate_pass/" + section + "/" + from_date +  "/" + to_date + "/" + admission_no + "/page1");
+	}	
+		
+	$scope.change_course_coordinator_status = function(gate_pass_id, status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "gate_pass/change_course_coordinator_status",
+			data: {'gate_pass_id':gate_pass_id, 'course_coordinator_approval': status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.gate_pass_list[index].course_coordinator_approval = status;
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+}]);

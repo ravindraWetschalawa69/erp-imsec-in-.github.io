@@ -1,0 +1,464 @@
+angular.module("User").controller('assignment', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+	$scope.assignment = {};
+	$scope.assignment_list = {};
+	$scope.course_list	=	{};
+	$scope.stream_list	=	{};	
+	$scope.section_list	=	{};	
+	$scope.assignment.files = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";	
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.isClicked = false;
+	$scope.assignment_data = {};
+
+	$scope.assignment.file_name = {};
+	$scope.maxYear	=	0;
+	$scope.stream_name_for_section = '';
+	
+	$scope.getStream = function(financial_year_id, course_id) {	
+		if(financial_year_id != '' && course_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_stream",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				console.log(response);
+				loading.finish();				
+				$scope.stream_list = response;
+			});	
+		} else {
+			$scope.stream_list = [];
+			$scope.year_list = [];
+		}
+	}
+	
+	$scope.getScheduledYear = function(financial_year_id, course_id, stream_id) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_scheduled_year",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id},
+			}).success(function(response) {
+				console.log(response);
+				loading.finish();				
+				$scope.year_list = response;
+			});	
+		} else {
+			$scope.year_list = [];
+		}
+	}
+	
+	$scope.getSectionAndSubject = function(financial_year_id, course_id, stream_id, year) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_section_and_subject",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) {
+				console.log(response);
+				loading.finish();								
+				$scope.section_list = response[0];
+				$scope.subject_list = response[1];
+				$scope.assignment_report.section = '';
+			});	
+		} else {
+			$scope.subject_list = [];
+			$scope.section_list = [];
+		}
+	}
+	
+	/*$scope.getStreamNameforSection = function(stream_id){ 
+		if($.trim(stream_id) != ''){
+			res = stream_id.split("#");				
+			$scope.stream_name_for_section = res[1];
+		}
+	}
+	
+	$scope.getSubject = function(course_id, stream_id, year){
+		if($.trim(course_id) != '' && $.trim(stream_id) != '' && year > 0 ){
+			res = course_id.split("#");	
+			course_id = res[0];			
+			res = stream_id.split("#");				
+			stream_id = res[0];	
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_subject",
+				data: {'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) { //console.log(response);
+				$scope.subject_list	=	response;
+				loading.finish();
+			});	
+		}
+	}
+	
+	$scope.getSection = function(financial_year_id, course_id, type, stream_id, year, shift_type){
+		if(type == 'true'){
+			res = course_id.split("#");	
+			course_id = res[0];
+			
+			res = stream_id.split("#");				
+			stream_id = res[0];
+		}
+		if($.trim(course_id) != '' && $.trim(stream_id) != '' && year > 0 && $.trim(shift_type) != ''){
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_section",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year, 'shift_type':shift_type},
+			}).success(function(response) { //console.log(response);
+				$scope.section_list	=	response;
+				loading.finish();
+			});	
+		}		
+	}*/
+			   
+	$scope.isvalid_assignment = function (){
+		noOfErrors = 0;
+		if(!$scope.assignment.course_id || $scope.assignment.course_id == '') {
+			$scope.error.course_id = true; 
+			noOfErrors++;
+		}
+		if(!$scope.assignment.stream_id || $scope.assignment.stream_id == '') {
+			$scope.error.stream_id = true;
+			noOfErrors++;
+		}
+		if(!$scope.assignment.year || $scope.assignment.year == '') {
+			$scope.error.year = true;
+			noOfErrors++;
+		}
+		if(!$scope.assignment.no_of_semester || $scope.assignment.no_of_semester == '') {
+			$scope.error.no_of_semester = true;
+			noOfErrors++;
+		}
+		if(!$scope.assignment.subject_id || $scope.assignment.subject_id == '') {
+			$scope.error.subject_id = true;
+			noOfErrors++;
+		}
+		if(!$scope.assignment.section || $scope.assignment.section == '') {
+			$scope.error.section = true;
+			noOfErrors++;
+		}
+		if(!$scope.assignment.title || $scope.assignment.title == '') {
+			$scope.error.title = true;
+			noOfErrors++;
+		}
+		if(!$scope.assignment.tags || $scope.assignment.tags == '') {
+			$scope.error.tags = true;
+			noOfErrors++;			
+		}
+		if(noOfErrors > 0)return false;
+		else return true;
+	}
+	
+	$scope.save = function (assignment){
+		if($scope.isvalid_assignment()){
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/add_assignment",
+				data: assignment
+			}).success(function(response) { 
+				loading.finish();
+				console.log(response)
+				
+				if(response == 'Some error occured. Please try again.' || response == ' Alraedy created 5 assingment for this section !!') 
+				{
+					alert(response);
+					/*return false;
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	*/
+				} else {
+					
+					//alert('else');
+					//alert(response);
+					$scope.assignment = {};
+					
+					$location.path("/assignment_list");
+				}				
+			});
+		}
+	}
+	
+	$scope.change_status = function(assignment_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "assignment/change_status",
+			data: {'assignment_id':assignment_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			response = $.trim(response);
+			if(response == '') {
+				$scope.assignment_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.getSubbucket = function(){
+		if($scope.isvalid_assignment()){
+			var course_name = '';
+			for(i in $scope.course_list){
+				if($scope.assignment.course_id == $scope.course_list[i].course_id){
+					course_name = $scope.course_list[i].course_name;
+				}
+			}
+			
+			var stream_name = '';
+			for(i in $scope.stream_list){
+				if($scope.assignment.stream_id == $scope.stream_list[i].stream_id){
+					stream_name = $scope.stream_list[i].stream_name_abbr;
+				}
+			}
+			
+			var subject_name = '';
+			for(i in $scope.subject_list){
+				if($scope.assignment.subject_id == $scope.subject_list[i].subject_id){
+					subject_name = $scope.subject_list[i].subject_name;
+				}
+			}
+			
+			course_name = course_name.replace(/[^a-zA-Z0-9]/g, '_');
+			stream_name = stream_name.replace(/[^a-zA-Z0-9]/g, '_');
+			subject_name = subject_name.replace(/[^a-zA-Z0-9]/g, '_');
+			var year = $scope.assignment.year + '_year';
+			var subbucket = course_name+'/'+stream_name+'/'+year+'/'+subject_name;
+			return subbucket;
+		}else return 0;
+	}
+	
+	// CALLBACKS
+	var uploader = $scope.uploader = new FileUploader({url: $scope.s3url});	
+	
+	// FILTERS
+	uploader.filters.push({
+		name: 'fileFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
+			var res = '|doc|docx|pdf|xls|xlsx|ppt|pptx|jpg|png|jpeg|gif|'.indexOf(type);		
+			if('|pdf|vnd.ms-excel|vnd.openxmlformats-officedocument.spreadsheetml.sheet|vnd.openxmlformats-officedocument.wordprocessingml.document|msword|vnd.openxmlformats-officedocument.presentationml.presentation|vnd.ms-powerpoint|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly WORD, EXCEL, PPT, IMAGES(.JPEG, .JPG, .PNG, .GIF) are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	
+	uploader.onWhenAddingFileFailed = function(item /*{File|FileLikeObject}*/, filter, options) {
+		//console.info('onWhenAddingFileFailed', item, filter, options);
+	};
+	
+	uploader.onAfterAddingFile = function(fileItem) {
+		//console.log(subbucket);
+		var subbucket = $scope.getSubbucket();
+		if(subbucket) {
+			subbucket = 'assignment/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			extension = filename[filename.length - 1];
+			
+			var currentdate = new Date();
+			filename = currentdate.getDate() + '' +(currentdate.getMonth()+1) + '' + currentdate.getFullYear() + "_" + currentdate.getHours() + '' + currentdate.getMinutes();				
+			filename += ' '+fileItem.file.name;	//'.'+extension;
+			console.log(subbucket+filename);
+			
+			$scope.assignment.subbucket = subbucket;
+			$scope.assignment.name =	fileItem.file.name;
+			$scope.assignment.file_name =	filename;
+			
+			fileItem.formData.push({'key': subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			$scope.uploader_index++;
+		} else {
+			alert('some error occured!!!!!');	
+		} 
+	};
+	
+	uploader.onAfterAddingAll = function(addedFileItems) {
+		//console.info('onAfterAddingAll', addedFileItems);
+	};
+	
+	uploader.onBeforeUploadItem = function(item) {
+		//console.info('onBeforeUploadItem', item);
+	};
+	
+	uploader.onProgressItem = function(fileItem, progress) {
+		//console.info('onProgressItem', fileItem, progress);
+	};
+	
+	uploader.onProgressAll = function(progress) {
+		//console.info('onProgressAll', progress);
+	};
+	
+	uploader.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.save($scope.assignment);
+		//console.info('onSuccessItem', fileItem, response, status, headers);		
+		//$scope.assignment.file_name = fileItem.formData[0].key;		
+	};
+	
+	uploader.onErrorItem = function(fileItem, response, status, headers) {
+		//console.info('onErrorItem', fileItem, response, status, headers);
+	};
+	
+	uploader.onCancelItem = function(fileItem, response, status, headers) {
+		//console.info('onCancelItem', fileItem, response, status, headers);		
+	};
+	
+	uploader.onCompleteItem = function(fileItem, response, status, headers) {
+		//console.info('onCompleteItem', fileItem, response, status, headers);
+	};
+	
+	uploader.onCompleteAll = function() {
+		//console.info('onCompleteAll');
+		//console.log($scope.assignment);		
+	};
+	
+	$scope.openAmazonFile = function(key) {
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key};
+		s3.getSignedUrl('getObject', params, function (err, url) {
+			if(err) alert('No such key exist!!!');
+			else window.open(url);
+		});
+	}
+	
+	$scope.student_assignment = {};
+	$scope.save_student_assignment = function(student_assignment)
+	{
+		if(confirm('Are you sure to save marks ?'))
+		{
+		loading.start();
+			$http({
+				method: "post",
+				url: "assignment/save_student_assignment",
+				data: student_assignment
+			}).success(function(response) { 
+				loading.finish();
+				console.log(response);
+				if(response == 'Some error occured. Please try again.') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}else{
+					$scope.assignment = {};
+					$location.path("/assignment_list");
+				}				
+			});	
+		}
+	}
+	
+	
+	$scope.search_assignment = function(assignment){
+		if($scope.assignment.course_id != ''){
+			res = $scope.assignment.course_id.split("#");	
+			course_id = res[0];
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/search_assignment",
+				data: {'course_id':course_id, 'stream_id':$scope.assignment.stream_id, 'no_of_semester' : $scope.assignment.no_of_semester },
+			}).success(function(response) {
+				$scope.assignment_list	=	response;
+				loading.finish();
+			});
+		}
+	}
+	
+	$scope.getAssignmentReport = function(financial_year_id, course_id, stream_id, year, section, subject_id) {
+		if(subject_id && subject_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_assignment_report",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id' : stream_id, 'year':year, 'section': section, 'subject_id' : subject_id },
+			}).success(function(response) {
+				loading.finish();
+				console.log(response);
+				$scope.assignment_list = response[0];
+				$scope.student_list = response[1];
+			});
+		}
+	}
+	
+	$scope.get_assignment = function(financial_year_id, course_id, stream_id, year, section, subject_id, semester) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_assignment",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year, 'section':section, 'subject_id':subject_id, 'semester':semester},
+			}).success(function(response) {
+				loading.finish();
+				console.log(response);
+				$scope.assignment_list = response;
+			});
+		}
+	}
+	
+	$scope.get_assignment2 = function(financial_year_id, course_id, stream_id, year, subject_id, faculty_id) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && faculty_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_assignment",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year, 'subject_id':subject_id, 'faculty_id':faculty_id},
+			}).success(function(response) {
+				loading.finish();
+				console.log(response);
+				$scope.assignment_list = response;
+			});
+		}
+	}
+	
+	/*$scope.showCheckAssignment = false;
+	$scope.showCheckAssignmentDetail = {};
+	
+	$scope.showCheckAssignment = function(assignment_id){
+		$scope.showCheckAssignment = true;
+		console.log($scope.showCheckAssignment);
+		 alert('yes');
+	}
+	
+	$scope.hidewCheckAssignment = function() {
+		$scope.showCheckAssignment = false;
+		console.log($scope.showCheckAssignment);
+	}*/
+	
+	$scope.nextocourse = function()
+	{
+		$scope.assignment_data.subject_id 	= '';
+		$scope.assignment_data.stream_id 	= '';
+		$scope.assignment_data.year 		= '';
+		$scope.assignment_data.course_id = '';
+	}
+	
+	$scope.getSectionWiseAssignmentReport = function(financial_year_id, course_id, stream_id, year, section, from_date, to_date) {
+		//$location.path("/section_wise_assignment_report/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section);	
+		if(section == '') return;
+		if(financial_year_id == '' || course_id == '' || stream_id == '' || year == '' || section == ''){
+			alert('Please Select Details.');
+			return false;
+		}		
+		loading.start();
+		$http({
+			method: "post",
+			url: "assignment/get_section_wise_assignment_report",
+			data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id' : stream_id, 'year':year, 'section': section, 'from_date': from_date, 'to_date': to_date},
+		}).success(function(response) {
+			loading.finish();
+			console.log(response);
+			$scope.assignment_list = response;
+			//$scope.student_list = response[1];
+		});
+	}
+}]);

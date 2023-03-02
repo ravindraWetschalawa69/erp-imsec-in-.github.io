@@ -1,0 +1,1048 @@
+angular.module("User").controller('hostel_warden', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+	$scope.hostel = {};
+	$scope.hostel_allocate = {};
+	$scope.hostel_list = {};
+	$scope.charges_list = {};
+	$scope.hostel_allocate_list = {};
+	$scope.student_list = {};
+	$scope.hostel_request = {};
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.error = {};
+	$scope.isClicked = false;
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	
+	$scope.course_list	= {};
+	$scope.stream_list = {};
+	$scope.registration_settings = {};
+	$scope.hostel_registration_settings = {};
+	
+	$scope.getStream = function(financial_year_id, course_id){
+		if(financial_year_id != '' && course_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				$scope.stream_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_list	=	{};
+		}
+	}
+	
+	/*$scope.search_hostel_request = function(admission){
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';		
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		name = admission.name ? admission.name : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		status = admission.status ? admission.status : '-';
+		
+		$location.path("/hostel_registration_list/" + admission_no + "/" + roll_no + "/" + name + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + status + "/page1");
+	}*/
+	
+	/*Start Hostel Request/Registration Section here*/
+	$scope.search_hostel_request_list = function(admission){
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';		
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		name = admission.name ? admission.name : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';		
+		payment_type = admission.payment_type ? admission.payment_type : '-';	
+		status = admission.status ? admission.status : '-';	
+		gender = admission.gender ? admission.gender : '-';
+		
+		$location.path("/hostel_request_list/" + admission_no + "/" + roll_no + "/" + name + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + payment_type + "/" + status + "/" + gender + "/page1");		
+	}	
+	
+	$scope.export_hostel_request_list = function(admission, base_url) {
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';		
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		name = admission.name ? admission.name : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';		
+		payment_type = admission.payment_type ? admission.payment_type : '-';	
+		status = admission.status ? admission.status : '-';	
+		gender = admission.gender ? admission.gender : '-';
+		
+		window.open(base_url + 'hostel_warden/export_hostel_request_list/' + admission_no + "/" + roll_no + "/" + name + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + payment_type + "/" + status + "/" + gender);		
+	}
+	
+	$scope.check_hostel_receipt_no = function(receipt_no, fee_mode, is_advance) {
+		if(fee_mode == '1' && $.trim(receipt_no) != ''){
+			$scope.isClicked = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel_warden/check_hostel_receipt_no",
+				data: {'admission_id':$scope.admission.admission_id, 'receipt_no': receipt_no, 'is_advance': is_advance}
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response[0] == 0) {
+					if(is_advance == '1') $scope.hostel_request.receipt_no = '';
+					else if(is_advance == '0')$scope.hostel_registration.receipt_no = '';
+					alert(response[1]);
+				}
+				$scope.isClicked = false;
+			});
+		}
+	}
+		
+	$scope.call_apply_hostel_request_form = function(admission_id) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel_warden/call_apply_hostel_request_form",
+			data: {'admission_id':admission_id}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response[0] == 1) {
+				$location.path("/hostel_request_form");	
+			} else if(response[0] == 0) {
+				alert(response[1]);
+			}
+		});
+	}
+	
+	$scope.validate_hostel_request = function(should_check) {
+		hostel_request = $scope.hostel_request;	
+		$scope.error = {};
+		$error  = 0;
+		
+		if(!hostel_request.financial_year_id || hostel_request.financial_year_id == '') {
+			$error++; 
+			$scope.error.financial_year_id = true;
+		} 
+		if(!hostel_request.course_year || hostel_request.course_year == '') {
+			$error++; 
+			$scope.error.course_year = true;
+		} 
+		if(!hostel_request.hostel_details_selected || hostel_request.hostel_details_selected == '0-' || hostel_request.hostel_details_selected == '0' || hostel_request.hostel_details_selected == '0-0') {
+			$error++; 
+			$scope.error.hostel_type = true;
+		} 
+		/*if(!hostel_request.room_type || hostel_request.room_type == '' || hostel_request.room_type == '0') {
+			$error++;
+			$scope.error.room_type = true;
+		}*/	
+		if(!$scope.hostel_request.fee_mode){
+			$error++;
+			$scope.error.fee_mode = true;
+		}
+		if($scope.hostel_request.fee_mode){
+			if($scope.hostel_request.fee_mode == '1'){
+				if(!$scope.hostel_request.receipt_no || $scope.hostel_request.receipt_no == ''){
+					$error++;
+					$scope.error.receipt_no = true;	
+				}
+			}
+			if(!$scope.hostel_request.receipt_date || $scope.hostel_request.receipt_date == ''){
+				$error++;
+				$scope.error.receipt_date = true;	
+			}else{
+				var dt = new Date();	
+				var date1 = $scope.hostel_request.receipt_date.split("-");
+				if(parseInt(date1[2]) < dt.getFullYear() || parseInt(date1[2]) > dt.getFullYear()){
+					$error++;
+					$scope.error.invalid_receipt_date = true;	
+				}
+			}
+			if(!$scope.hostel_request.amount || $scope.hostel_request.amount == '' || $scope.hostel_request.amount == 0){
+				$error++;
+				$scope.error.amount = true;	
+			}			
+			if($scope.hostel_request.fee_mode == '2'){
+				if(!$scope.hostel_request.payment_type || $scope.hostel_request.payment_type == ''){
+					$error++;
+					$scope.error.payment_type = true;	
+				}	
+				if($scope.hostel_request.payment_type == '2' || $scope.hostel_request.payment_type == '3'){
+					if(!$scope.hostel_request.utr_no || $scope.hostel_request.utr_no == '' || $scope.hostel_request.utr_no == 0){
+						$error++;
+						$scope.error.utr_no = true;	
+					}	
+					if(!$scope.hostel_request.account_holder_name || $scope.hostel_request.account_holder_name == ''){
+						$error++;
+						$scope.error.account_holder_name = true;	
+					}	
+				}
+				if(!$scope.hostel_request.transaction_no || $scope.hostel_request.transaction_no == '' || $scope.hostel_request.transaction_no == 0){
+					$error++;
+					$scope.error.transaction_no = true;	
+				}
+			}
+			if(!$scope.hostel_request.scan_file_path || $scope.hostel_request.scan_file_path == ''){
+				$error++;
+				$scope.error.error_scan_receipt = true;	
+			}			
+		}
+		if($scope.hostel_request.is_change_contacts == '1'){
+			if(!hostel_request.contact_details || hostel_request.contact_details == '') {
+				$error++;
+				$scope.error.change_contacts = true;
+			}		
+		}
+		if($scope.hostel_request.is_any_disease == '1'){
+			if(!hostel_request.disease_details || hostel_request.disease_details == '') {
+				$error++;
+				$scope.error.disease_details = true;
+			}		
+		}
+		if($scope.hostel_request.is_involved_indiscipline_case == '1'){
+			if(!hostel_request.indiscipline_details || hostel_request.indiscipline_details == '') {
+				$error++;
+				$scope.error.indiscipline_details = true;
+			}		
+		}
+		if($scope.hostel_request.is_marks_deducted_for_indiscipline == '1'){
+			if(!hostel_request.marks_deducted_description || hostel_request.marks_deducted_description == '') {
+				$error++;
+				$scope.error.marks_deducted_description = true;
+			}		
+		}
+		if($scope.hostel_request.is_warden_recommendation == '1'){
+			if(!hostel_request.warden_details || hostel_request.warden_details == '') {
+				$error++;
+				$scope.error.warden_details = true;
+			}		
+		}		
+		if($scope.hostel_request.is_chief_warden_recommendation == '1'){
+			if(!hostel_request.chief_warden_details || hostel_request.chief_warden_details == '') {
+				$error++;
+				$scope.error.chief_warden_details = true;
+			}		
+		}		
+		if($scope.hostel_request.is_chief_proctor_recommendation == '1'){
+			if(!hostel_request.chief_proctor_details || hostel_request.chief_proctor_details == '') {
+				$error++;
+				$scope.error.chief_proctor_details = true;
+			}		
+		}
+		if($scope.hostel_request.is_dsw_recommendation == '1'){
+			if(!hostel_request.dsw_details || hostel_request.dsw_details == '') {
+				$error++;
+				$scope.error.dsw_details = true;
+			}		
+		}		
+		if($error > 0){
+			return false;	
+		}
+		return true;
+	}
+
+	$scope.hostelFeeStructure = false;
+	$scope.hideHostelFeeStructure_popup = function(){
+		$scope.error					= {};
+		$scope.hostelFeeStructure 		= false;
+	}
+	
+	
+	$scope.isterm_condition_accepted = function(hostel_request){
+		if($scope.validate_hostel_request(true)){
+			$scope.hostelFeeStructure = true;
+		}
+	}
+	
+	$scope.save_hostel_request = function(hostel_request) { //console.log(hostel_request);
+		if(confirm('Are you sure to submit?')){
+			if($scope.validate_hostel_request(true)){
+				$scope.isClicked = true;	
+				hostel_request.admission_id = $scope.admission.admission_id;
+				loading.start();
+				$http({
+					method: "post",
+					url: "hostel_warden/hostel_request_form",
+					data: hostel_request
+				}).success(function(response) { //console.log(response);
+					loading.finish();
+					$scope.isClicked = false;
+					if(response[0] == 'success') {
+						alert(response[1]);	
+						$location.path("/hostel_request");
+					}else if(response[0] == 'error') {
+						alert(response[1]);
+					}
+					$scope.hideHostelFeeStructure_popup();
+				});
+			}
+		}
+	}	
+	
+	var scan_receipt = $scope.scan_receipt = new FileUploader({url: $scope.s3url});	
+	scan_receipt.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			if('|jpg|png|jpeg|gif|pdf|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF are valied file type.');	
+				return false;
+			}
+			if(item.size > 3145728){
+				alert('Max Image Size Only 3 MB');
+				return false;
+			}
+			return true;
+		}
+	});
+	scan_receipt.onAfterAddingFile = function(fileItem) { //console.log(fileItem);
+		if($scope.admission.admission_id) {
+			var subbucket = 'account/'+$scope.admission.admission_id+'/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = $scope.admission.admission_id+'_'+Math.round(new Date().getTime() / 1000) + '.' + filename;
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			$scope.hostel_request.scan_file_path = fileItem.formData[0].key; 		
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	scan_receipt.onProgressItem = function(fileItem, progress) {
+		if(!$scope.validate_hostel_request(false)) fileItem.cancel();
+	};
+	scan_receipt.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		//$scope.save_hostel_request($scope.hostel_request);
+		$scope.isterm_condition_accepted($scope.hostel_request);
+	};
+	$scope.openAmazonFile = function(key) {
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key};
+		s3.getSignedUrl('getObject', params, function (err, url) {
+			if(err) alert('No such key exist!!!');
+			else window.open(url);
+		});
+	}
+	
+	$scope.change_hostel_request_status = function(hostel_student_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel_warden/change_hostel_request_status",
+			data: {'hostel_student_id':hostel_student_id, 'current_status': current_status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.student_list[index].status = current_status == '0' ? '1' : '0';	
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+	
+	$scope.openRequestFormForPrinting = function(base_url, hostel_student_id) {
+		window.open(base_url + 'hostel_warden/print_hostel_request/' + hostel_student_id);
+	}
+	
+	$scope.printHostelRequestTermsLetter = function(base_url, hostel_student_id) {
+		window.open(base_url + 'hostel_warden/print_hostel_request_terms_letter/' + hostel_student_id);
+	}
+	/*End Hostel Request/Registratio Section here*/
+
+	/*Start Hostel Room Allotment Form Section here*/
+	$scope.search_hostel_registration_list = function(admission){
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';		
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		name = admission.name ? admission.name : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';	
+		gender = admission.gender ? admission.gender : '-';	
+		status = admission.status ? admission.status : '-';
+		
+		$location.path("/hostel_registration_list/" + admission_no + "/" + roll_no + "/" + name + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + gender + "/" + status + "/page1");
+	}
+	
+	$scope.export_hostel_registration_list = function(admission, base_url,with_photo) 
+	{
+		alert('export_hostel_registration_list');
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';		
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		name = admission.name ? admission.name : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		status = admission.status ? admission.status : '-';	
+		gender = admission.gender ? admission.gender : '-';
+		
+		window.open(base_url + 'hostel_warden/export_hostel_registration_list/' + admission_no + "/" + roll_no + "/" + name + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + gender + "/" + status + "/" + with_photo);
+	}
+	
+	$scope.export_hostel_dues_list = function(admission, base_url) 
+	{
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';		
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		name = admission.name ? admission.name : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		status = admission.status ? admission.status : '-';	
+		gender = admission.gender ? admission.gender : '-';
+		hostel_id = admission.hostel_id ? admission.hostel_id : '-';
+		gender = admission.gender ? admission.gender : '-';
+		hostel_id = admission.hostel_id ? admission.hostel_id : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		
+		if(financial_year_id > 0 && course_id > 0)
+		{
+			window.open(base_url + 'hostel_warden/export_hostel_dues_list/' + admission_no + "/" + roll_no + "/" + name + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + gender + "/" + status + "/" + hostel_id+ "/" + from_date + "/" + to_date);
+		}else{
+			alert('kindly Select Session and Course, then try');
+		}
+	}
+	$scope.hostel_popup_div = false;
+		
+	$scope.call_apply_hostel_registration_form = function(admission_id) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel_warden/call_apply_hostel_registration_form",
+			data: {'admission_id':admission_id}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response[0] == 1) {
+				$location.path("/hostel_registration_form");	
+			} else if(response[0] == 0) {
+				alert(response[1]);
+			}
+		});
+	}
+	
+	$scope.validate_hostel_registration = function(should_check) {
+		hostel_registration = $scope.hostel_registration;	
+		$scope.error = {};
+		$error  = 0;
+		if(!should_check) return true;
+		if(!hostel_registration.financial_year_id || hostel_registration.financial_year_id == '') {
+			$error++; 
+			$scope.error.financial_year_id = true;
+		} 
+		if(!hostel_registration.course_year || hostel_registration.course_year == '') {
+			$error++; 
+			$scope.error.course_year = true;
+		} 
+				
+		if(!hostel_registration.guardian_name || hostel_registration.guardian_name == '') {
+			$error++; 
+			$scope.error.guardian_name = true;
+		} 
+		if(!hostel_registration.guardian_contact_no || hostel_registration.guardian_contact_no == '' || hostel_registration.guardian_contact_no == '0') {
+			$error++; 
+			$scope.error.guardian_contact_no = true;
+		} 
+		if(!hostel_registration.student_mobile || hostel_registration.student_mobile == '' || hostel_registration.student_mobile == '0') {
+			$error++; 
+			$scope.error.student_mobile = true;
+		}
+		if(!hostel_registration.hostel_details_selected || hostel_registration.hostel_details_selected == '0-' || hostel_registration.hostel_details_selected == '0' || hostel_registration.hostel_details_selected == '0-0') {
+			$error++; 
+			$scope.error.hostel_type = true;
+		}  
+		/*if(!hostel_registration.room_type || hostel_registration.room_type == '' || hostel_registration.room_type == '0') {
+			$error++;
+			$scope.error.room_type = true;
+		}*/	
+		if(!$scope.hostel_registration.fee_mode){
+			$error++;
+			$scope.error.fee_mode = true;
+		}
+		if($scope.hostel_registration.fee_mode){
+			if($scope.hostel_registration.fee_mode == '1'){
+				if(!$scope.hostel_registration.receipt_no || $scope.hostel_registration.receipt_no == ''){
+					$error++;
+					$scope.error.receipt_no = true;	
+				}
+			}
+			if(!$scope.hostel_registration.receipt_date || $scope.hostel_registration.receipt_date == ''){
+				$error++;
+				$scope.error.receipt_date = true;	
+			}
+			if(!$scope.hostel_registration.amount || $scope.hostel_registration.amount == '' || $scope.hostel_registration.amount == 0){
+				$error++;
+				$scope.error.amount = true;	
+			}			
+			if($scope.hostel_registration.fee_mode == '2'){
+				if(!$scope.hostel_registration.payment_type || $scope.hostel_registration.payment_type == ''){
+					$error++;
+					$scope.error.payment_type = true;	
+				}	
+				if($scope.hostel_registration.payment_type == '2' || $scope.hostel_registration.payment_type == '3'){
+					if(!$scope.hostel_registration.utr_no || $scope.hostel_registration.utr_no == '' || $scope.hostel_registration.utr_no == 0){
+						$error++;
+						$scope.error.utr_no = true;	
+					}	
+					if(!$scope.hostel_registration.account_holder_name || $scope.hostel_registration.account_holder_name == ''){
+						$error++;
+						$scope.error.account_holder_name = true;	
+					}	
+				}
+				if(!$scope.hostel_registration.transaction_no || $scope.hostel_registration.transaction_no == '' || $scope.hostel_registration.transaction_no == 0){
+					$error++;
+					$scope.error.transaction_no = true;	
+				}
+			}
+			if(!$scope.hostel_registration.scan_file_path || $scope.hostel_registration.scan_file_path == ''){
+				$error++;
+				$scope.error.error_scan_receipt = true;	
+			}			
+		}
+		if(!$scope.hostel_registration.guardian_photo_path || $scope.hostel_registration.guardian_photo_path == ''){
+			$error++;
+			$scope.error.error_guardian_photo = true;	
+		}
+		if($scope.hostel_registration.is_change_contacts == '1'){
+			if(!hostel_registration.contact_details || hostel_registration.contact_details == '') {
+				$error++;
+				$scope.error.change_contacts = true;
+			}		
+		}
+		if($scope.hostel_registration.is_any_disease == '1'){
+			if(!hostel_registration.disease_details || hostel_registration.disease_details == '') {
+				$error++;
+				$scope.error.disease_details = true;
+			}		
+		}
+		if($scope.hostel_registration.is_involved_indiscipline_case == '1'){
+			if(!hostel_registration.indiscipline_details || hostel_registration.indiscipline_details == '') {
+				$error++;
+				$scope.error.indiscipline_details = true;
+			}		
+		}
+		if($scope.hostel_registration.is_marks_deducted_for_indiscipline == '1'){
+			if(!hostel_registration.marks_deducted_description || hostel_registration.marks_deducted_description == '') {
+				$error++;
+				$scope.error.marks_deducted_description = true;
+			}		
+		}
+		if($scope.hostel_registration.is_warden_recommendation == '1'){
+			if(!hostel_registration.warden_details || hostel_registration.warden_details == '') {
+				$error++;
+				$scope.error.warden_details = true;
+			}		
+		}		
+		if($scope.hostel_registration.is_chief_warden_recommendation == '1'){
+			if(!hostel_registration.chief_warden_details || hostel_registration.chief_warden_details == '') {
+				$error++;
+				$scope.error.chief_warden_details = true;
+			}		
+		}		
+		if($scope.hostel_registration.is_chief_proctor_recommendation == '1'){
+			if(!hostel_registration.chief_proctor_details || hostel_registration.chief_proctor_details == '') {
+				$error++;
+				$scope.error.chief_proctor_details = true;
+			}		
+		}
+		if($scope.hostel_registration.is_dsw_recommendation == '1'){
+			if(!hostel_registration.dsw_details || hostel_registration.dsw_details == '') {
+				$error++;
+				$scope.error.dsw_details = true;
+			}		
+		}	
+		if($error > 0){
+			return false;	
+		}
+		return true;
+	}	
+	
+	$scope.save_hostel_registration = function(hostel_registration) {// console.log(hostel_registration);
+		$scope.isClicked = true;	
+		$scope.hostel_registration.admission_id = $scope.admission.admission_id;
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel_warden/hostel_registration_form",
+			data: hostel_registration
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			$scope.isClicked = false;
+			if(response[0] == 'success') {
+				alert(response[1]);	
+				$location.path("/hostel_registration");
+			}else if(response[0] == 'error') {
+				alert(response[1]);
+			}
+			$scope.hostel_popup_div = false;
+		});
+	}
+		
+	var scan_hostel_receipt = $scope.scan_hostel_receipt = new FileUploader({url: $scope.s3url});	
+	var guardian_photo = $scope.guardian_photo = new FileUploader({url: $scope.s3url});	
+	scan_hostel_receipt.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			if('|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF are valied file type.');	
+				return false;
+			}
+			if(item.size > 3145728){
+				alert('Max Image Size Only 3 MB');
+				return false;
+			}
+			return true;
+		}
+	});
+	guardian_photo.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			if('|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF are valied file type.');	
+				return false;
+			}	
+			if(item.size > 1048576){
+				alert('Max Image Size Only 1 MB');
+				return false;
+			}
+			return true;
+		}
+	});
+	scan_hostel_receipt.onAfterAddingFile = function(fileItem) { //console.log(fileItem);
+		if($scope.admission.admission_id) {
+			var subbucket = 'account/'+$scope.admission.admission_id+'/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = $scope.admission.admission_id+'_'+Math.round(new Date().getTime() / 1000) + '.' + filename;
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			$scope.hostel_registration.scan_file_path = fileItem.formData[0].key;
+		} else {
+			alert('some error occured!!!!!');
+		}
+	};
+	scan_hostel_receipt.onProgressItem = function(fileItem, progress) {
+		//if(!$scope.validate_hostel_registration(true)) fileItem.cancel();
+	};
+	scan_hostel_receipt.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		//$scope.save_hostel_registration($scope.hostel_registration);
+	};	
+	
+	guardian_photo.onAfterAddingFile = function(fileItem) { //console.log(fileItem);
+		if($scope.admission.admission_id) {
+			var subbucket = 'hostel/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = $scope.admission.admission_id+'_G_'+Math.round(new Date().getTime() / 1000) + '.' + filename;
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			$scope.hostel_registration.guardian_photo_path = fileItem.formData[0].key;
+		} else {
+			alert('some error occured!!!!!');
+		}
+	};
+	guardian_photo.onProgressItem = function(fileItem, progress) {
+		//if(!$scope.validate_hostel_registration(true)) fileItem.cancel();
+	};
+	guardian_photo.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		//console.log($scope.hostel_registration);
+		$scope.save_hostel_registration($scope.hostel_registration);
+	};
+	$scope.call_popup = function(){ 
+		if($scope.validate_hostel_registration(true)){
+			$scope.hostel_popup_div = true;
+		}
+	}
+	$scope.hide_popup = function(){
+		$scope.hostel_popup_div = false;
+	}
+	$scope.call_save_hostel_registration = function(hostel_registration){ 
+		if(!hostel_registration.hostel_student_id){
+			angular.forEach($scope.scan_hostel_receipt.queue, function(item) {
+				item.upload(hostel_registration);
+			});
+			angular.forEach($scope.guardian_photo.queue, function(item) {
+				item.upload(hostel_registration);
+				//console.log(item);
+			});
+		}else{
+			angular.forEach($scope.scan_hostel_receipt.queue, function(item) {
+				item.upload(hostel_registration);
+			});
+			if($scope.guardian_photo.queue > 0){
+				angular.forEach($scope.guardian_photo.queue, function(item) {
+					item.upload(hostel_registration);
+				});
+			}else{
+				$scope.save_hostel_registration($scope.hostel_registration);
+			}
+		}
+	}	
+	
+	$scope.openRegistrationFormForPrinting = function(base_url, hostel_student_id) {
+		window.open(base_url + 'hostel_warden/print_hostel_registration/' + hostel_student_id);
+	}
+	
+	$scope.printAllotmentTermsLetter = function(base_url, hostel_student_id) {
+		window.open(base_url + 'hostel_warden/print_allotment_terms_letter/' + hostel_student_id);
+	}
+	
+	$scope.change_status = function(hostel_student_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel_warden/change_status",
+			data: {'hostel_student_id':hostel_student_id, 'current_status': current_status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.student_list[index].status = current_status == '0' ? '1' : '0';	
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+	
+	$scope.change_registration_status = function(hostel_student_id, registration_status, index) {
+		if(confirm('Are You Sure?')){
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel_warden/change_registration_status",
+				data: {'hostel_student_id':hostel_student_id, 'registration_status': registration_status}
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response == 1) {
+					$scope.student_list[index].registration_status = registration_status;
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+	
+	$scope.change_gate_pass_status = function(hostel_student_id, is_enable_gate_pass, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel_warden/change_gate_pass_status",
+			data: {'hostel_student_id':hostel_student_id, 'is_enable_gate_pass':is_enable_gate_pass}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.student_list[index].is_enable_gate_pass = is_enable_gate_pass == '0' ? '1' : '0';
+				//$scope.student_list.splice(index, 1);
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+	/*End Hostel Room Allotment Section here*/
+	
+	/*$scope.get_hostel_floor_detail= function(hostel_id) {		
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel/get_hostel_floor_detail",
+			data: {'hostel_id':hostel_id},
+		}).success(function(response) {console.log(response);
+			$scope.hostel_floor_list	=	response;				
+			loading.finish();
+		});	
+	}
+
+	$scope.room_allocate.no_of_year = 0;
+	$scope.get_course_year_detail= function(course_id) {
+		if(course_id != ''){	
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel/get_course_year_detail",
+				data: {'course_id':course_id},
+			}).success(function(response) { console.log(response);
+				$scope.room_allocate.no_of_year	=	response;
+				loading.finish();
+			});	
+		}else{
+			$scope.room_allocate.no_of_year	=	0;
+		}
+	}
+	
+	$scope.get_floor_room_no = function(index){
+		floor_index = parseInt($scope.room_allocate.floors[index].floor_no) - 1;
+		$scope.room_allocate.floors[index].no_of_room = $scope.hostel_floor_list[floor_index].no_of_room;
+		$scope.room_allocate.floors[index].total_room = $scope.hostel_floor_list[floor_index].total_room;
+	}*/	
+	/*Start Wardent Section here*/
+	$scope.save_warden = function(warden) { //console.log(warden);
+		$scope.error = {};
+		$error  = 0;
+		if(!warden.hostel_id || warden.hostel_id == '') {
+			$error++; 
+			$scope.error.hostel_id = true;
+		} 
+		if(!warden.faculty_id || warden.faculty_id == '') {
+			$error++; 
+			$scope.error.faculty_id = true;
+		} 
+		if($error > 0){
+			return false;	
+		}else {
+			$scope.isClicked = true;	
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel_warden/add_warden",
+				data: warden
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				$scope.isClicked = false;
+				if(response[0] == 'success') {
+					$location.path("/warden_list");
+				}else if(response[0] == 'error') {
+					alert(response[1]);
+				}
+			});
+		}
+	}		
+	$scope.change_warden_status = function(warden_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel_warden/change_warden_status",
+			data: {'warden_id':warden_id, 'current_status': current_status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.warden_list[index].status = current_status == '0' ? '1' : '0';	
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+	/*End Wardent Section here*/
+	
+	/*Start Blocked Hosteller Section here*/
+	$scope.blocked_hosteller = {};
+	$scope.route = {};
+	$scope.search_admission_detail_for_blocked = function(admission_id){ //	console.log(admission_id);
+		admission_id = $.trim(admission_id);
+		if(admission_id != '' && admission_id != '0'){
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel_warden/search_admission_detail_for_blocked",
+				data: {'admission_id':admission_id}
+			}).success(function(response){ //console.log(response);
+				if(response != ''){
+					$scope.admission = response[0];
+					$scope.route = response[1];
+				}else{
+					$scope.admission = {};
+				}
+				loading.finish();
+			});	
+		}
+	}	
+	
+	$scope.save_blocked_hosteller = function(blocked_hosteller) {
+		$scope.error = {};
+		var error = 0;
+		if(!blocked_hosteller.admission_no || blocked_hosteller.admission_no == '') {
+			alert('Missing Student ID.');
+			error++;
+		}		
+		if(error == 0) { 
+			$scope.isPaying = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel_warden/add_blocked_hostller",
+				data: blocked_hosteller
+			}).success(function(response) {	 //console.log(response);
+				loading.finish();
+				$scope.isPaying = false;
+				if(response[0] == 'error') {
+					alert(response[1]);
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+				} else if(response[0] == 'success') {
+					alert(response[1]);
+					$location.path("/blocked_hostller");
+				}							
+			});
+		}
+	}
+	$scope.change_blocked_hostller_status = function(id, is_deleted, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel_warden/change_blocked_hostller_status",
+			data: {'id':id, 'is_deleted': is_deleted}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if($.trim(response) == 1) {
+				$scope.blocked_hosteller_list[index].is_deleted = is_deleted == '0' ? '1' : '0';	
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+	/*End Blocked Hosteller Section here*/
+	
+	/*Hostel Registration Settings Start*/
+	$scope.save_registration_settings = function(registration_settings) {
+		$scope.error = {};
+		if(!registration_settings.course_id || registration_settings.course_id == '') {
+			$scope.error.course_id = true;
+			return false;
+		} else if(!registration_settings.year || registration_settings.year == '') {
+			$scope.error.year = true;
+			return false;
+		} else if(!registration_settings.gender || registration_settings.gender == '') {
+			$scope.error.gender = true;
+			return false;
+		} else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel_warden/add_hostel_registration_setting",
+				data: registration_settings
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if($.trim(response) == '') {
+					$location.path('/hostel_registration_setting');
+				} else {
+					alert($.trim(response));
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+	
+	$scope.change_registration_setting_status = function(settings_id, status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "hostel_warden/change_registration_setting_status",
+			data: {'settings_id' : settings_id, 'status' : status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if($.trim(response) == 1) {
+				$scope.hostel_registration_settings[index].status = status == '0' ? '1' : '0';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	/*Hostel Registration Settings End*/
+	
+	$scope.hostel_registration_popup = false;
+	$scope.array_room = {};
+	$scope.hide_hostel_registration_popup = function(){
+		$scope.hostel_registration_popup = false;	
+	}
+	$scope.edit_hostel_registration_popup = function(hostel_student_id, room_no) {
+		if(room_no > 0){
+			alert('First remove stdudent from alloted room. Then proceed');
+			return false;
+		}else{
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel_warden/edit_hostel_registration_popup",
+				data: {'hostel_student_id':hostel_student_id}
+			}).success(function(response) {// console.log(response);
+				loading.finish();
+				if($.trim(response) != ''){
+					$scope.error = {};	
+					$scope.admission = response[0];
+					$scope.array_room = response[1];
+					$scope.hostel_registration_popup = true;	
+				}
+			});
+		}
+	}
+	
+	$scope.save_hostel_registration_popup = function(admission){ 
+		if(!admission.hostel_details_selected || admission.hostel_details_selected == '0-0' || admission.hostel_details_selected == '0'){
+			$scope.error.hostel_details_selected = true;
+			return false;
+		}else{
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel_warden/save_hostel_registration_popup",
+				data: admission
+			}).success(function(response) { 
+				loading.finish();
+				if(response[0] == 'success') {
+					alert(response[1]);	
+					$scope.hostel_registration_popup = false;
+				} else if(response[0] == 'error') {
+					alert(response[1]);
+				}
+			});	
+		}
+	}
+	
+	
+	$scope.hostel_reg_cancel_popup = false;	
+	$scope.cancel_admission = {};	
+	
+	$scope.show_hostel_reg_cancel_popup = function(hostel_student_id, reason_for_cancel, index){
+		$scope.cancel_admission.current_index =  index;
+		$scope.cancel_admission.hostel_student_id =  hostel_student_id;	
+		$scope.cancel_admission.reason_for_cancel =  reason_for_cancel;	
+		$scope.cancel_admission.message =  '';	
+		$scope.hostel_reg_cancel_popup = true;			
+	}
+	$scope.hide_hostel_reg_cancel_popup = function(){
+		$scope.hostel_reg_cancel_popup = false;	
+		$scope.cancel_admission = {};
+	}	
+		
+	$scope.cancel_hostel_registration = function(cancel_admission) {
+		var error = 0; var msg = ''; $scope.cancel_admission.message = '';
+		if(!cancel_admission.hostel_student_id || cancel_admission.hostel_student_id == ''){
+			error++;
+			msg = 'Something went wrong, Please try again.';
+		}
+		if(!cancel_admission.reason_for_cancel || $.trim(cancel_admission.reason_for_cancel) == ''){
+			error++;
+			msg = 'Reason For Cancel is required';
+		}
+		if(error == 0){
+			loading.start();
+			$http({
+				method: "post",
+				url: "hostel_warden/cancel_hostel_registration",
+				data: {cancel_admission}
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response == 1) {
+					$scope.student_list[cancel_admission.current_index].registration_status = '3';
+					$scope.hide_hostel_reg_cancel_popup();
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+					$scope.cancel_admission.message = response;
+				}
+			});
+		}else{
+			$scope.cancel_admission.message = msg;
+		}
+	}
+	
+}]);

@@ -1,0 +1,368 @@
+angular.module("User").controller('complaint', ['$scope', '$http', 'loading', '$location','FileUploader', function($scope, $http, loading, $location, FileUploader){
+	$scope.complaint = {};
+	$scope.complaint_category = {};
+	$scope.complaint_type = {};
+	$scope.complaint_list = {};
+	$scope.accessrights = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	
+	$scope.reply = {};
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	
+	$scope.get_access_rights = function(category_id) 
+	{
+		if(category_id != '') {
+			loading.start();									
+			$http({
+				method: "post",
+				url: "complaint/get_access_rights",
+				data: {'category_id':category_id},
+			}).success(function(response) {
+				loading.finish();
+				//console.log(response);
+				
+				if(response != "Some error occured. Please try again!!!") {
+					$scope.faculty_list = response;
+				} else {
+					alert("Some error occured. Please try again!!!");
+				}
+			});
+		} else {
+			$scope.faculty_list = [];	
+		}
+	}	
+	$scope.save_access_rights = function(accessrights) 
+	{
+		loading.start();									
+		$http({
+			method: "post",
+			url: "complaint/save_access_rights",
+			data: accessrights,
+		}).success(function(response) {
+			loading.finish();
+			response = $.trim(response);
+			if(response == '0') {
+				alert("Some error occured. Please try again!!!");
+			} else {
+				$location.path("/complaint_list");
+			}
+		});
+	}	
+	$scope.get_complaint_type = function(category_id) 
+	{
+		loading.start();									
+		$http({
+			method: "post",
+			url: "complaint/get_complaint_type",
+			data: {'category_id' : category_id},
+		}).success(function(response) {
+			loading.finish();
+			if(response[0] == '0') {
+				alert("Some error occured. Please try again!!!");
+			} else {
+				$scope.complaint_type = response[1];
+			}
+		});
+	}	
+	$scope.add_student_complaint = function(complaint) 
+	{
+		if(!complaint.category_id || complaint.category_id == '') {
+			$scope.error.category_id = true;	
+			return false;
+		} else if(!complaint.complaint_type_id || complaint.complaint_type_id == '') {
+			$scope.error.complaint_type_id = true;	
+			return false;
+		} else if(!complaint.complaint || complaint.complaint == '') {
+			$scope.error.complaint = true;	
+			return false;
+		} else {
+			$scope.error = {};
+			loading.start();									
+			$http({
+				method: "post",
+				url: "complaint/add_student_complaint",
+				data: complaint,
+			}).success(function(response) {	//console.log(response);
+				loading.finish();
+				response = $.trim(response);
+				if(response == '0') {
+					//$scope.flashMessageType = "error";
+					//$scope.flashMessage = response;
+					alert("Some error occured. Please try again!!!");
+				} else {
+					$location.path("/complaint_list");
+				}
+			});
+		}
+	}	
+	$scope.comment_on_student_complaint = function(reply) 
+	{
+		//alert($scope.complaint.complaint_id);
+		//console.log(reply);
+		//alert(reply.comment);
+		$scope.error = {};
+		if(!reply || !reply.comment || reply.comment == '')
+		{
+			$scope.error.comment = true;
+		}
+		else if((!reply.for_student || reply.for_student == '') && reply.role != 5)
+		{
+			$scope.error.for_student = true;
+		}		
+		else{
+			if(reply.role == 5)
+			{
+				reply.for_student = 1;
+			}
+			//console.log(reply);
+			//alert('OK '+$scope.reply.compalint_doc);	
+			if($scope.compalint_doc.queue != '')
+			{	
+				angular.forEach($scope.compalint_doc.queue, function(item)
+				{
+					item.upload();
+				});
+				reply.compalint_doc = $scope.reply.compalint_doc;
+			}
+			else
+			{
+				reply.compalint_doc = '';
+			}
+			//alert(reply.compalint_doc);
+			loading.start();
+			$http({
+				method: "post",
+				url: "complaint/comment_on_student_complaint",
+				data: {'complaint_id':$scope.complaint.complaint_id, 'comment': reply.comment, 'for_student': reply.for_student, 'compalint_doc': reply.compalint_doc}
+			}).success(function(response) {
+				loading.finish();
+				if(response == '0') {
+					alert('Some error occured. Please try again.');	
+				} else {
+					$scope.reply_list.unshift(response[1]);
+					angular.element('#new_comment').val('');
+					$scope.reply = {};
+				}
+			});
+		} 
+		
+		
+	}
+	$scope.comment_on_student_complaint_old = function(reply) 
+	{
+		if(reply && reply != ''){			
+			loading.start();
+			$http({
+				method: "post",
+				url: "complaint/comment_on_student_complaint",
+				data: {'complaint_id':$scope.complaint.complaint_id, 'comment': reply}
+			}).success(function(response) {
+				loading.finish();
+				if(response == '0') {
+					alert('Some error occured. Please try again.');	
+				} else {
+					$scope.reply_list.unshift(response[1]);
+					angular.element('#new_comment').val('')			
+				}
+			});
+		} else {
+			$scope.error.reply = true;
+		}
+	}	
+	$scope.close_student_complaint = function() 
+	{
+		loading.start();
+		$http({
+			method: "post",
+			url: "complaint/close_student_complaint",
+			data: {'complaint_id':$scope.complaint.complaint_id}
+		}).success(function(response) {
+			loading.finish();
+			if(response[0] == '0') {
+				alert('Some error occured. Please try again.');	
+			} else {
+				$scope.complaint = response[1];
+			}
+		});
+	}
+	
+
+	var compalint_doc = $scope.compalint_doc = new FileUploader({url: $scope.s3url});
+	compalint_doc.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PNG, .GIF are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	compalint_doc.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.complaint.complaint_id;	
+		//alert('onAfterAddingFile');
+		if(subbucket) {
+			subbucket = 'student/complaint_' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			$scope.reply.compalint_doc = fileItem.formData[0].key;
+		} else {
+			alert('some error occured!!!!!');	
+		}/**/
+	};
+	compalint_doc.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();		
+	};
+	
+	$scope.search_complaint_list = function(complaint){ 
+		admission_no = complaint.admission_no ? complaint.admission_no : '-';
+		name = complaint.name ? complaint.name : '-';
+		roll_no = complaint.roll_no ? complaint.roll_no : '-';		
+		complaint_type_id = complaint.complaint_type_id ? complaint.complaint_type_id : '-';
+		financial_year_id = complaint.financial_year_id ? complaint.financial_year_id : '-';
+		complaint_status = complaint.complaint_status ? complaint.complaint_status : '-';
+		from_date = complaint.from_date ? complaint.from_date : '-';
+		to_date = complaint.to_date ? complaint.to_date : '-';		
+		hostel_id = complaint.hostel_id ? complaint.hostel_id : '-';
+		is_complaint = complaint.is_complaint ? complaint.is_complaint : '-';
+		email = complaint.email ? complaint.email : '-';
+		$scope.email = email.replace("@","_");
+		department_id = complaint.department_id ? complaint.department_id : '-';
+		rank_id = complaint.rank_id ? complaint.rank_id : '-';
+		$location.path("/complaint_list/" + name + "/" + admission_no +  "/" + roll_no + "/" + financial_year_id + "/" + complaint_type_id + "/" + complaint_status + "/" + from_date + "/" + to_date + "/" + hostel_id + "/" + is_complaint + "/" + $scope.email + "/" + department_id + "/" + rank_id + "/page1");
+	}
+		
+	$scope.export_complaint_list = function(complaint, base_url) {
+		admission_no = complaint.admission_no ? complaint.admission_no : '-';
+		name = complaint.name ? complaint.name : '-';
+		roll_no = complaint.roll_no ? complaint.roll_no : '-';		
+		complaint_type_id = complaint.complaint_type_id ? complaint.complaint_type_id : '-';
+		financial_year_id = complaint.financial_year_id ? complaint.financial_year_id : '-';
+		complaint_status = complaint.complaint_status ? complaint.complaint_status : '-';
+		from_date = complaint.from_date ? complaint.from_date : '-';
+		to_date = complaint.to_date ? complaint.to_date : '-';
+		hostel_id = complaint.hostel_id ? complaint.hostel_id : '-';
+		is_complaint = complaint.is_complaint ? complaint.is_complaint : '-';
+		email = complaint.email ? complaint.email : '-';
+		$scope.email = email.replace("@","_");
+		department_id = complaint.department_id ? complaint.department_id : '-';
+		rank_id = complaint.rank_id ? complaint.rank_id : '-';
+		
+		window.open(base_url + 'complaint/export_complaint_list/' + name + "/" + admission_no +  "/" + roll_no + "/" + financial_year_id + "/" + complaint_type_id + "/" + complaint_status + "/" + from_date + "/" + to_date + "/" + hostel_id + "/" + is_complaint + "/" + $scope.email + "/" + department_id + "/" + rank_id);
+	}
+	
+	$scope.add_employee_complaint = function(complaint) 
+	{
+		if(!complaint.category_id || complaint.category_id == '') {
+			$scope.error.category_id = true;	
+			return false;
+		} else if(!complaint.complaint_type_id || complaint.complaint_type_id == '') {
+			$scope.error.complaint_type_id = true;	
+			return false;
+		} else if(!complaint.complaint || complaint.complaint == '') {
+			$scope.error.complaint = true;	
+			return false;
+		} else {
+			$scope.error = {};
+			loading.start();									
+			$http({
+				method: "post",
+				url: "complaint/add_employee_complaint",
+				data: complaint,
+			}).success(function(response) {	//console.log(response);
+				loading.finish();
+				response = $.trim(response);
+				if(response == '0') {
+					//$scope.flashMessageType = "error";
+					//$scope.flashMessage = response;
+					alert("Some error occured. Please try again!!!");
+				} else {
+					$location.path("/complaint_list");
+				}
+			});
+		}
+	}
+	$scope.is_disabled = false;
+	$scope.comment_on_employee_complaint = function(reply) 
+	{
+		//alert($scope.complaint.complaint_id);
+		//console.log(reply);
+		//alert(reply.comment);
+		$scope.error = {};
+		if(!reply || !reply.comment || reply.comment == '')
+		{
+			$scope.error.comment = true;
+		}
+		/*else if((!reply.for_student || reply.for_student == '') && reply.role != 5)
+		{
+			$scope.error.for_student = true;
+		}*/		
+		else{
+			/*if(reply.role == 5)
+			{
+				reply.for_student = 1;
+			}*/
+			//console.log(reply);
+			//alert('OK '+$scope.reply.compalint_doc);	
+			if($scope.compalint_doc.queue != '')
+			{	
+				angular.forEach($scope.compalint_doc.queue, function(item)
+				{
+					item.upload();
+				});
+				reply.compalint_doc = $scope.reply.compalint_doc;
+			}
+			else
+			{
+				reply.compalint_doc = '';
+			}
+			$scope.is_disabled = true;
+			//alert(reply.compalint_doc);
+			//loading.start();
+			$http({
+				method: "post",
+				url: "complaint/comment_on_employee_complaint",
+				data: {'complaint_id':$scope.complaint.complaint_id, 'comment': reply.comment, 'compalint_doc': reply.compalint_doc, 'faculty_id':$scope.complaint.faculty_id}
+			}).success(function(response) {
+				//loading.finish();
+				$scope.is_disabled = false;
+				if(response == '0') {
+					alert('Some error occured. Please try again.');	
+				} else {
+					$scope.reply_list.unshift(response[1]);
+					angular.element('#new_comment').val('');
+					$scope.reply = {};
+				}
+			});
+		} 
+		
+		
+	}
+	
+	$scope.close_employee_complaint = function() 
+	{
+		loading.start();
+		$http({
+			method: "post",
+			url: "complaint/close_employee_complaint",
+			data: {'complaint_id':$scope.complaint.complaint_id, 'faculty_id':$scope.complaint.faculty_id}
+		}).success(function(response) {
+			loading.finish();
+			if(response[0] == '0') {
+				alert('Some error occured. Please try again.');	
+			} else {
+				$scope.complaint = response[1];
+			}
+		});
+	}
+
+	
+}]);

@@ -1,0 +1,47 @@
+angular.module("User").controller('financial_year', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+	$scope.financial_year = {};
+	$scope.financial_year_list = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	
+	$scope.save = function(financial_year) {
+		if(!financial_year.start_date || financial_year.start_date == '') {
+			$scope.error.start_date = true;
+		} else if(!financial_year.end_date || financial_year.end_date == '') {
+			$scope.error.end_date = true;
+		} else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "financial_year/add_financial_year",
+				data: financial_year
+			}).success(function(response) {
+				$location.path("/financial_year_list");				
+				if(response != '') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+				loading.finish();				
+			});
+		}
+	}	
+	
+	$scope.change_status = function(financial_year_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "financial_year/change_status",
+			data: {'financial_year_id':financial_year_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			
+			if(response == '') {
+				$scope.financial_year_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+}]);

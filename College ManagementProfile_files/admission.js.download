@@ -1,0 +1,1935 @@
+angular.module("User").controller('admission', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+	$scope.admission = {};
+	$scope.holiday = {};
+	$scope.aadhaar = {};
+	$scope.aadhaar.photo = {};
+	$scope.holiday_list = {};
+	$scope.stream_list = {};
+	$scope.stoppage_list = {};
+	$scope.admission_list = {};
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.pagination = {};
+	$scope.isAdding = true;
+	$scope.isDisabled = '2';
+	$scope.section_list = [];
+	$scope.admission.entrance_exam = {};
+	$scope.fd = new FormData();
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	$scope.permitted_fields = {};
+	$scope.mail_check= true;
+	$scope.validateEmail = function(email) {
+		var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+		return re.test(email);
+	}
+	
+	
+	$scope.validateDate = function(date) {
+		//var dateformat = /^(0?[1-9]|1[012])[\/\-](0?[1-9]|[12][0-9]|3[01])[\/\-]\d{4}$/;
+		var dateformat = /^(0?[1-9]|[12][0-9]|3[01])[\/\-](0?[1-9]|1[012])[\/\-]\d{4}$/;
+			 
+		if(dateformat.test(date)) {
+			var pdate = date.split('-');
+			var dd  = parseInt(pdate[0]);
+			var mm = parseInt(pdate[1]);
+			var yy = parseInt(pdate[2]);
+			
+			
+			var ListofDays = [31,28,31,30,31,30,31,31,30,31,30,31];  
+			if (mm==1 || mm>2) { 
+				if (dd>ListofDays[mm-1]) {
+					return false;  
+				}
+			}
+			if (mm==2) {
+				var lyear = false;  
+				if ( (!(yy % 4) && yy % 100) || !(yy % 400)) {
+					lyear = true;  
+				}  
+				if ((lyear==false) && (dd>=29)) {
+					return false;  
+				}
+				if ((lyear==true) && (dd>29)) {
+					return false;  
+				}  
+			}
+			if(yy < 1902 || yy > (new Date()).getFullYear()) {
+				return false; 
+			}
+			return true;
+		}
+		return false;
+	}
+	$scope.getOption = function(f){
+		
+		$('.tobechange').val(f);
+	}
+	
+	$scope.getOptionSub = function(f){
+		
+		$('.changeSub').val(f);
+	}
+	
+	$scope.$watch('admission.lateral_entry', function() {
+		if($scope.admission.lateral_entry == '1' && $scope.isOld == '0') {
+			$scope.admission.admitted_year = '2';
+			$scope.admission.semester = '3';
+		}
+	});
+	
+	$scope.$watch('admission.is_same_as_local_address', function() {
+		if($scope.admission.is_same_as_local_address) {
+			$scope.permanent_city_list = $scope.local_city_list;
+			$scope.admission.permanent_address = $scope.admission.local_address;
+			$scope.admission.permanent_pincode = $scope.admission.local_pincode;
+			$scope.admission.permanent_state_id = $scope.admission.local_state_id;
+			$scope.admission.permanent_city_id = $scope.admission.local_city_id;
+			$scope.admission.permanent_telephone = $scope.admission.local_telephone;
+		}
+	});
+	
+	$scope.confirm_studentReg = function() 
+	{
+		loading.start();									
+			$http({
+				method: "post",
+				url: "admission/check_dues",
+				data: ""
+			}).success(function(response) 
+			{
+				console.log(response);
+				//alert(response[0]);
+				loading.finish();
+				if(response[0] == 'success'){
+				
+					alert(' Your Registration Has Been Confirmed  ! Kindly Contact Your Department Now!!');
+					$location.path("/view_admission");
+				}
+				else
+				{
+					alert('You Should Pay Amount of Rs. '+response[1]+'  For Semester Registration.');
+				}
+				
+			})
+	}
+	$scope.maxAcademicQualificationLimit = 1;	
+	$scope.addAcademicQualificationLimit = function() {
+		$scope.maxAcademicQualificationLimit++;
+	}
+	
+	$scope.admission.academic = [];
+	$scope.admission.academic[0] = {};
+	$scope.admission.academic[1] = {};
+	$scope.admission.academic[2] = {};
+	$scope.admission.academic[3] = {};
+	
+	$scope.currentTab = 1;
+	$scope.callFocus = function(index, admission, callNext) {//console.log(admission);
+		$scope.error = {};
+		$error = 0;
+		
+		if(index > 1){
+			if($scope.isOld == '0') {
+				if(!admission.first_name || admission.first_name == '') {
+					$scope.error.first_name = true;	
+					$scope.currentTab = 1;
+					$error++;
+				} 
+				if(!admission.last_name || admission.last_name == '') {
+					$scope.error.last_name = true;	
+					$scope.currentTab = 1;
+					$error++;
+				} 
+				if(!admission.category_id || admission.category_id == '0') {
+					$scope.error.category_id = true;
+					$scope.currentTab = 1;	
+					$error++;
+				} 
+				if(!admission.religion_id || admission.religion_id == '') {
+					$scope.error.religion_id = true;
+					$scope.currentTab = 1;	
+					$error++;
+				}  
+				if(!admission.date_of_birth || admission.date_of_birth == '') {
+					$scope.error.date_of_birth = true;
+					$scope.currentTab = 1;	
+					$error++;
+				} else if(!$scope.validateDate(admission.date_of_birth)) {
+					$scope.error.date_of_birth = true;	
+					$scope.currentTab = 1;
+					$error++;
+				} else if(parseInt(admission.date_of_birth.substring(6)) > (new Date()).getFullYear() - 10) { //for removing 16 year age bar condition, it converts to 10 year age bar
+					$scope.error.date_of_birth = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}
+				if(!admission.nationality || admission.nationality == '') {
+					$scope.error.nationality = true;	
+					$scope.currentTab = 1;
+					$error++;
+				} 
+				if(!admission.student_mobile || admission.student_mobile == '') {
+					$scope.error.student_mobile = true;	
+					$scope.currentTab = 1;
+					$error++;
+				} 
+				if(!admission.email || admission.email == '') {
+					$scope.error.email = true;	
+					$scope.currentTab = 1;
+					$error++;
+				} else if(!$scope.validateEmail(admission.email)) {				
+					$scope.error.email_invalid = true;
+					$scope.currentTab = 1;
+					$error++;
+				}
+				if(!admission.local_address || admission.local_address == '') {
+					$scope.error.local_address = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}
+				if(!admission.local_state_id || admission.local_state_id == '') {
+					$scope.error.local_state_id = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}
+				if(!admission.local_city_id || admission.local_city_id == '') {
+					$scope.error.local_city_id = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}
+				if(!admission.permanent_address || admission.permanent_address == '') {
+					$scope.error.permanent_address = true;
+					$scope.currentTab = 1;	
+					$error++;
+				}
+				if(!admission.permanent_state_id || admission.permanent_state_id == '') {
+					$scope.error.permanent_state_id = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}
+				if(!admission.permanent_city_id || admission.permanent_city_id == '') {
+					$scope.error.permanent_city_id = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}
+				if(!admission.father_name || admission.father_name == '') {
+					$scope.error.father_name = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}
+				if(!admission.father_occupation_id || admission.father_occupation_id == '') {
+					$scope.error.father_occupation_id = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}			
+				if(admission.father_email){
+					if(!$scope.validateEmail(admission.father_email)){
+						$scope.error.father_email_invalid = true;
+						$scope.currentTab = 1;
+						$error++;
+					}			
+				}
+				if(!admission.mother_name || admission.mother_name == '') {
+					$scope.error.mother_name = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}
+				if(!admission.mother_occupation_id || admission.mother_occupation_id == '') {
+					$scope.error.mother_occupation_id = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}
+				if(admission.mother_email){
+					if(!$scope.validateEmail(admission.mother_email)){
+						$scope.error.mother_email_invalid = true;
+						$scope.currentTab = 1;
+						$error++;
+					}			
+				}
+				if(!admission.parent_income || admission.parent_income == '') {
+					$scope.error.parent_income = true;	
+					$scope.currentTab = 1;
+					$error++;
+				}
+			}
+		}
+		if($error > 0){ return false; }
+		if(index > 2){
+			if($scope.isOld == '0') {
+				if(!admission.academic[0].board_course || admission.academic[0].board_course == "") {				
+					$scope.error.academic_board_course_0 = true;
+					$scope.currentTab = 2;
+					$error++;
+				} 
+				if(!admission.academic[0].year_passing || admission.academic[0].year_passing == "") {
+					$scope.error.academic_year_passing_0 = true;
+					$scope.currentTab = 2;
+					$error++;
+				} 
+				if(!admission.academic[0].school_name || admission.academic[0].school_name == "") {
+					$scope.error.academic_school_name_0 = true;
+					$scope.currentTab = 2;
+					$error++;
+				} 
+				if(!admission.academic[0].roll_no || admission.academic[0].roll_no == "" || parseInt(admission.academic[0].roll_no) == 0) {
+					$scope.error.academic_roll_no_0 = true;
+					$scope.currentTab = 2;
+					$error++;
+				}
+				if((!admission.academic[0].obt_marks || admission.academic[0].obt_marks == "" || parseFloat(admission.academic[0].obt_marks) == 0) && (!admission.academic[0].cgp || admission.academic[0].cgp == "" || parseFloat(admission.academic[0].cgp) == 0) ) {
+					$scope.error.academic_obt_marks_0 = true;
+					$scope.currentTab = 2;
+					$error++;
+				}
+				if(!admission.academic[0].max_marks  || admission.academic[0].max_marks == "" || parseInt(admission.academic[0].max_marks) == 0) {
+					$scope.error.academic_max_marks_0 = true;
+					$scope.currentTab = 2;
+					$error++;
+				}
+				if(!admission.academic[0].state_id || admission.academic[0].state_id == "") {
+					$scope.error.academic_state_id_0 = true;
+					$scope.currentTab = 2;
+					$error++;
+				}
+				else if(parseFloat(admission.academic[0].obt_marks) > parseFloat(admission.academic[0].max_marks)) {
+					$scope.error.academic_invalid_max_marks_0 = true;
+					$scope.currentTab = 2;
+					$error++;
+				}
+				if(admission.course_id != '11')
+				{
+					if(admission.lateral_entry == '0' && (!admission.academic[1].board_course || admission.academic[1].board_course == "")) {				
+						$scope.error.academic_board_course_1 = true;
+						$scope.currentTab = 2;
+						$error++;
+					} 
+					if(admission.lateral_entry == '0' && (!admission.academic[1].year_passing || admission.academic[1].year_passing == "")) {
+						$scope.error.academic_year_passing_1 = true;
+						$scope.currentTab = 2;
+						$error++;
+					} else if(admission.lateral_entry == '0' && (parseInt(admission.academic[1].year_passing) - 2 < parseInt(admission.academic[0].year_passing))){
+						$scope.error.academic_invalid_year_passing_1 = true;
+						$scope.currentTab = 2;
+						$error++;
+					}
+					if(admission.lateral_entry == '0' && (!admission.academic[1].school_name || admission.academic[1].school_name == "")) {
+						$scope.error.academic_school_name_1 = true;
+						$scope.currentTab = 2;
+						$error++;
+					} 
+					if(admission.lateral_entry == '0' && (!admission.academic[1].roll_no || admission.academic[1].roll_no == "" || parseInt(admission.academic[1].roll_no) == 0)) {
+						$scope.error.academic_roll_no_1 = true;
+						$scope.currentTab = 2;
+						$error++;
+					}				
+					/*if(admission.academic[0].roll_no != '' && admission.academic[1].roll_no != '') {
+						if(admission.academic[0].roll_no == admission.academic[1].roll_no) {
+							$scope.error.academic_invalid_roll_no_1 = true;
+							$scope.currentTab = 2;
+							$error++;
+						}
+					}*/
+					if(admission.lateral_entry == '0' && ((!admission.academic[1].obt_marks || admission.academic[1].obt_marks == "" || parseInt(admission.academic[1].obt_marks) == 0)  && (!admission.academic[1].cgp || admission.academic[1].cgp == "" || parseInt(admission.academic[1].cgp) == 0)) ) {
+						$scope.error.academic_obt_marks_1 = true;
+						$scope.currentTab = 2;
+						$error++;
+					}
+					if(admission.lateral_entry == '0' && (!admission.academic[1].max_marks  || admission.academic[1].max_marks == "" || parseInt(admission.academic[1].max_marks) == 0)) {
+						$scope.error.academic_max_marks_1 = true;
+						$scope.currentTab = 2;
+						$error++;
+					}else if(admission.lateral_entry == '0' && (parseInt(admission.academic[1].obt_marks) > parseInt(admission.academic[1].max_marks))) {
+						$scope.error.academic_invalid_max_marks_1 = true;
+						$scope.currentTab = 2;
+						$error++;
+					}
+					/*if(!admission.academic[1].percent_marks || admission.academic[1].percent_marks == "" || parseFloat(admission.academic[1].percent_marks) == 0) {
+						$scope.error.academic_percent_marks_1 = true;
+						$scope.currentTab = 2;
+						$error++;
+					} else if(parseFloat(admission.academic[1].percent_marks) > 100){
+						$scope.error.academic_percent_marks_1 = true;
+						$scope.currentTab = 2;
+						$error++;
+					}*/
+					/*if(!admission.academic[1].pcm_pcb || admission.academic[1].pcm_pcb == '') {
+						$scope.error.academic_pcm_pcb_type = true;
+						$scope.currentTab = 2;
+						$error++;
+					}			
+					if(!admission.academic[1].pcm_pcb_marks || admission.academic[1].pcm_pcb_marks == "" || parseFloat(admission.academic[1].pcm_pcb_marks) == 0) {
+						$scope.error.academic_pcm_pcb_marks = true;
+						$scope.currentTab = 2;
+						$error++;
+					} else if(parseFloat(admission.academic[1].pcm_pcb_marks) > 100){
+						$scope.error.academic_pcm_pcb_marks = true;
+						$scope.currentTab = 2;
+						$error++;
+					}*/
+					if(admission.lateral_entry == '0' && (!admission.academic[1].physics_marks || admission.academic[1].physics_marks == "" || parseInt(admission.academic[1].physics_marks) > 100)) {
+						$scope.error.physics_marks = true;
+						$scope.currentTab = 2;
+						$error++;
+					}
+					if(admission.lateral_entry == '0' && (!admission.academic[1].chemistry_marks || admission.academic[1].chemistry_marks == "" || parseInt(admission.academic[1].chemistry_marks) > 100)) {
+						$scope.error.chemistry_marks = true;
+						$scope.currentTab = 2;
+						$error++;
+					}
+					if(admission.lateral_entry == '0' && (!admission.academic[1].math_bio_marks || admission.academic[1].math_bio_marks == "" || parseInt(admission.academic[1].math_bio_marks) > 100)) {
+						$scope.error.math_bio_marks = true;
+						$scope.currentTab = 2;
+						$error++;
+					}
+					if(admission.lateral_entry == '0' && (!admission.academic[1].english_marks || admission.academic[1].english_marks == "" || parseInt(admission.academic[1].english_marks) > 100)) {
+						$scope.error.english_marks = true;
+						$scope.currentTab = 2;
+						$error++;
+					}
+				}
+				if(admission.is_apply_improvement_paper == '1' && (!admission.improvement_paper_subject || admission.improvement_paper_subject == "")) {
+					$scope.error.improvement_paper_subject = true;
+					$scope.currentTab = 2;
+					$error++;
+				}
+				if(admission.is_apply_improvement_paper == '1' && (!admission.improvement_paper_result || admission.improvement_paper_result == "")) {
+					$scope.error.improvement_paper_result = true;
+					$scope.currentTab = 2;
+					$error++;
+				}
+				if(admission.is_any_grace == '1' && (!admission.grace_marks_details || admission.grace_marks_details == "")) {
+					$scope.error.grace_marks_details = true;
+					$scope.currentTab = 2;
+					$error++;
+				}
+			}
+		}
+		if($error > 0){ return false; }
+		if(index > 3){
+			if(!admission.course_id || admission.course_id == '') {
+				$scope.error.course_id = true;
+				$scope.currentTab = 3;
+				$error++;
+			} 
+			if(!admission.stream_id || admission.stream_id == '') {
+				$scope.error.stream_id = true;
+				$scope.currentTab = 3;
+				$error++;
+			} 		 
+			if(!admission.admission_type_id || admission.admission_type_id == '') {
+				$scope.error.admission_type_id = true;
+				$scope.currentTab = 3;
+				$error++;
+			} 		 
+			/*if(!admission.guardian_name || admission.guardian_name == '') {
+				$scope.error.guardian_name = true;
+				$scope.currentTab = 3;
+				$error++;
+			}*/
+			if(admission.guardian_name && (!admission.guardian_relationship || admission.guardian_relationship == '')) {
+				$scope.error.guardian_relationship = true;
+				$scope.currentTab = 3;
+				$error++;
+			}		 
+			if(admission.guardian_name && (!admission.guardian_contact_no || admission.guardian_contact_no == '')) {
+				$scope.error.guardian_contact_no = true;
+				$scope.currentTab = 3;
+				$error++;
+			}		 
+			if(admission.guardian_name && (!admission.guardian_address || admission.guardian_address == '')) {
+				$scope.error.guardian_address = true;
+				$scope.currentTab = 3;
+				$error++;
+			}		 
+			if(admission.guardian_name && (!admission.guardian_state_id || admission.guardian_state_id == '')) {
+				$scope.error.guardian_state_id = true;
+				$scope.currentTab = 3;
+				$error++;
+			}		 
+			if(admission.guardian_name && (!admission.guardian_city_id || admission.guardian_city_id == '')) {
+				$scope.error.guardian_city_id = true;
+				$scope.currentTab = 3;
+				$error++;
+			}
+		}
+		if($error > 0){ return false; }
+		if(callNext) { $scope.currentTab = index; }
+		return true;
+    }
+	
+	$scope.callBack = function(index) {
+		$scope.currentTab = index;
+	}
+	
+	$scope.save_admission = function(admission, step) { 
+		if($scope.currentTab == '5') {
+			admission.currentTab = $scope.currentTab;
+            loading.start();									
+			$http({
+				method: "post",
+				url: "admission/add_admission",
+				data: admission
+			}).success(function(response) {	//console.log(response);
+				loading.finish();
+				if($scope.currentTab == step) {
+					if(response == 'Some error occured. Please try again.') {
+						$scope.flashMessageType = "error";
+						$scope.flashMessage = response;
+					} else {
+						if($scope.isDisabled == '1')
+							$location.path("/view_admission");
+						else
+							$location.path("/view_admission/" + parseInt(response.admission_id));	
+					}
+				} else {
+					if(parseInt(response.admission_id)) {
+						$scope.array_room = response.array_room;	
+						$scope.admission.admission_id = parseInt(response.admission_id);
+						$scope.currentTab++;
+					} else {
+						$scope.flashMessageType = "error";
+						$scope.flashMessage = response;
+					}
+				}
+			});
+		} else if($scope.callFocus(parseInt($scope.currentTab) + 1, admission, false)) {
+			admission.currentTab = $scope.currentTab;
+            loading.start();									
+			$http({
+				method: "post",
+				url: "admission/add_admission",
+				data: admission
+			}).success(function(response) {	//console.log(response);
+				loading.finish();
+				if($scope.currentTab == step) {
+					if(response == 'Some error occured. Please try again.') {
+						$scope.flashMessageType = "error";
+						$scope.flashMessage = response;
+					}
+				} else { //console.log(response.admission_id);
+					if(parseInt(response.admission_id)) {
+						$scope.array_room = response.array_room;
+						$scope.admission.admission_id = parseInt(response.admission_id);
+						$scope.currentTab++;
+					} else {
+						alert($.trim(response));
+						$scope.flashMessageType = "error";
+						$scope.flashMessage = response;
+					}	
+					//console.log($scope.currentTab);
+				}
+			});
+		}
+		return false;
+	}
+	
+	
+	
+	$scope.openApplicationFormForPrinting = function(base_url, admission_id) {
+		window.open(base_url + 'admission/print_admission_form/' + admission_id);
+	}
+	
+	$scope.change_status = function(admission_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "admission/change_status",
+			data: {'admission_id':admission_id, 'current_status':current_status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.admission_list[index].status = current_status == '0' ? '1' : '0';
+				//$scope.admission_list.splice(index, 1);
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.confirm_student_registration = function(admission_id, registration_status, index) {
+		if(confirm("Are you sure?")) {
+			loading.start();
+			registration_status = registration_status == '0' ? '1' : '0';	
+			$http({
+				method: "post",
+				url: "admission/confirm_student_registration",
+				data: {'admission_id':admission_id, 'registration_status':registration_status}
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response != 'Some error occured. Please try again.' && response != 'Arguments missing.') {
+					$scope.admission_list[index].registration_status = registration_status;
+					$scope.admission_list[index].registration_datetime = response.registration_datetime;
+				} else {
+					alert(response);
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+	
+	$scope.getCourse = function(financial_year_id) {	
+		
+		if(financial_year_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_course",
+				data: {'financial_year_id':financial_year_id},
+			}).success(function(response) { 	
+				loading.finish();
+				$scope.course_list	=	response;
+				$scope.stream_list	=	{};
+			});	
+		}
+	}
+	
+	$scope.getStream = function(financial_year_id, course_id) {
+		if(financial_year_id != '' && course_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				$scope.stream_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_list	=	{};
+		}
+	}
+	
+	$scope.getScheduledYear = function(financial_year_id, course_id, stream_id) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_scheduled_year",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id},
+			}).success(function(response) {
+				loading.finish();				
+				$scope.year_list = response;
+			});	
+		} else {
+			$scope.year_list = [];
+		}
+		
+		$scope.add_schedule.year = "";
+	}
+	
+	$scope.getSection = function(financial_year_id, course_id, stream_id, year) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_section",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) {
+				loading.finish();								
+				$scope.section_list = response;
+			});	
+		} else {
+			$scope.section_list = [];
+		}
+	}
+	
+	$scope.getStudentRegistration = function(financial_year_id, course_id, stream_id, year, semester,section,admission_no,rstatus) 
+	{
+		//alert(rstatus);
+		financial_year_id = financial_year_id ? financial_year_id : '-';
+		course_id = course_id ? course_id : '-';
+		stream_id = stream_id ? stream_id : '-';
+		year = year ? year : '-';
+		semester = semester ? semester : '-';
+		section = section ? section : '-';
+		admission_no = admission_no ? admission_no : '-';
+		rstatus = (rstatus != undefined && rstatus != '') ? rstatus : '-';
+		//alert("/student_registration/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + semester + "/" + section+ "/" + admission_no+ "/" + rstatus + "/page1");
+		
+		//if((financial_year_id != '' && course_id != '' && stream_id != '' && year != '' && (semester && semester != '') && (section && section != '') ) || admission_no && admission_no != '')
+		{
+			$location.path("/student_registration/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + semester + "/" + section+ "/" + admission_no+ "/" + rstatus + "/page1");
+		}
+	}
+	
+	$scope.getCity = function(state_id, type) {
+		if(state_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "pincode/get_city",
+				data: {'state_id':state_id},
+			}).success(function(response) { 
+				if(type == 'local'){
+					$scope.local_city_list	=	response;	
+				}else if(type == 'permanent'){
+					$scope.permanent_city_list	=	response;	
+				}else if(type == 'guardian'){
+					$scope.guardian_city_list	=	response;	
+				}
+				loading.finish();
+			});	
+		} else {
+			$scope.states	=	{};
+		}
+	}
+	
+	$scope.getState_City_By_Pincode = function(pincode, type) {		
+		pincode = $.trim(pincode);
+		if(pincode != '') {	
+			loading.start();
+			$http({
+				method: "post",
+				url: "pincode/get_state_city_by_pincode",
+				data: {'pincode':pincode},
+			}).success(function(response) { 
+				if(response[0] == 'success'){
+					if(type == 'local'){
+						$scope.admission.local_state_id	=	response[1];
+						$scope.local_city_list	=	response[3];
+						$scope.admission.local_city_id	=	response[2];						
+					}else if(type == 'permanent'){
+						$scope.admission.permanent_state_id	=	response[1];
+						$scope.permanent_city_list	=	response[3];	
+						$scope.admission.permanent_city_id	=	response[2];
+					}else if(type == 'guardian'){
+						$scope.admission.guardian_state_id	=	response[1];
+						$scope.guardian_city_list	=	response[3];	
+						$scope.admission.guardian_city_id	=	response[2];
+					}
+				}
+				loading.finish();
+			});	
+		} else {
+			$scope.states	=	{};
+		}
+	}
+	
+	$scope.search_enquiry = function(enquiry_no) {
+		enquiry_no = $.trim(enquiry_no);
+		if(enquiry_no != '') {	
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/search_enquiry",
+				data: {'enquiry_no':enquiry_no},
+			}).success(function(response) { //console.log(response);
+				loading.finish(); 
+				if(response[0] == 'success'){
+					$scope.admission = response[1];
+					$scope.local_city_list		=	response[2];
+					$scope.permanent_city_list	=	response[3];
+					$scope.stream_list			=	response[4];
+					$scope.admission.academic = response[5];					
+					$scope.admission.entrance_exam = response[6];					
+					$scope.admission.nationality = 1;
+					$scope.admission.background = 0; 
+					$scope.admission.domicile = 1; 
+					$scope.admission.is_apply_improvement_paper = 0;
+					$scope.admission.is_any_grace = 0;
+					$scope.admission.shift = 'I';
+					$scope.admission.tfw = 0;
+					$scope.admission.is_hostel_required = response[1]['is_require_hostel_accomodation'];
+					$scope.admission.hostel_type = 0;
+					$scope.admission.room_type = 0;
+					$scope.admission.is_transport_required = response[1]['is_require_bus_service'];
+					$scope.admission.route_id = 0; 
+					$scope.admission.stoppage_id = 0;
+					$scope.admission.is_entrance_exam_appeared = 1;
+					$scope.admission.any_enquiry_no = 1;
+				} else {
+					alert(response[0]);	
+				}
+			});	
+		}
+	}
+	
+	$scope.getRouteStoppage = function(fare_slab_id) {		
+		if(fare_slab_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_route_stoppage",
+				data: {'fare_slab_id': fare_slab_id},
+			}).success(function(response) {
+				$scope.stoppage_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.states	=	{};
+		}
+	}
+	
+	$scope.save_holiday = function(holiday) { //console.log(holiday);
+		if(!holiday.occasion || holiday.occasion == '') {
+			$scope.error.occasion = true;
+		} else if(!holiday.start_date || holiday.start_date == '') {
+			$scope.error.start_date = true;
+		} else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/add_holiday",
+				data: holiday
+			}).success(function(response) { //console.log(response);
+				if(response == 'Some error occured. Please try again.') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}else{
+					$location.path("/holiday_list");
+				}
+				loading.finish();				
+			});
+		}
+	}	
+	
+	$scope.change_holiday_status = function(holiday_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "admission/change_holiday_status",
+			data: {'holiday_id':holiday_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			if(response == '') {
+				$scope.holiday_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	
+	
+	
+	//Student photo	
+	var student_photo = $scope.student_photo = new FileUploader({url: $scope.s3url});
+	student_photo.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PNG, .GIF are valied image type.');	
+				return false;
+			}	
+			if(item.size > 1048576){
+				alert('Max Image Size Only 1 MB');	 $scope.isClicked = true;
+				return false;
+			}else {
+				$scope.isClicked = false;
+			}
+			return true;
+		}
+	});
+	student_photo.onAfterAddingFile = function(fileItem) 
+	{
+		var subbucket = $scope.admission.admission_id;		
+		//var subbucket = $scope.admission.first_name ? $scope.admission.first_name : '';
+		//subbucket += $scope.admission.middle_name ? $scope.admission.middle_name : '';
+		//subbucket += $scope.admission.last_name ? $scope.admission.last_name : '';
+		//subbucket += $scope.admission.admission_id;
+		if(subbucket) {
+			subbucket = 'student/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			$scope.admission.student_photo = fileItem.formData[0].key;
+
+
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	student_photo.onSuccessItem = function(fileItem, response, status, headers) 
+	{
+		fileItem.remove();		
+	};
+	
+	//father photo	
+	var father_photo = $scope.father_photo = new FileUploader({url: $scope.s3url});
+	father_photo.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PNG, .GIF are valied image type.');	
+				return false;
+			}	
+			if(item.size > 1048576){
+				alert('Max Image Size Only 1 MB');	 $scope.isClicked = true;
+				return false;
+			}else {
+				$scope.isClicked = false;
+			}
+			return true;
+		}
+	});
+	father_photo.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.admission.admission_id;		
+		//var subbucket = $scope.admission.first_name ? $scope.admission.first_name : '';
+		//subbucket += $scope.admission.middle_name ? $scope.admission.middle_name : '';
+		//subbucket += $scope.admission.last_name ? $scope.admission.last_name : '';
+		//subbucket += $scope.admission.admission_id;
+		if(subbucket) {
+			subbucket = 'student/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			$scope.admission.father_photo = fileItem.formData[0].key;
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	father_photo.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();		
+	};
+	
+	//mother photo	
+	var mother_photo = $scope.mother_photo = new FileUploader({url: $scope.s3url});
+	mother_photo.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PNG, .GIF are valied image type.');	
+				return false;
+			}
+			if(item.size > 1048576){
+				alert('Max Image Size Only 1 MB');	
+				$scope.isClicked = true;
+				return false;
+			}else {
+				$scope.isClicked = false;
+			}
+			return true;
+		}
+	});
+	mother_photo.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.admission.admission_id;		
+		//var subbucket = $scope.admission.first_name ? $scope.admission.first_name : '';
+		//subbucket += $scope.admission.middle_name ? $scope.admission.middle_name : '';
+		//subbucket += $scope.admission.last_name ? $scope.admission.last_name : '';
+		//subbucket += $scope.admission.admission_id;
+		if(subbucket) {
+			subbucket = 'student/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			$scope.admission.mother_photo = fileItem.formData[0].key;
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	mother_photo.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+	};
+	
+	//guardian photo
+	var guardian_photo = $scope.guardian_photo = new FileUploader({url: $scope.s3url});
+	guardian_photo.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PNG, .GIF are valied image type.');	
+				return false;
+			}
+			if(item.size > 1048576){
+				alert('Max Image Size Only 1 MB');	
+				$scope.isClicked = true;
+				return false;
+			}else {
+				$scope.isClicked = false;
+			}
+			return true;
+		}
+	});
+	guardian_photo.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.admission.admission_id;		
+		//var subbucket = $scope.admission.first_name ? $scope.admission.first_name : '';
+		//subbucket += $scope.admission.middle_name ? $scope.admission.middle_name : '';
+		//subbucket += $scope.admission.last_name ? $scope.admission.last_name : '';
+		//subbucket += $scope.admission.admission_id;
+		if(subbucket) {
+			subbucket = 'student/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};	
+	guardian_photo.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.admission.guardian_photo = fileItem.formData[0].key;
+	};
+	
+	$scope.search_admission = function(admission){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		name = admission.name ? admission.name : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		semester = admission.semester ? admission.semester : '-';
+		lateral_entry = admission.lateral_entry ? admission.lateral_entry : '-';
+		tfw = admission.tfw != '0' ? admission.tfw : '-';
+		studentshift = admission.studentshift ? admission.studentshift : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		status = admission.status ? admission.status : '-';
+				
+		$location.path("/admission_list/" + admission_no + "/" + roll_no + "/" + name + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + lateral_entry + "/" + tfw + "/" + studentshift + "/" + admission_status + "/" + status + "/page1");
+	}
+	
+	$scope.export_excel = function(admission, base_url, with_photo){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		name = admission.name ? admission.name : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		semester = admission.semester ? admission.semester : '-';
+		lateral_entry = admission.lateral_entry ? admission.lateral_entry : '-';
+		tfw = admission.tfw != '0' ? admission.tfw : '-';
+		studentshift = admission.studentshift ? admission.studentshift : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		status = admission.status ? admission.status : '-';
+		
+		window.open(base_url + 'admission/export_excel/' + admission_no + "/" + roll_no + "/" + name + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + lateral_entry + "/" + tfw + "/" + studentshift + "/" + admission_status + "/-/-/-/-/" + with_photo + "/" + status);
+		
+		/*loading.start();
+		$http({
+			method: "post",
+			url: "admission/export_excel",
+			data: admission,
+		}).success(function(response){ 
+			loading.finish();
+			if(response != ''){
+				window.open(response);
+			}
+		});	*/
+	}
+	//***********************************************created by vinay***************************************************************************
+	$scope.export_bank_detail = function(admission, base_url){              // Export bank detail
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		name = admission.name ? admission.name : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		semester = admission.semester ? admission.semester : '-';
+		lateral_entry = admission.lateral_entry ? admission.lateral_entry : '-';
+		tfw = admission.tfw != '0' ? admission.tfw : '-';
+		studentshift = admission.studentshift ? admission.studentshift : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		status = admission.status ? admission.status : '-';
+		
+		window.open(base_url + 'admission/export_bank_detail/' + admission_no + "/" + roll_no + "/" + name + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + lateral_entry + "/" + tfw + "/" + studentshift + "/" + admission_status + "/" + status);
+	}
+		
+	//******************************************************************************************************************************************
+	$scope.search_reporting_student = function(admission){
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		
+		$location.path("/student_reporting/" + course_id + "/" + stream_id + "/" + admitted_year + "/page1");
+	}
+	
+	$scope.markReported = function(admission_id, admission_no, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "admission/mark_reported",
+			data: {'admission_id':admission_id, 'admission_no':admission_no}
+		}).success(function(response){
+			loading.finish();
+			if(response != ''){
+				$scope.admission_list[index].password = response;
+			}else{
+				alert('Some error occured. Please try again');
+			}
+		});	
+	}
+	
+	$scope.search_block_admission = function(admission_no){ //console.log(admission_no);
+		admission_no = admission_no ? admission_no : '-';
+		if(admission_no != '-'){
+			$location.path("/search_block_admission/" + admission_no);
+		}else $location.path("/block_admission");
+	}
+	
+	$scope.search_branch_setting = function(admission){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		name = admission.name ? admission.name : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		semester = admission.semester ? admission.semester : '-';
+		lateral_entry = admission.lateral_entry ? admission.lateral_entry : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+
+		
+		$location.path("/branch_setting/" + admission_no + "/" + roll_no + "/" + name + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + lateral_entry+ "/" + admission_status + "/page1");		
+	}
+	
+	$scope.std = {};
+	$scope.update_branch = function(std) { 
+		std = angular.copy(std);		
+		loading.start();
+		$http({
+			method: "post",
+			url: "admission/update_branch",
+			data: std,
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {	
+				alert('Batch updated successfully.');
+				//$scope.search_branch_setting(admission);
+				$location.path("/branch_setting");
+			} else if(response == 'Some error occured. Please try again.') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert('Some error occured. Please try again.');
+			}				
+		});		
+	}
+	
+	$scope.add_rfid_request = function(request) {
+		if(!request.descr || request.descr == '') {
+			$scope.error.descr = true;	
+			return false;
+		} else {
+			$scope.error = {};
+			loading.start();									
+			$http({
+				method: "post",
+				url: "admission/add_rfid_request",
+				data: request,
+			}).success(function(response) {
+				loading.finish();
+				response = $.trim(response);
+				if(response == '0') {
+					alert("Some error occured. Please try again!!!");
+				} else {
+					$location.path("/rfid_request");
+				}
+			});
+		}
+	}
+	
+	$scope.close_rfid_request = function(req_id) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "admission/close_rfid_request",
+			data: {'req_id':req_id}
+		}).success(function(response) {
+			loading.finish();
+			if(response[0] == '0') {
+				alert('Some error occured. Please try again.');	
+			} else {
+				$location.path("/rfid_request");
+			}
+		});
+	}
+	
+	/*function for save export fields for admission list*/
+	$scope.export_fields = {};
+	$scope.save_export_fields = function(export_fields) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "admission/save_export_fields",
+			data: export_fields
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				alert('Export Fields successfully updated.');	
+			} else if(response == 0)  {
+				alert('Some error occured. Please try again.');	
+			}
+		});
+	}
+	
+	$scope.search_admission_archive = function(admission){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		name = admission.name ? admission.name : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		semester = admission.semester ? admission.semester : '-';
+		lateral_entry = admission.lateral_entry ? admission.lateral_entry : '-';
+		tfw = admission.tfw != '0' ? admission.tfw : '-';
+		studentshift = admission.studentshift ? admission.studentshift : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		status = admission.status ? admission.status : '-';
+				
+		$location.path("/admission_archive_list/" + admission_no + "/" + roll_no + "/" + name + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + lateral_entry + "/" + tfw + "/" + studentshift + "/" + admission_status + "/" + status + "/page1");
+	}
+	
+	$scope.export_excel_archive = function(admission, base_url, with_photo){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		name = admission.name ? admission.name : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		semester = admission.semester ? admission.semester : '-';
+		lateral_entry = admission.lateral_entry ? admission.lateral_entry : '-';
+		tfw = admission.tfw != '0' ? admission.tfw : '-';
+		studentshift = admission.studentshift ? admission.studentshift : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		status = admission.status ? admission.status : '-';
+		
+		window.open(base_url + 'admission/export_excel_archive/' + admission_no + "/" + roll_no + "/" + name + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + lateral_entry + "/" + tfw + "/" + studentshift + "/" + admission_status + "/-/-/-/-/" + with_photo + "/" + status);		
+	}
+	
+	$scope.search_section_setting = function(admission){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		name = admission.name ? admission.name : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		semester = admission.semester ? admission.semester : '-';
+		lateral_entry = admission.lateral_entry ? admission.lateral_entry : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		section_status = admission.section_status ? admission.section_status : '-';
+		
+		$location.path("/section_setting/" + admission_no + "/" + roll_no + "/" + name + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + lateral_entry+ "/" + admission_status+ "/" + section_status + "/page1");		
+	}
+	
+	$scope.std = {};
+	$scope.update_section = function(std) { 
+	alert('update_section');
+		std = angular.copy(std);		
+		loading.start();
+		$http({
+			method: "post",
+			url: "admission/update_section",
+			data: std,
+		}).success(function(response) { onsole.log(response);
+			loading.finish();
+			if(response == 1) {	
+				alert('Section updated successfully.');
+				$location.path("/section_setting");
+			} else if(response == 'Some error occured. Please try again.') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert('Some error occured. Please try again.');
+			}				
+		});		
+	}
+	
+	$scope.selectAll = function(){
+		//console.log($scope.admission_status['current_status']);
+		angular.forEach($scope.std.section_setting, function(value, key) {
+			//console.log(key + ': ' + value.id);
+			value.id = $scope.selectedAll;
+			
+		});
+	}
+	
+	$scope.export_student_registration = function(add_schedule, base_url) {
+		financial_year_id = add_schedule.financial_year_id ? add_schedule.financial_year_id : '-';
+		course_id = add_schedule.course_id ? add_schedule.course_id : '-';
+		stream_id = add_schedule.stream_id ? add_schedule.stream_id : '-';
+		admitted_year = add_schedule.year ? add_schedule.year : '-';
+		semester = add_schedule.semester ? add_schedule.semester : '-';
+		section = add_schedule.section ? add_schedule.section : '-';
+		page = add_schedule.page ? add_schedule.page : '1';
+		
+		if(financial_year_id != '-' && course_id != '-' && stream_id != '-' && admitted_year != '-' && semester != '-') {
+			window.open(base_url + 'admission/export_student_registration/' + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + section + "/" + page);
+		}
+	}	
+	
+	$scope.admission.excel_file = {};
+	//starting of Excel File
+	$scope.$watch('admission.excel_file', function() {
+		if($scope.admission.excel_file){										   
+			for (var i = 0; i < $scope.admission.excel_file.length; i++) {
+				var item = $scope.admission.excel_file[i];
+				var type = '|' + item.name.slice(item.name.lastIndexOf('.') + 1) + '|';
+				if('|xls|'.indexOf(type) === -1){
+					alert('Invalid File.');	
+					$scope.admission.excel_file.length = 0;
+					return false;
+				}	
+				$scope.fd.append('excel_file['+i+']', $scope.admission.excel_file[i]);
+			}
+		}
+	});
+	
+	$scope.upload_roll_no = function(admission) {		//console.log(pre_qual_exam);
+		$scope.error = {};
+		if(!admission.financial_year_id ||admission.financial_year_id == '') {
+			$scope.error.financial_year_id = true;
+		}else if(!admission.course_id || admission.course_id == '') {
+			$scope.error.course_id = true;
+		}else if(!admission.admitted_year || admission.admitted_year == '') {
+			$scope.error.admitted_year = true;
+		} else if(admission.excel_file.length != 1) {
+            $scope.error.excel_file = true;
+        } else {
+			var form_data = objectToQueryString(admission);	
+            loading.start();									
+			$http({
+				method: "post",
+				url: "admission/assign_roll_no?" + form_data,
+				data: $scope.fd,
+				transformRequest: angular.identity,
+           		headers: {'Content-Type': undefined}
+			}).success(function(response) {	
+				if(response == 'Updated Successfully'){
+					alert(response);
+					$location.path("/assign_roll_no");
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+					alert(response);
+					
+				}			
+				loading.finish();				
+			});
+		}
+	}	
+	
+	/*WORK DONE BY VINEET KRISHNA PAL START*/	
+	$scope.save_permitted_fields = function(permitted_fields) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "admission/save_permitted_fields",
+			data: permitted_fields
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				alert('Permitted Fields successfully updated.');	
+			} else if(response == 0)  {
+				alert('Some error occured. Please try again.');	
+			}
+		});
+	}
+	
+	$scope.update_self_profile = function(admission, permitted_fields){//console.log(admission);
+		$scope.error ={};
+		$error = 0;	
+		if((!admission.student_mobile || admission.student_mobile == '') && permitted_fields.mobile_number == '1') 	{
+			$scope.error.student_mobile = true;					
+			$error++;
+		}
+		if((!admission.email || admission.email == '') && permitted_fields.email == '1') {
+			$scope.error.email = true;	
+			$error++;
+		}else if(!$scope.validateEmail(admission.email) && permitted_fields.email == '1'){				
+			$scope.error.email_invalid = true;
+			$error++;
+		}
+		if((!admission.local_address || admission.local_address == '') && permitted_fields.address == '1'){
+			$scope.error.local_address = true;	
+			$error++;
+		}
+		if((!admission.local_state_id || admission.local_state_id == '') && permitted_fields.address == '1'){
+			$scope.error.local_state_id = true;	
+			$error++;
+		}
+		if((!admission.local_city_id || admission.local_city_id == '') && permitted_fields.address == '1'){
+			$scope.error.local_city_id = true;	
+			$error++;
+		}
+		if(admission.father_email  && permitted_fields.father_email == '1'){
+			if(!$scope.validateEmail(admission.father_email)){
+				$scope.error.father_email_invalid = true;
+				$error++;
+			}
+		}
+		/*if(!admission.aadhaar_card_no || admission.aadhaar_card_no == '') {
+			$scope.error.aadhaar_card_no = true;	
+			$error++;
+		}*/
+		if($error > 0){
+			return false;	
+		}else{	
+			$scope.isClicked = true;	
+			admission.is_father_photo_upload = 0;
+			admission.is_mother_photo_upload = 0;
+			admission.is_student_photo_upload = 0;
+			if($scope.father_photo.queue != ''){	
+				admission.is_father_photo_upload = 1;
+				angular.forEach($scope.father_photo.queue, function(item) {
+					item.upload();
+				});
+				admission.father_photo = $scope.admission.father_photo;
+			}
+			if($scope.mother_photo.queue != ''){
+				admission.is_mother_photo_upload = 1;	
+				angular.forEach($scope.mother_photo.queue, function(item) {
+					item.upload();
+				});
+				admission.mother_photo = $scope.admission.mother_photo;
+			}
+			if($scope.student_photo.queue != ''){
+				admission.is_student_photo_upload = 1;	
+				angular.forEach($scope.student_photo.queue, function(item) {
+					item.upload();
+				});
+				admission.student_photo = $scope.admission.student_photo;
+			}
+            loading.start();	
+			$http({
+				method: "post",
+				url: "admission/update_self_profile",
+				data: admission
+			}).success(function(response) {	//console.log(response);
+				loading.finish();
+				$scope.isClicked = false;	
+				if(response[0] == '1') {
+					alert(response[1]);
+					$location.path("/view_admission");
+				} else {
+					alert(response[1]);
+					window.location.reload();
+
+				}
+			});
+		}
+	}
+	/*
+	//father photo	
+	var edit_father_photo = $scope.edit_father_photo = new FileUploader({url: $scope.s3url});
+	edit_father_photo.filters.push({
+		name: 'imageFilter',
+		fn: function(item , options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PNG, .GIF are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	edit_father_photo.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.admission.admission_id;		
+		//var subbucket = $scope.admission.first_name ? $scope.admission.first_name : '';
+		//subbucket += $scope.admission.middle_name ? $scope.admission.middle_name : '';
+		//subbucket += $scope.admission.last_name ? $scope.admission.last_name : '';
+		//subbucket += $scope.admission.admission_id;
+		if(subbucket) {
+			subbucket = 'student/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	edit_father_photo.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.admission.father_photo = fileItem.formData[0].key;
+	};
+	/////////////////
+	var guardian_photo = $scope.guardian_photo = new FileUploader({url: $scope.s3url});	
+	guardian_photo.filters.push({
+		name: 'imageFilter',
+		fn: function(item , options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			if('|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	guardian_photo.onAfterAddingFile = function(fileItem) { //console.log(fileItem);
+		if($scope.admission.admission_id) {
+			var subbucket = 'hostel/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = $scope.admission.admission_id+'_G_'+Math.round(new Date().getTime() / 1000) + '.' + filename;
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			$scope.hostel_registration.guardian_photo_path = fileItem.formData[0].key;
+		} else {
+			alert('some error occured!!!!!');
+		}
+	};
+	guardian_photo.onProgressItem = function(fileItem, progress) {
+		//if(!$scope.validate_hostel_registration(true)) fileItem.cancel();
+	};
+	guardian_photo.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		//console.log($scope.hostel_registration);
+	};
+	*/
+	
+	
+	
+	//////////////////
+	
+	$scope.check_student_email = function(email){
+		if(email != ''){
+			loading.start();
+				$http({
+				method: "post",
+				url: "admission/check_student_email",
+				data: {'email': email}, 	
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response[0] == '1') {
+					$scope.admission.email = '';
+					alert(response[1]);			
+				} 
+			});
+		}
+	}
+	
+	$scope.btn_disabled= function(value){
+		$scope.mail_check = value;
+	}	
+	/*WORK DONE BY VINEET KRISHNA PAL END*/
+	
+	//Created by darshna jaiswal	
+	$scope.admission_data = {};
+	$scope.save_adhar_details = function(admission_data){	
+		if($scope.validate_aadhar_submitted(admission_data)) { //console.log(admission_data);
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/update_aadhaar_number",
+				data: admission_data
+			}).success(function(response) {  //console.log(response);
+				loading.finish();
+				$scope.isClicked = false;
+				if(response[0] == '1') {
+					alert(response[1]);
+					$scope.admission_data = {};
+					window.location.href = response[2];
+					window.location.reload(true);
+					$scope.error = {};
+				} else if(response[0] == '0') {
+					alert(response[1]);
+				}
+			});
+		}
+	}
+	
+	$scope.validate_aadhar_submitted = function(admission_data) { 
+		$scope.error = {};
+		$error = 0;
+		if(!admission_data.aadhaar_no || admission_data.aadhaar_no == ''){
+			$scope.error.aadhaar_no = true;
+			$error++;
+		} 
+		if(!student_adhar.queue || student_adhar.queue.length == 0){
+			$scope.error.aadhaar_photo = true;
+			$error++;
+		} 		
+		if($error > 0) return false;
+		$scope.isClicked = true;
+		return true;
+	}
+	
+	//student adhar	
+	var student_adhar = $scope.student_adhar = new FileUploader({url: $scope.s3url});
+	student_adhar.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			if('|jpg|jpeg|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG are valied image type.');	
+				return false;
+			}
+			if(item.size > 1048576){
+				alert('Max Adhar Size Only 1 MB');	
+				$scope.isClicked = true;
+				return false;
+			}else {
+				$scope.isClicked = false;
+			}
+			return true;
+		}
+	});
+	student_adhar.onAfterAddingFile = function(fileItem) { //console.log(fileItem);
+		var subbucket = $scope.admission.first_name ? $scope.admission.first_name : '';
+		subbucket += $scope.admission.middle_name ? $scope.admission.middle_name : '';
+		subbucket += $scope.admission.last_name ? $scope.admission.last_name : '';
+		subbucket += $scope.admission.admission_id;
+		if(subbucket) {
+			subbucket = 'student/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			$scope.admission_data.adhar_photo = fileItem.formData[0].key;
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};	
+	student_adhar.onProgressItem = function(fileItem, progress) {		
+		if(!$scope.validate_aadhar_submitted($scope.admission_data)) fileItem.cancel();
+	};
+	student_adhar.onSuccessItem = function(fileItem, response, status, headers) {
+		$scope.save_adhar_details($scope.admission_data);fileItem.remove();
+	};
+		
+	$scope.openAmazonFile = function(key) {
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key};
+		s3.getSignedUrl('getObject', params, function (err, url) {
+			if(err) alert('No such key exist!!!');
+			else window.open(url);
+		});
+	}
+	
+	var admission_adhar = $scope.admission_adhar = new FileUploader({url: $scope.s3url});
+	admission_adhar.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			if('|jpg|jpeg|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG are valied image type.');	
+				return false;
+			}	
+			if(item.size > 1048576){
+				alert('Max Admission Adhar Size Only 1 MB');	
+				$scope.isClicked = true;
+				return false;
+			}else {
+				$scope.isClicked = false;
+			}
+			return true;
+		}
+	});
+	admission_adhar.onAfterAddingFile = function(fileItem) { //console.log(fileItem);
+		var subbucket = $scope.admission.first_name ? $scope.admission.first_name : '';
+		subbucket += $scope.admission.middle_name ? $scope.admission.middle_name : '';
+		subbucket += $scope.admission.last_name ? $scope.admission.last_name : '';
+		subbucket += $scope.admission.admission_id;
+		if(subbucket) {
+			subbucket = 'student/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};	
+	admission_adhar.onProgressItem = function(fileItem, progress) {		
+		//fileItem.cancel();
+	};
+	admission_adhar.onSuccessItem = function(fileItem, response, status, headers) {
+		$scope.admission.aadhaar_card_file_name = fileItem.formData[0].key;
+		//console.log($scope.admission.aadhaar_card_file_name);
+		fileItem.remove();
+	};
+	
+	$scope.skip_fill_aadhar_form = function() {	
+		$http({
+			method: "post",
+			url: "admission/skip_fill_aadhar_form"
+		}).success(function(response) {  //console.log(response);
+			window.location.href = response[1];
+			window.location.reload(true);
+		});
+		
+	}
+	
+	$scope.delete_student_photo = function(id)
+	{	
+		if (confirm('Are you sure ?')) {
+			if(id) {
+			loading.start();									
+				$http({
+					method: "post",
+					url: "admission/delete_student_photo",
+					data: {'id':id}
+				}).success(function(response) {	//console.log(response);
+					loading.finish();
+					if(response[0] == '1') {
+						$scope.admission.photo = '';
+						alert(response[1]);
+						
+					} else {
+						alert(response[1]);
+					}
+				});
+			
+			}
+		}
+	}
+	/*Start bank account here*/
+	$scope.bank_account_popup = false;	
+	$scope.bank_account = {};	
+	$scope.showBankAccountPopup = function(admission){
+		$scope.bank_account_popup = true;
+		$scope.bank_account.admission_id	= admission.admission_id;
+		$scope.bank_account.bank_name		= admission.bank_name;
+		$scope.bank_account.bank_branch_name= admission.bank_branch_name;
+		$scope.bank_account.bank_account_no	= admission.bank_account_no;
+		$scope.bank_account.ifsc_code		= admission.ifsc_code;
+		$scope.bank_account.benificiary_name= admission.benificiary_name;
+		$scope.bank_account.contact_no		= admission.contact_no;
+	}	
+	
+	$scope.hideBankAccountPopup = function(){
+		$scope.bank_account_popup = false;
+		$scope.bank_account = {};
+	}
+	
+	$scope.apply_bank_account = function(bank_account){
+		$scope.error		= {}; var error = 0; $scope.message = '';
+		if(!bank_account.benificiary_name || bank_account.benificiary_name == '') {
+			$scope.error.benificiary_name = true;
+			error++;
+		}
+		if(!bank_account.bank_account_no || bank_account.bank_account_no == '') {
+			$scope.error.bank_account_no = true;
+			error++;
+		}
+		if(!bank_account.ifsc_code || bank_account.ifsc_code == '') {
+			$scope.error.ifsc_code = true;
+			error++;
+		}
+		if(!bank_account.bank_name || bank_account.bank_name == '') {
+			$scope.error.bank_name = true;
+			error++;
+		}
+		if(!bank_account.bank_branch_name || bank_account.bank_branch_name == '') {
+			$scope.error.bank_branch_name = true;
+			error++;
+		}
+		if(!bank_account.contact_no || bank_account.contact_no == '') {
+			$scope.error.contact_no = true;
+			error++;
+		}
+		
+		if(error == 0){
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/apply_bank_account",
+				data: bank_account
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response[0] == 1) {
+					$scope.admission.benificiary_name = bank_account.benificiary_name.toUpperCase();
+					$scope.admission.bank_account_no = bank_account.bank_account_no;
+					$scope.admission.ifsc_code = bank_account.ifsc_code.toUpperCase();
+					$scope.admission.bank_name = bank_account.bank_name;
+					$scope.admission.bank_branch_name = bank_account.bank_branch_name;
+					$scope.admission.contact_no = bank_account.contact_no;
+					$scope.admission.is_edit_bank_detail = '1';
+					$scope.hideBankAccountPopup();	
+					alert(response[1]);
+				} else  if(response[0] == 0) {
+					$scope.error = true;
+					$scope.message = response[1];
+				}			
+				loading.finish();
+			});
+		}
+	}
+		
+	$scope.enable_to_bank_edit = function(admission_id, is_edit_bank_detail, index) {
+		if(confirm('Are you sure to revert to edit bank account detail?')){
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/enable_to_bank_edit",
+				data: {'admission_id':admission_id, 'is_edit_bank_detail':is_edit_bank_detail}
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response == 1) {
+					$scope.admission_list[index].is_edit_bank_detail = '0';
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+
+	$scope.tfw_ews = function(TfwAwsValue){ // add by shashikant for validation 
+		if(TfwAwsValue == 'ews') {
+			$scope.admission.tfw= 0;
+		}else {
+			$scope.admission.ews = 0;
+		}
+	}
+	
+	/*End here*/
+	//***************This function created by Vinay for close admission ********************
+	$scope.admission_close = function(){ 
+		loading.start();
+			$http({
+				method: "post",
+				url: "admission/admission_close"
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response[0] == '1')
+				{
+					document.getElementById('popup-hop_con').style.display = 'block';
+					document.getElementById('popup-hop-con-bg').style.display = 'block';
+				}else
+				{
+					document.getElementById('popup-hop').style.display = 'block';
+					document.getElementById('popup-hop-bg').style.display = 'block';
+				}
+			});
+	}
+	$scope.hide_popup = function(p1, p2){ 
+		document.getElementById(p1).style.display = 'none';
+		document.getElementById(p2).style.display = 'none';
+	}
+	$scope.update_open_admission = function(){ 
+		loading.start();
+		$http({
+			method: "post",
+			url: "admission/update_open_admission"
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1)
+			{
+				alert("Admission Close Successfully");
+				document.getElementById('popup-hop_con').style.display = 'none';
+				document.getElementById('popup-hop-con-bg').style.display = 'none';
+			}else
+			{
+				alert(response);
+			}
+		});
+	}
+	//***************************************************************************
+	
+	$scope.partial_payment_popup = false;	
+	$scope.partial_payment_list 	= {};
+	$scope.partial_payment_detail 	= {};
+	
+	$scope.hidePartial_payment_popup = function(){
+		$scope.error		= {};
+		$scope.partial_payment_detail.amount 	= 0;
+		$scope.partial_payment_detail.next_payment_date 	= '';
+		$scope.partial_payment_popup = false;
+	}
+	
+	$scope.showPartial_payment_popup = function(){
+		$scope.partial_payment_popup = true;
+	}
+	
+	$scope.add_partial_payment = function(partial_payment_detail){ //console.log(partial_payment_detail);
+		loading.start();
+		$http({
+			method: "post",
+			url: "admission_fee/add_partial_payment",
+			data : partial_payment_detail
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response[0] == 1){
+				$scope.partial_payment_list = response[1];
+				alert("Request created successfully");
+			}else if(response[0] == 0){
+				alert(response[1]);
+			}
+		});
+	}
+	
+	$scope.call_url = function(url){
+		if($.trim(url) != ''){
+			window.open(url);	
+		}
+	}
+	
+	$scope.set_advance_amount = function(val){
+		$scope.admission_fee.amount = val;
+	}
+	//add fee_reciept print at Student portal here	
+	$scope.openFeeReceiptForPrinting = function(base_url, admission_fee_id) 
+	{
+		//alert('in admission');
+		window.open(base_url + 'admission_fee/print_admission_fee_receipt/' + admission_fee_id);
+	}
+	
+	//End here
+	$scope.upload_medical_policy = function(admission) 
+	{		//console.log(pre_qual_exam);
+	
+		$scope.error = {};
+		/*if(!admission.financial_year_id ||admission.financial_year_id == '') {
+			$scope.error.financial_year_id = true;
+		}else if(!admission.course_id || admission.course_id == '') {
+			$scope.error.course_id = true;
+		}else if(!admission.admitted_year || admission.admitted_year == '') {
+			$scope.error.admitted_year = true;
+		} else */if(admission.excel_file.length != 1) {
+            $scope.error.excel_file = true;
+        }else if(!admission.medical_policy_download_url || admission.medical_policy_download_url == '') {
+			$scope.error.medical_policy_download_url = true;
+		} else {
+			var form_data = objectToQueryString(admission);	
+            loading.start();									
+			$http({
+				method: "post",
+				url: "admission/assign_medical_policy?" + form_data,
+				data: $scope.fd,
+				transformRequest: angular.identity,
+           		headers: {'Content-Type': undefined}
+			}).success(function(response) {	
+				if(response == 'Updated Successfully'){
+					alert(response);
+					$location.path("/assign_medical_policy");
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+					alert(response);
+					
+				}			
+				loading.finish();				
+			});
+		}
+	}
+	
+}]);
+
+

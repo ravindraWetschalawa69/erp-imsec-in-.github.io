@@ -1,0 +1,268 @@
+angular.module("User").controller('training_material', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+	$scope.training_material = {};
+	$scope.training_material_list = {};
+	$scope.course_list	=	{};
+	$scope.stream_list	=	{};	
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";	
+	//$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imspgdmerp/';
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.isClicked = false;
+
+	$scope.training_material.file_name = {};
+	$scope.maxSemester	=	0;
+	
+	$scope.getStream = function(course_id, type, searchType) {		
+		if(type == 'true'){
+			res = course_id.split("#");	
+			course_id = res[0];
+			$scope.maxSemester	=	res[1];			
+		}
+		if(course_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "training_material/get_stream",
+				data: {'course_id':course_id},
+			}).success(function(response) {
+				loading.finish();				
+				$scope.stream_list	=	response[0];
+				$scope.subject_list	=	{};				
+				$scope.training_material.stream_id = response[1];				
+				$scope.search_training_material($scope.training_material);
+			});	
+		}else{
+			$scope.stream_list	=	{};
+			$scope.subject_list	=	{};
+			$scope.maxSemester	=	0;
+		}
+	}
+	
+	$scope.getSubject = function(course_id, stream_id, no_of_semester){
+		if($.trim(course_id) != '' && $.trim(stream_id) != '' && no_of_semester > 0 ){
+			res = course_id.split("#");	
+			course_id = res[0];
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "training_material/get_subject",
+				data: {'course_id':course_id, 'stream_id':stream_id, 'no_of_semester':no_of_semester},
+			}).success(function(response) { console.log(response);
+				$scope.subject_list	=	response;
+				loading.finish();
+			});	
+		}
+	}
+	
+	$scope.search_training_material = function(training_material)
+	{
+		console.log(training_material);
+		//alert('search_training_material');
+		training_material = angular.copy(training_material);
+		if(training_material.course_id != '')
+		{
+			res = training_material.course_id.split("#");	
+			course_id = res[0];
+			
+				no_of_semester 	= training_material.no_of_semester ? training_material.no_of_semester : '-';
+				stream_id 		= training_material.stream_id ? training_material.stream_id : '-';
+				subject_id 		= training_material.subject_id ? training_material.subject_id : '-';
+				tags 			= training_material.tags ? training_material.tags : '-';
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "training_material/search_training_material",
+				data: {'course_id':course_id, 'stream_id':stream_id, 'no_of_semester' : no_of_semester, 'subject_id' : subject_id, 'unit' : tags },
+			}).success(function(response) {
+				$scope.training_material_list	=	response;
+				loading.finish();
+			});
+		}
+	}
+	
+	$scope.isvalid_training_material = function (){
+		noOfErrors = 0;
+		if(!$scope.training_material.course_id || $scope.training_material.course_id == '') {
+			$scope.error.course_id = true; 
+			noOfErrors++;
+		}
+		if(!$scope.training_material.stream_id || $scope.training_material.stream_id == '') {
+			$scope.error.stream_id = true;
+			noOfErrors++;
+		}
+		if(!$scope.training_material.no_of_semester || $scope.training_material.no_of_semester == '') {
+			$scope.error.no_of_semester = true;
+			noOfErrors++;
+		}
+		if(!$scope.training_material.subject_id || $scope.training_material.subject_id == '') {
+			$scope.error.subject_id = true;
+			noOfErrors++;
+		}
+		if(!$scope.training_material.title || $scope.training_material.title == '') {
+			$scope.error.title = true;
+			noOfErrors++;
+		}
+		if(!$scope.training_material.tags || $scope.training_material.tags == '') {
+			$scope.error.tags = true;
+			noOfErrors++;			
+		}
+		if(noOfErrors > 0)return false;
+		else return true;
+	}
+	
+	$scope.save = function (training_material){ console.log(training_material);
+		if($scope.isvalid_training_material()){
+			loading.start();
+			$http({
+				method: "post",
+				url: "training_material/add_training_material",
+				data: training_material
+			}).success(function(response) { 
+				if(response == 'Some error occured. Please try again.') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}else{
+					$location.path("/training_material_list");
+				}
+				loading.finish();				
+			});
+		}
+	
+	}
+	
+	$scope.getSubbucket = function()
+	{
+		/*alert('getSubbucket');
+		console.log($scope.training_material);
+		return false;*/
+		if($scope.isvalid_training_material())
+		{
+			res = $scope.training_material.course_id.split("#");	
+			course_id = res[0];
+			for(i in $scope.course_list){
+				if(course_id == $scope.course_list[i].course_id){
+					$scope.training_material.course_name = 	$scope.course_list[i].course_name;
+				}
+			}
+			for(i in $scope.stream_list){
+				if($scope.training_material.stream_id == $scope.stream_list[i].stream_id){
+					$scope.training_material.stream_name = 	$scope.stream_list[i].stream_name;
+				}
+			}
+			
+			for(i in $scope.subject_list){
+				if($scope.training_material.subject_id == $scope.subject_list[i].subject_id){
+					$scope.training_material.subject_name = 	$scope.subject_list[i].subject_name;
+				}
+			}		
+			course_name = $scope.training_material.course_name.replace(/[^a-zA-Z0-9]/g, '_');
+			stream_name = $scope.training_material.stream_name.replace(/[^a-zA-Z0-9]/g, '_');
+			subject_name = $scope.training_material.subject_name.replace(/[^a-zA-Z0-9]/g, '_');
+			semester	=	'semester_'+$scope.training_material.no_of_semester;
+			var subbucket = course_name+'/'+stream_name+'/'+semester+'/'+subject_name;
+			return subbucket;
+		}else return 0;
+	}
+	
+	// CALLBACKS
+	var uploader = $scope.uploader = new FileUploader({url: $scope.s3url});	
+	
+	// FILTERS
+	uploader.filters.push({
+		name: 'fileFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
+			var res = '|doc|docx|pdf|xls|xlsx|ppt|pptx|jpg|png|jpeg|gif|'.indexOf(type);		
+			if('|pdf|vnd.ms-excel|vnd.openxmlformats-officedocument.spreadsheetml.sheet|vnd.openxmlformats-officedocument.wordprocessingml.document|msword|vnd.openxmlformats-officedocument.presentationml.presentation|vnd.ms-powerpoint|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly WORD, EXCEL, PPT, IMAGES(.JPEG, .JPG, .PNG, .GIF) are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	
+	uploader.onWhenAddingFileFailed = function(item /*{File|FileLikeObject}*/, filter, options) {
+		//console.info('onWhenAddingFileFailed', item, filter, options);
+	};
+	uploader.onAfterAddingFile = function(fileItem) {
+		//console.log($scope.training_material);
+		//fileItem.formData.push($scope.training_material);
+		
+		var subbucket = $scope.getSubbucket();
+		if(subbucket) {
+			//alert(subbucket);
+			subbucket = 'training_material/' + subbucket + '/';
+			//subbucket = 'training_material/';
+			var filename = fileItem.file.name.split(".");
+			extension = filename[filename.length - 1];
+			
+			var currentdate = new Date();
+			filename = currentdate.getDate() + '' +(currentdate.getMonth()+1) + '' + currentdate.getFullYear() + "_" + currentdate.getHours() + '' + currentdate.getMinutes() ;				
+			filename += '.'+extension;
+			console.log(subbucket+filename);
+			//alert(subbucket+filename);
+			$scope.training_material.subbucket	= subbucket;
+			//$scope.training_material.name		= fileItem.file.name;
+			$scope.training_material.name		= $scope.training_material.title+'_unit'+$scope.training_material.tags+'.'+extension;
+			//alert(filename);
+			//$scope.training_material.file_name=filename;
+			$scope.training_material.file_name = $scope.training_material.title+'_unit'+$scope.training_material.tags+'.'+extension;
+			
+			//alert(subbucket + $scope.training_material.file_name);
+			
+			fileItem.formData.push({'key': subbucket + $scope.training_material.file_name, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			
+		} else {
+			alert('some error occured!!!!!');	
+		} 
+	};
+	uploader.onAfterAddingAll = function(addedFileItems) {
+		//console.info('onAfterAddingAll', addedFileItems);
+	};
+	uploader.onBeforeUploadItem = function(item) {
+		//console.info('onBeforeUploadItem', item);
+	};
+	uploader.onProgressItem = function(fileItem, progress) {
+		//console.info('onProgressItem', fileItem, progress);
+	};
+	uploader.onProgressAll = function(progress) {
+		//console.info('onProgressAll', progress);
+	};
+	uploader.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		//console.info('onSuccessItem', fileItem, response, status, headers);
+		
+		//$scope.training_material.file_name = fileItem.formData[0].key;
+		//===========================================================================
+		$scope.save($scope.training_material);
+	};
+	uploader.onErrorItem = function(fileItem, response, status, headers) {
+		//console.info('onErrorItem', fileItem, response, status, headers);
+	};
+	uploader.onCancelItem = function(fileItem, response, status, headers) {
+		//console.info('onCancelItem', fileItem, response, status, headers);
+	};
+	uploader.onCompleteItem = function(fileItem, response, status, headers) {
+		//console.info('onCompleteItem', fileItem, response, status, headers);
+	};
+	uploader.onCompleteAll = function() {
+		//console.info('onCompleteAll');
+	};
+	
+	$scope.openAmazonFile = function(key) {
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key};
+		s3.getSignedUrl('getObject', params, function (err, url) {
+			if(err) alert('No such key exist!!!');
+			else window.open(url);
+		});
+	}
+	
+	
+}]);

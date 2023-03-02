@@ -1,0 +1,49 @@
+angular.module("User").controller('room', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+	$scope.room = {};
+	$scope.room_list = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	
+	$scope.save = function(room) {
+		if(!room.room_no || room.room_no == '') {
+			$scope.error.room_no = true;
+		} else if(!room.type || room.type == '') {
+			$scope.error.type = true;
+		} else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "room/add_room",
+				data: room
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+					alert(response);
+				} else {
+					$location.path("/room_list");
+				}
+			});
+		}
+	}	
+	
+	$scope.change_status = function(room_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "room/change_status",
+			data: {'room_id':room_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			
+			if(response == '') {
+				$scope.room_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+}]);

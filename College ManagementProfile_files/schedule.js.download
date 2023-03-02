@@ -1,0 +1,2956 @@
+angular.module("User").controller('schedule', ['$scope', '$http', 'loading', '$timeout', '$log', 'Uuid', 'ganttMouseOffset', 'moment', '$window', '$location', function($scope, $http, loading, $timeout, $log, Uuid, mouseOffset, moment, $window, $location){
+	var longMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+	//$scope.period_list = [{'start_time' : '06:00', 'period' : 'Period 1'}, {'start_time' : '07:00', 'period' : 'Period 2'}, {'start_time' : '08:00', 'period' : 'Period 3'}, {'start_time' : '09:00', 'period' : 'Period 4'}, {'start_time' : '10:00', 'period' : 'Period 5'}, {'start_time' : '11:00', 'period' : 'Period 6'}, {'start_time' : '12:00', 'period' : 'Period 7'}, {'start_time' : '13:00', 'period' : 'Period 8'}, {'start_time' : '14:00', 'period' : 'Period 9'}, {'start_time' : '15:00', 'period' : 'Period 10'}, {'start_time' : '16:00', 'period' : 'Period 11'}];
+	
+	//$scope.period_list = [{'start_time' : '06:50', 'period' : 'Period 1'}, {'start_time' : '07:50', 'period' : 'Period 2'}, {'start_time' : '08:40', 'period' : 'Period 3'}, {'start_time' : '09:30', 'period' : 'Period 4'}, {'start_time' : '10:20', 'period' : 'Period 5'}, {'start_time' : '11:10', 'period' : 'Period 6'}, {'start_time' : '12:00', 'period' : 'Period 7'}, {'start_time' : '12:50', 'period' : 'Period 8'}, {'start_time' : '13:40', 'period' : 'Period 9'}, {'start_time' : '14:30', 'period' : 'Period 10'}, {'start_time' : '15:20', 'period' : 'Period 11'}];
+	
+/*	$scope.period_list = [{'start_time' : '06:00', 'period' : 'Period 1'}, {'start_time' : '07:00', 'period' : 'Period 2'}, {'start_time' : '08:00', 'period' : 'Period 3'}, {'start_time' : '09:00', 'period' : 'Period 4'}, {'start_time' : '10:00', 'period' : 'Period 5'}, {'start_time' : '11:00', 'period' : 'Period 6'}, {'start_time' : '12:00', 'period' : 'Period 7'}, {'start_time' : '13:00', 'period' : 'Period 8'}, {'start_time' : '14:00', 'period' : 'Period 9'}];
+	
+	var no_of_period_list = {
+		1	: '6',
+		2	: '7',
+		3	: '8',
+		4	: '9',
+		5	: '10',
+		6	: '11',
+		7	: '12',
+		8	: '13',
+		9	: '14'	
+	};*/
+	
+	$scope.period_list = [{'start_time' : '06:00', 'period' : 'Period 1'}, {'start_time' : '07:00', 'period' : 'Period 2'}, {'start_time' : '08:00', 'period' : 'Period 3'}, {'start_time' : '09:00', 'period' : 'Period 4'}, {'start_time' : '10:00', 'period' : 'Period 5'}, {'start_time' : '11:00', 'period' : 'Period 6'}, {'start_time' : '12:00', 'period' : 'Period 7'}, {'start_time' : '13:00', 'period' : 'Period 8'}, {'start_time' : '14:00', 'period' : 'Period 9'}, {'start_time' : '15:00', 'period' : 'Period 10'}];
+	
+	var no_of_period_list = {
+		1	: '6',
+		2	: '7',
+		3	: '8',
+		4	: '9',
+		5	: '10',
+		6	: '11',
+		7	: '12',
+		8	: '13',
+		9	: '14',
+		10	: '15'
+	};
+		
+	var currentDate = new Date();
+	
+	$scope.popScheduler	= false;
+	$scope.popScheduler2 = false;
+	$scope.popScheduler3 = false;
+	$scope.add_schedule	= {};
+	//$scope.add_schedule.is_hostel	= '0';
+	$scope.attendence = {};
+	$scope.attendence_enabled = '0';
+	$scope.editable_schedule_id = undefined;
+	$scope.isWorking = false;
+	$scope.faculty_already_assigned = true;
+	$scope.faculty_already_assigned2 = true;
+	$scope.faculty_already_assigned3 = true;
+	$scope.faculty_already_assigned4 = true;
+	$scope.faculty_already_assigned5 = true;
+	$scope.faculty_already_assigned6 = true;
+	$scope.saveall = false;
+		$scope.getagprAttendance = function(financial_year_id, f_date, t_date,gc) {
+		
+		if(financial_year_id && financial_year_id != '' && f_date && f_date != '' && t_date && t_date != '') 
+		{
+			$location.path("/attendence_agpr/" + financial_year_id + "/" + f_date + "/" + t_date+ "/" + gc);
+			
+		}
+	}
+	$scope.add_schedule = new Array();
+	$scope.selectedStd =  new Array();
+	
+	$scope.selectAll = function(){
+		//console.log($scope.admission_status['current_status']);
+		$scope.selectedStd =  new Array();
+		angular.forEach($scope.add_schedule['selectedID'], function(value, key) 
+		{
+			//console.log(key + ': ' + value.id);
+			value.id = $scope.selectedAll;
+			
+			
+		});
+	}
+	$scope.sendSelected = function(SelectedID,add_schedule)
+	{
+		console.log(SelectedID);
+		//console.log($scope.admission_status['current_status']);
+		selectCount = 0;
+		angular.forEach(SelectedID, function(value, key) 
+		{
+			if(value.id === true)
+			{
+				console.log(key + ': ' + value.id);
+				$scope.selectedStd.push(key);
+				selectCount++;
+			}			
+		});
+		if(!add_schedule.ct || add_schedule.ct =='')
+		{
+			alert('Please select CT!! ');
+			return false;
+		}
+		
+		if(selectCount > 0)
+		{
+			$scope.vineet = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/send_AttSms",
+				data: {'SelectedID':$scope.selectedStd,'add_schedule':add_schedule}
+			}).success(function(response) 
+			{
+				alert('SMS sent to selected!!');
+				$scope.vineet = false;
+				loading.finish();
+				/*$scope.question_list[index].status = status == '1' ? '0' : '1';
+				console.log(response);
+				if(response == '') {
+					alert(status);
+					
+				} else {
+					alert('sss');
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}*/
+			});			
+			
+		}
+		else
+		{
+			alert('Please select atleast one!!');
+		}
+		
+	}
+	
+	
+	$scope.question = {};
+	$scope.error 	= {};
+	$scope.question_list = {};
+	$scope.save_question = function(question) 
+	{
+		var noOfErrors = 0;
+		console.log(question);
+		if(!question.question || question.question == '') {
+			$scope.error.question = true;
+			noOfErrors++;
+		}
+		
+		if(noOfErrors > 0) return false;
+		else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/add_question",
+				data: question
+			}).success(function(response) {
+				$location.path("/question_list");				
+				if(response != '') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+				loading.finish();				
+			});
+		}
+	}	
+	$scope.change_status = function(id, status, index)
+	{
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/change_status",
+			data: {'id':id, 'status':status}
+		}).success(function(response) 
+		{
+			loading.finish();
+			$scope.question_list[index].status = status == '1' ? '0' : '1';
+			console.log(response);
+			/*if(response == '') {
+				alert(status);
+				
+			} else {
+				alert('sss');
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}*/
+		});
+	}
+	$scope.getNotfilled = function(financial_year_id, course_id, stream_id, year, section, from_date='02-01-2021') 
+	{	
+//	alert('getNotfilled'+from_date);
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != ''  && from_date != '' ) 
+		{	
+				stream_id = stream_id ? stream_id : "-";
+				year = year ? year : "-";
+				section = section ? section : "-";
+				$location.path("/scheduleNotattendance/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + from_date );
+		
+		}
+	}
+		$scope.getEDRAttendance = function(financial_year_id, course_id, stream_id, date) {
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && stream_id && stream_id != '') {
+			if(date && date != '') $location.path("/attendence_edr/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + date);
+			else $location.path("/attendence_edr/" + financial_year_id + "/" + course_id+ "/" + stream_id);
+		}
+	}
+	
+	$scope.getExcutiveRangedata = function(dateRange) {
+		if(dateRange.start_date != '' && dateRange.end_date != '' ) {
+			$location.path("/executiveSummary/" + dateRange.start_date + "/" + dateRange.end_date);
+		}
+	}
+	
+	
+	$scope.getScheduleRangedata = function(dateRange) 
+	{
+		console.log(dateRange);
+		var course_id = dateRange.course_id ? dateRange.course_id : '-';
+		var stream_id = dateRange.stream_id ? dateRange.stream_id : '-';
+		var year = dateRange.year ? dateRange.year : '-';
+		if(dateRange.start_date != '' && dateRange.end_date != '' ) 
+		{
+			$location.path("/scheduleSummary/" + dateRange.start_date + "/" + dateRange.end_date+ "/" + course_id + "/" + stream_id + "/" + year);
+		}
+	}
+	
+	$scope.getoverallAttendance = function(financial_year_id, course_id, stream_id, year, section) 
+	{
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && stream_id && stream_id != '' && year && year != '' && section && section != '') {
+			$location.path("/overall_attendence/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section);
+		}
+	}
+	//Get the value of Start and End of Week
+	var sendfirstDate = '';
+  	$('#weeklyDatePicker').on('dp.change', function (e) 
+ 	{
+		console.log($scope.add_schedule);
+		if($scope.add_schedule.financial_year_id && $scope.add_schedule.financial_year_id != '' 
+		   && $scope.add_schedule.course_id && $scope.add_schedule.course_id != '' 
+		   && $scope.add_schedule.stream_id && $scope.add_schedule.stream_id != '' 
+		   && $scope.add_schedule.year && $scope.add_schedule.year != '' 
+		   && $scope.add_schedule.section && $scope.add_schedule.section != '') 
+		{
+			console.log('in if'+sendfirstDate+'--- url date'+window.location.href.substr(window.location.href.lastIndexOf('/') + 1));
+			
+			var value = $("#weeklyDatePicker").val();
+			var firstDate = moment(value, "MM-DD-YYYY").day(0).format("MM-DD-YYYY");
+			var lastDate =  moment(value, "MM-DD-YYYY").day(6).format("MM-DD-YYYY");
+			$("#weeklyDatePicker").val(firstDate + " - " + lastDate);
+			
+			sendfirstDate = moment(value, "MM-DD-YYYY").day(0).format("YYYY-MM-DD");
+			console.log('date'+sendfirstDate);
+			
+			$location.path("/scheduler/" + $scope.add_schedule.session_id + "/" + $scope.add_schedule.course_id + "/" + $scope.add_schedule.stream_id + "/" + $scope.add_schedule.year + "/" + $scope.add_schedule.section + "/" + sendfirstDate);
+		}else
+		{
+			alert('1Please select all options. ');
+			$("#weeklyDatePicker").val('');
+		}
+	
+  });
+	
+	var w = angular.element($window);	
+	w.bind('resize', function() {
+		if(w.width() < 768) {
+			$scope.options.width = 80;
+		} else {
+			$scope.options.width = 250;
+		}
+    });
+	
+	$scope.getColumnWidth = function() {
+		if(w.width() < 1280) {
+			return 80;
+		}
+		return 250;
+	}
+	
+	$scope.options = 
+	{
+        scale: 'hour',
+		currentDate: 'none',
+		tooltipDateFormat: 'HH:mm',
+		columnMagnet: '5 minutes',
+		width: $scope.getColumnWidth(),
+		fromDate: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 6, 0, 0),
+        	toDate: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 17, 59, 59),
+		api: function(api) {
+			$scope.api = api;
+
+			api.core.on.ready($scope, function() {
+				$scope.addSamples();
+			});
+			
+			api.tasks.on.change($scope, addEventName('tasks.on.change', logTaskEvent));
+			api.tasks.on.click($scope, addEventName('tasks.on.click', TaskDblClicked));
+			
+			api.directives.on.new($scope, function(directiveName, directiveScope, element) {
+				if (directiveName === 'ganttRow') {//ganttLabels/ganttRowLabel
+					// When gantt-row directive is added
+					var drawHandler = function(evt) {
+						if ((evt.target ? evt.target : evt.srcElement).className.indexOf('gantt-row') > -1 && ($scope.role == '2' || $scope.rank == 'HOD')) {
+							if(!$scope.isWorking) {
+								var startDate = new Date($scope.api.core.getDateByPosition(mouseOffset.getOffset(evt).x));
+								if(startDate.getHours() != 17) {
+									$scope.isWorking = true;
+									$scope.showPopScheduler("", startDate.getHours(), "05", directiveScope.row.id);									
+									$scope.$apply();
+								}
+							}
+						}
+					};
+
+					element.on('mousedown', drawHandler);
+					directiveScope.drawHandler = drawHandler;
+				} 
+				else if (directiveName === 'ganttRowLabel') {
+					var drawHandler = function(evt) {
+						if ((evt.target ? evt.target : evt.srcElement).className == 'copy' && ($scope.role == '2' || $scope.rank == 'HOD')) {
+							if(!$scope.isWorking) {
+								$scope.isWorking = true;
+								$scope.copy(directiveScope.row.id);
+								$scope.$apply();
+							}
+						} 
+						else if ((evt.target ? evt.target : evt.srcElement).className == 'delete' && ($scope.role == '2' || $scope.rank == 'HOD')) {
+							if(!$scope.isWorking) {
+								$scope.isWorking = true;
+								$scope.delete(directiveScope.row.id);
+								$scope.$apply();
+							}
+						}
+					};
+
+					element.on('mousedown', drawHandler);
+					directiveScope.drawHandler = drawHandler;
+				}
+			});
+		}
+	}
+	
+	$scope.setSemester = function(semester) {
+		if(semester != '' ) {
+			$location.path("/feedback/" + semester);
+		}
+	}
+	
+		$scope.resetfeedbackFrm = function() 
+		{
+			$scope.feedback_frm.course_id = '';
+			$scope.feedback_frm.course_year = '';
+			$scope.feedback_frm.stream_id = '';
+			$scope.feedback_frm.semester = '';
+			$scope.feedback_frm.section = '';	
+		};
+	$scope.addSamples = function() {
+		$scope.api.data.load($scope.data);
+	};
+	
+	$scope.previous = function(financial_year_id, course_id, stream_id, year, section) {
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && stream_id && stream_id != '' && year && year != '' && section && section != '') {
+			$location.path("/scheduler/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + $scope.previous_week_start);
+		}
+	}
+	
+	$scope.next = function(financial_year_id, course_id, stream_id, year, section) {
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && stream_id && stream_id != '' && year && year != '' && section && section != '') {
+			$location.path("/scheduler/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + $scope.next_week_start);
+		}
+	}
+	
+	
+	$scope.allowfaculty = function(schedule_id, time) 
+	{
+		
+		//alert(schedule_id+' <==> '+time);
+		if(!time || time == '' || time < 1) 
+		{
+			alert('Please enter valid hours!!');
+			return false;
+		} 
+		
+		if(time != '' && schedule_id != '') 
+		{				
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/allowfaculty",
+				data: {'schedule_id':schedule_id, 'time':time},
+			}).success(function(response) {
+				loading.finish();				
+				alert(response);
+			});	
+		} 
+				
+	}
+	
+	$scope.getStreamforSchdeule = function(financial_year_id, course_id) {
+		if(financial_year_id != '' && course_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_stream",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				loading.finish();				
+				$scope.stream_list = response;
+			});	
+		} else {
+			$scope.stream_list = [];
+		}
+		
+		$scope.add_schedule.stream_id = "";
+		
+	}
+	
+	$scope.getStream = function(financial_year_id, course_id) {
+		if(financial_year_id != '' && course_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_stream",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				loading.finish();				
+				$scope.stream_list = response;
+			});	
+		} else {
+			$scope.stream_list = [];
+		}
+		
+		$scope.add_schedule.stream_id = "";
+		$scope.add_schedule.year = "";
+		$scope.add_schedule.subject_id = "";
+		$scope.add_schedule.section = "";
+		$scope.year_list = [];
+		$scope.subject_list = [];
+		$scope.section_list = [];
+	}
+	
+	$scope.getScheduledYear = function(financial_year_id, course_id, stream_id) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_scheduled_year",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id},
+			}).success(function(response) {
+				loading.finish();				
+				$scope.year_list = response;
+			});	
+		} else {
+			$scope.year_list = [];
+		}
+		
+		$scope.add_schedule.year = "";
+		$scope.add_schedule.subject_id = "";
+		$scope.add_schedule.section = "";
+		$scope.subject_list = [];
+		$scope.section_list = [];
+	}
+	
+	$scope.getSection = function(financial_year_id, course_id, stream_id, year) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_section",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) {// alert('dddddddddddd');console.log(response);
+				loading.finish();								
+				$scope.section_list = response;
+			});	
+		} else {
+			$scope.section_list = [];
+		}
+		
+		$scope.add_schedule.section = "";
+		$scope.add_schedule.schedule_id = "";
+	}
+	
+	$scope.getSectionAndSubject = function(financial_year_id, course_id, stream_id, year) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_section_and_subject",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) {
+				loading.finish();								
+				$scope.section_list = response[0];
+				$scope.subject_list = response[1];
+			});	
+		} else {
+			$scope.subject_list = [];
+			$scope.section_list = [];
+		}
+		
+		$scope.add_schedule.subject_id = "";
+		$scope.add_schedule.section = "";
+		$scope.add_schedule.schedule_id = "";
+	}
+	
+	$scope.getScheduleForSubjectAndSection = function(financial_year_id, course_id, stream_id, year, subject_id, section) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year && year != '' && subject_id && subject_id != '' && section && section != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/get_schedule_for_subject_and_section",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year, 'subject_id':subject_id, 'section':section},
+			}).success(function(response) {	
+				loading.finish();
+				$scope.schedule_list = response;
+			});	
+		} else {
+			$scope.schedule_list = [];
+		}
+		
+		$scope.add_schedule.schedule_id = "";
+		$scope.add_schedule.date = "";
+	}
+	
+	$scope.getSchedule = function(financial_year_id, course_id, stream_id, year, section) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '' && section != '') {
+			$location.path("/scheduler/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section);
+		}
+	}
+	
+		
+	$scope.showPopScheduler = function(add_schedule, hh, mm, date) 
+	{
+		//Get here no of period
+		var no_of_period = 0;
+		angular.forEach(no_of_period_list, function(tmpTime, tmpPeriod) 
+		{					
+		  	if(hh == tmpTime)
+			{
+				no_of_period = 	tmpPeriod;
+			}
+		});	
+		
+		if(hh != ''){
+			$scope.add_schedule.no_of_period = add_schedule.no_of_period = no_of_period;		
+		}
+		//end here to get no of period
+		//alert(hh+' -- '+mm);
+		if($scope.add_schedule.financial_year_id && $scope.add_schedule.course_id && $scope.add_schedule.stream_id && $scope.add_schedule.year && $scope.add_schedule.section && ($scope.role == '2' || $scope.rank == 'HOD' || $scope.canEdit)) {
+			$scope.error = {};
+			
+			if(add_schedule == '') {
+				loading.start();
+				$http({
+					method: "post",
+					url: "schedule/get_room_list",
+					data: {'hh':hh, 'mm':mm, 'date':date, 'type':$scope.add_schedule.type, 'stream_id':$scope.add_schedule.stream_id, 'year':$scope.add_schedule.year},
+				}).success(function(response) {
+					loading.finish();
+					$scope.isWorking = false;
+					
+					$scope.room_list = response;
+					$scope.faculty_list1 = [];
+					$scope.faculty_list2 = [];
+					$scope.faculty_list3 = [];
+					$scope.faculty_list4 = [];
+					$scope.faculty_list5 = [];
+					$scope.faculty_list6 = [];
+					
+					$scope.add_schedule.schedule_id = undefined;
+					$scope.add_schedule.repeat = '1';
+					$scope.add_schedule.periods = "2";
+					$scope.add_schedule.type = "Lecture";
+					
+					$scope.add_schedule.periods1 = "3";
+					$scope.add_schedule.type1 = "Lab";
+					
+					$scope.add_schedule.subject_id = "";
+					$scope.add_schedule.room_id = "";//$scope.room_id;
+					$scope.add_schedule.department_id = "";
+					$scope.add_schedule.faculty_id = "";
+					$scope.add_schedule.attendance = "0";
+					
+					$scope.add_schedule.subject_id2 = "";
+					$scope.add_schedule.room_id2 = "";
+					$scope.add_schedule.department_id2 = "";
+					$scope.add_schedule.faculty_id2 = "";
+					$scope.add_schedule.attendance2 = "0";
+					
+					$scope.add_schedule.subject_id3 = "";
+					$scope.add_schedule.room_id3 = "";
+					$scope.add_schedule.department_id3 = "";
+					$scope.add_schedule.faculty_id3 = "";
+					$scope.add_schedule.attendance3 = "0";
+					
+					$scope.add_schedule.periods2 = "3";
+					$scope.add_schedule.type2 = "Tutorial";
+					
+					$scope.add_schedule.subject_id4 = "";
+					$scope.add_schedule.room_id4 = "";
+					$scope.add_schedule.department_id4 = "";
+					$scope.add_schedule.faculty_id4 = "";
+					$scope.add_schedule.attendance4 = "0";
+					
+					$scope.add_schedule.subject_id5 = "";
+					$scope.add_schedule.room_id5 = "";
+					$scope.add_schedule.department_id5 = "";
+					$scope.add_schedule.faculty_id5 = "";
+					$scope.add_schedule.attendance5 = "0";
+					
+					$scope.add_schedule.subject_id6 = "";
+					$scope.add_schedule.room_id6 = "";
+					$scope.add_schedule.department_id6 = "";
+					$scope.add_schedule.faculty_id6 = "";
+					$scope.add_schedule.attendance6 = "0";
+				
+					$scope.add_schedule.start_date = date;
+					$scope.add_schedule.end_date = date;
+					$scope.add_schedule.start_time_hh = hh;
+					$scope.add_schedule.start_time_mm = mm;
+					$scope.add_schedule.isElective = false;
+				
+					$scope.add_schedule.combined_lab = '0';
+
+					$scope.popScheduler = true;
+				});
+			} else {
+				if($scope.year_list) { 
+					$scope.add_schedule = add_schedule;
+					$scope.popScheduler = true;
+					$scope.isWorking = false;
+				} else {
+					$scope.add_schedule.course_id = '';
+					$scope.add_schedule.stream_id = '';
+					$scope.add_schedule.year = '';
+					$scope.add_schedule.section = '';
+					alert('Please select Stream/Year/Section to make arrangement!!!');	
+				}
+			}
+			$scope.canEdit = false;
+		} else if($scope.role == '3') {
+			$scope.add_schedule = add_schedule;
+			$scope.popScheduler2 = true;
+			$scope.isWorking = false;
+		}
+	}
+	
+	$scope.hidePopScheduler = function() 
+	{
+		$scope.popScheduler	= false;
+		$scope.popScheduler2 = false;
+		$scope.popScheduler3 = false;
+	}
+	
+	$scope.add_schedule.isElective = '0';
+	$scope.showElectiveOptions = function(subject_id, department_id, index) 
+	{
+		//alert($scope.add_schedule.type+' Subject_id --> '+subject_id+' department_id --> '+department_id+' index --> '+index);
+		if($scope.add_schedule.type == 'Lecture' || $scope.add_schedule.type == 'CT') 
+		{
+			for(var i = 0; i < $scope.subject_list.length; i++) 
+			{
+				if(subject_id == $scope.subject_list[i].subject_id) {
+					if($scope.subject_list[i].is_elective == '1') 
+					{
+						//alert('Elective hai')
+						$scope.add_schedule.isElective = '1';
+						//$scope.add_schedule.room_id4 = $scope.add_schedule.room_id;
+					} else 
+					{
+						$scope.add_schedule.isElective = '0';
+						$scope.add_schedule.combined_lab = '0';
+					}
+					break;	
+				}
+			}
+		}
+		
+		$scope.getFacultyFromSubject(subject_id, department_id, index, '0');
+	}
+	
+	$scope.getFacultyFromSubject = function(subject_id, department_id, index, is_lab_enable_for_lecture) 
+	{
+		//if($scope.add_schedule.type == 'Lecture') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/get_faculty_from_subject",
+				data: {'schedule_id': $scope.add_schedule.schedule_id, 'financial_year_id': $scope.add_schedule.financial_year_id, 'course_id': $scope.add_schedule.course_id, 'stream_id': $scope.add_schedule.stream_id, 'year': $scope.add_schedule.year, 'section': $scope.add_schedule.section, 'subject_id': subject_id, 'hh': $scope.add_schedule.start_time_hh, 'mm': $scope.add_schedule.start_time_mm, 'date': $scope.add_schedule.start_date, 'is_lab_enable_for_lecture': is_lab_enable_for_lecture, 'faculty_from_other_department': $scope.add_schedule.faculty_from_other_department, 'type': $scope.add_schedule.type},
+			}).success(function(response) {	
+				loading.finish();
+				
+				if(index == '1') {
+					$scope.faculty_list1 = response;
+					$scope.add_schedule.department_id = "";
+					$scope.add_schedule.department_id4 = "";
+					//$scope.add_schedule.faculty_id4 = "";
+					if(response.length > 1) {
+						$scope.add_schedule.faculty_id = "";
+						$scope.faculty_already_assigned = false;
+					}
+					else {
+						//$scope.add_schedule.faculty_id = response[0].faculty_id;
+						$scope.add_schedule.faculty_id = "";
+						$scope.faculty_already_assigned = true;
+					}
+				}
+				else if(index == '2') {
+					$scope.faculty_list2 = response;
+					$scope.add_schedule.department_id2 = "";
+					
+					if(response.length > 1) {
+						$scope.add_schedule.faculty_id2 = "";
+						$scope.faculty_already_assigned2 = false;
+					}
+					else {
+						//$scope.add_schedule.faculty_id2 = response[0].faculty_id;
+						$scope.add_schedule.faculty_id2 = "";
+						$scope.faculty_already_assigned2 = true;
+					}
+				}
+				else if(index == '3') {
+					$scope.faculty_list3 = response;
+					$scope.add_schedule.department_id3 = "";
+					
+					if(response.length > 1) {
+						$scope.add_schedule.faculty_id3 = "";
+						$scope.faculty_already_assigned3 = false;
+					}
+					else {
+						//$scope.add_schedule.faculty_id3 = response[0].faculty_id;
+						$scope.add_schedule.faculty_id3 = "";
+						$scope.faculty_already_assigned3 = true;
+					}
+				}
+				else if(index == '4') {
+					$scope.faculty_list4 = response;
+					$scope.add_schedule.department_id4 = "";
+					
+					if(response.length > 1) {
+						$scope.add_schedule.faculty_id4 = "";
+						$scope.faculty_already_assigned4 = false;
+					}
+					else {
+						//$scope.add_schedule.faculty_id4 = response[0].faculty_id;
+						$scope.add_schedule.faculty_id4 = "";
+						$scope.faculty_already_assigned4 = true;
+					}
+				}
+				else if(index == '5') {
+					$scope.faculty_list5 = response;
+					$scope.add_schedule.department_id5 = "";
+					
+					if(response.length > 1) {
+						$scope.add_schedule.faculty_id5 = "";
+						$scope.faculty_already_assigned5 = false;
+					}
+					else {
+						//$scope.add_schedule.faculty_id5 = response[0].faculty_id;
+						$scope.add_schedule.faculty_id5 = "";
+						$scope.faculty_already_assigned5 = true;
+					}
+				}
+				else if(index == '6') 
+				{
+					$scope.faculty_list6 = response;
+					$scope.add_schedule.department_id6 = "";
+					
+					if(response.length > 1) 
+					{
+						$scope.add_schedule.faculty_id6 = "";
+						$scope.faculty_already_assigned6 = false;
+					}
+					else 
+					{
+						//$scope.add_schedule.faculty_id6 = response[0].faculty_id;
+						$scope.add_schedule.faculty_id6 = "";
+						$scope.faculty_already_assigned6 = true;
+					}
+				}
+			});
+		//}
+	}
+	
+	$scope.refreshsubform1 = function() 
+	{
+		$scope.add_schedule.subject_id = "";
+		$scope.add_schedule.room_id = "";
+		$scope.add_schedule.department_id = "";
+		$scope.add_schedule.faculty_id = "";
+		$scope.add_schedule.attendance = "0";
+		
+		$scope.add_schedule.subject_id2 = "";
+		$scope.add_schedule.room_id2 = "";
+		$scope.add_schedule.department_id2 = "";
+		$scope.add_schedule.faculty_id2 = "";
+		$scope.add_schedule.attendance2 = "0";
+		
+		$scope.add_schedule.subject_id3 = "";
+		$scope.add_schedule.room_id3 = "";
+		$scope.add_schedule.department_id3 = "";
+		$scope.add_schedule.faculty_id3 = "";
+		$scope.add_schedule.attendance3 = "0";
+	}
+	
+	$scope.refreshsubform2 = function() {
+		$scope.add_schedule.subject_id4 = "";
+		$scope.add_schedule.room_id4 = "";
+		$scope.add_schedule.department_id4 = "";
+		$scope.add_schedule.faculty_id4 = "";
+		$scope.add_schedule.attendance4 = "0";
+		
+		$scope.add_schedule.subject_id5 = "";
+		$scope.add_schedule.room_id5 = "";
+		$scope.add_schedule.department_id5 = "";
+		$scope.add_schedule.faculty_id5 = "";
+		$scope.add_schedule.attendance5 = "0";
+		
+		$scope.add_schedule.subject_id6 = "";
+		$scope.add_schedule.room_id6 = "";
+		$scope.add_schedule.department_id6 = "";
+		$scope.add_schedule.faculty_id6 = "";
+		$scope.add_schedule.attendance6 = "0";
+	}
+	
+	$scope.refreshform = function() {
+		
+		$scope.add_schedule.isElective = '0';
+		$scope.add_schedule.periods="2"; 
+		$scope.add_schedule.type1="Lab"; 
+		$scope.add_schedule.periods1="3"; 
+		$scope.add_schedule.type2="Tutorial"; 
+		$scope.add_schedule.periods2="3";
+
+		$scope.add_schedule.subject_id = "";
+		$scope.add_schedule.room_id = "";//$scope.room_id;
+		$scope.add_schedule.department_id = "";
+		$scope.add_schedule.faculty_id = "";
+		$scope.add_schedule.attendance = "0";
+		
+		$scope.add_schedule.subject_id2 = "";
+		$scope.add_schedule.room_id2 = "";
+		$scope.add_schedule.department_id2 = "";
+		$scope.add_schedule.faculty_id2 = "";
+		$scope.add_schedule.attendance2 = "0";
+		
+		$scope.add_schedule.subject_id3 = "";
+		$scope.add_schedule.room_id3 = "";
+		$scope.add_schedule.department_id3 = "";
+		$scope.add_schedule.faculty_id3 = "";
+		$scope.add_schedule.attendance3 = "0";
+		
+		/*$scope.add_schedule.periods2 = "3";
+		$scope.add_schedule.type2 = "Tutorial";*/
+		
+		$scope.add_schedule.subject_id4 = "";
+		$scope.add_schedule.room_id4 = "";
+		$scope.add_schedule.department_id4 = "";
+		$scope.add_schedule.faculty_id4 = "";
+		$scope.add_schedule.attendance4 = "0";
+		
+		$scope.add_schedule.subject_id5 = "";
+		$scope.add_schedule.room_id5 = "";
+		$scope.add_schedule.department_id5 = "";
+		$scope.add_schedule.faculty_id5 = "";
+		$scope.add_schedule.attendance5 = "0";
+		
+		$scope.add_schedule.subject_id6 = "";
+		$scope.add_schedule.room_id6 = "";
+		$scope.add_schedule.department_id6 = "";
+		$scope.add_schedule.faculty_id6 = "";
+		$scope.add_schedule.attendance6 = "0";
+
+		$scope.add_schedule.combined_lab = '0';
+	}
+	
+	$scope.addSchedule = function(add_schedule) 
+	{
+		$scope.error = {};
+		//alert(add_schedule.start_time_hh+' - periods - '+add_schedule.periods);
+		//alert('addSchedule');
+		if(!add_schedule.start_date || add_schedule.start_date == '') 
+		{
+			alert('Start Date Missing');
+			return false;
+		} 
+		if(!add_schedule.end_date || add_schedule.end_date == '') 
+		{
+			alert('End Date Missing');
+			return false;
+		} 
+		else if(!add_schedule.start_time_hh || add_schedule.start_time_hh == '') 
+		{
+			alert('Start Time Missing');
+			return false;
+		} 
+		else if(parseInt(add_schedule.start_time_hh) < 0 || parseInt(add_schedule.start_time_hh) > 23) 
+		{
+			alert('Invalid value for hour');
+			return false;
+		} 
+		else if(!add_schedule.start_time_mm || add_schedule.start_time_mm == '') 
+		{
+			alert('Arguments Missing4');
+			return false;
+		} 
+		else if(parseInt(add_schedule.start_time_mm) < 0 || parseInt(add_schedule.start_time_mm) > 59) 
+		{
+			alert('Invalid value for minutes');
+			return false;
+		} 
+		else if(parseInt(add_schedule.start_time_hh) == 23 && parseInt(add_schedule.start_time_mm) > 10) 
+		{
+			alert('Invalid value for hour/minutes');
+			return false;
+		} 
+		else if(!add_schedule.schedule_id && !(parseInt(add_schedule.repeat) > 0)) 
+		{
+			alert('Please enter a valid repeat value');
+			return false;
+		}
+		
+		if(add_schedule.type == 'Lecture')
+		{	//alert('dfgdfgdf');
+			
+			if(add_schedule.combined_lab == '1') {
+				add_schedule.subject_id4 = add_schedule.subject_id;
+				add_schedule.room_id4 = add_schedule.room_id;
+				add_schedule.department_id4 = add_schedule.department_id;
+				add_schedule.faculty_id4 = add_schedule.faculty_id;
+			}
+
+			if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+				$scope.error.subject_id = true;
+				return false;
+			} if(!add_schedule.room_id || add_schedule.room_id == '') {
+				$scope.error.room_id = true;
+				return false;
+			} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+				$scope.error.faculty_id = true;
+				return false;
+			}
+		/*	if(($scope.add_schedule.isElective == '1' && add_schedule.combined_lab == '0') && (!add_schedule.subject_id4 || add_schedule.subject_id4 == '')) {
+				$scope.error.subject_id4 = true;
+				return false;
+			}
+			if(($scope.add_schedule.isElective == '1' && add_schedule.combined_lab == '0') && (!add_schedule.room_id4 || add_schedule.room_id4 == '')) {
+				$scope.error.room_id4 = true;
+				return false;
+			} if(($scope.add_schedule.isElective == '1' && add_schedule.combined_lab == '0') && (!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '')) {	
+				$scope.error.faculty_id4 = true;
+				return false;
+			}*/ 
+			if((add_schedule.subject_id4 || add_schedule.subject_id4 != '') && ($scope.add_schedule.isElective == '1' && add_schedule.combined_lab == '0') && (!add_schedule.room_id4 || add_schedule.room_id4 == '')) 
+			{
+				alert('room_id4');
+				$scope.error.room_id4 = true;
+				return false;
+			}
+			if((add_schedule.subject_id4 || add_schedule.subject_id4 != '') &&  ($scope.add_schedule.isElective == '1' && add_schedule.combined_lab == '0') && (!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '')) 
+			{	
+			alert('faculty_id4');
+				$scope.error.faculty_id4 = true;
+				return false;
+			}
+			
+			add_schedule.periods	= "1";
+		}
+		else if(add_schedule.type == 'Tutorial') 
+		{
+			if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+				$scope.error.subject_id = true;
+				return false;
+			} if(!add_schedule.room_id || add_schedule.room_id == '') {
+				$scope.error.room_id = true;
+				return false;
+			} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+				$scope.error.faculty_id = true;
+				return false;
+			} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+				$scope.error.subject_id4 = true;
+				return false;
+			} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+				$scope.error.room_id4 = true;
+				return false;
+			} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+				$scope.error.faculty_id4 = true;
+				return false;
+			}
+			add_schedule.periods="1";
+		}
+		else if(add_schedule.type == 'Lab') {
+			if(add_schedule.type1 == 'Tutorial' && add_schedule.type2 == 'Tutorial' && add_schedule.combined_lab == '0') {
+				alert('There should be atleast one lab!!!');
+				return false;
+			}
+			if(add_schedule.periods == '2') {
+				if(add_schedule.combined_lab == '1') {
+					add_schedule.type2 = 'Lab';
+					add_schedule.subject_id4 = add_schedule.subject_id;
+					add_schedule.room_id4 = add_schedule.room_id;
+					add_schedule.department_id4 = add_schedule.department_id;
+					add_schedule.faculty_id4 = add_schedule.faculty_id;
+				}
+
+				if(add_schedule.type1 == 'Lab' && add_schedule.type2 == 'Lab') {
+					if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+						$scope.error.subject_id = true;
+						return false;
+					} if(!add_schedule.room_id || add_schedule.room_id == '') {
+						$scope.error.room_id = true;
+						return false;
+					} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+						$scope.error.faculty_id = true;
+						return false;
+					} if(add_schedule.combined_lab == '0' && (!add_schedule.subject_id4 || add_schedule.subject_id4 == '')) {
+						$scope.error.subject_id4 = true;
+						return false;
+					} if(add_schedule.combined_lab == '0' && (!add_schedule.room_id4 || add_schedule.room_id4 == '')) {
+						$scope.error.room_id4 = true;
+						return false;
+					} if(add_schedule.combined_lab == '0' && (!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '')) {	
+						$scope.error.faculty_id4 = true;
+						return false;
+					}
+				} 
+				else if(add_schedule.type1 == 'Lab' && add_schedule.type2 == 'Tutorial') {
+					if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+						$scope.error.subject_id = true;
+						return false;
+					} if(!add_schedule.room_id || add_schedule.room_id == '') {
+						$scope.error.room_id = true;
+						return false;
+					} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+						$scope.error.faculty_id = true;
+						return false;
+					} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+						$scope.error.subject_id4 = true;
+						return false;
+					} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+						$scope.error.room_id4 = true;
+						return false;
+					} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+						$scope.error.faculty_id4 = true;
+						return false;
+					} if(!add_schedule.subject_id5 || add_schedule.subject_id5 == '') {
+						$scope.error.subject_id5 = true;
+						return false;
+					} if(!add_schedule.room_id5 || add_schedule.room_id5 == '') {
+						$scope.error.room_id5 = true;
+						return false;
+					} if(!add_schedule.faculty_id5 || add_schedule.faculty_id5 == '') {	
+						$scope.error.faculty_id5 = true;
+						return false;
+					}
+				} 
+				else if(add_schedule.type1 == 'Tutorial' && add_schedule.type2 == 'Lab') {
+					if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+						$scope.error.subject_id = true;
+						return false;
+					} if(!add_schedule.room_id || add_schedule.room_id == '') {
+						$scope.error.room_id = true;
+						return false;
+					} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+						$scope.error.faculty_id = true;
+						return false;
+					} if(!add_schedule.subject_id2 || add_schedule.subject_id2 == '') {
+						$scope.error.subject_id2 = true;
+						return false;
+					} if(!add_schedule.room_id2 || add_schedule.room_id2 == '') {
+						$scope.error.room_id2 = true;
+						return false;
+					} if(!add_schedule.faculty_id2 || add_schedule.faculty_id2 == '') {	
+						$scope.error.faculty_id2 = true;
+						return false;
+					} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+						$scope.error.subject_id4 = true;
+						return false;
+					} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+						$scope.error.room_id4 = true;
+						return false;
+					} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+						$scope.error.faculty_id4 = true;
+						return false;
+					}
+				}
+			} else {
+				//console.log(add_schedule);
+				if(add_schedule.combined_lab == '1') {
+					add_schedule.type2 = add_schedule.type1;
+					add_schedule.periods2 = add_schedule.periods1;	
+					
+					add_schedule.subject_id4 = add_schedule.subject_id;
+					add_schedule.room_id4 = add_schedule.room_id;
+					add_schedule.department_id4 = add_schedule.department_id;
+					add_schedule.faculty_id4 = add_schedule.faculty_id;
+					
+					add_schedule.subject_id5 = add_schedule.subject_id2;
+					add_schedule.room_id5 = add_schedule.room_id2;
+					add_schedule.department_id5 = add_schedule.department_id2;
+					add_schedule.faculty_id5 = add_schedule.faculty_id2;
+					
+					add_schedule.subject_id6 = add_schedule.subject_id3;
+					add_schedule.room_id6 = add_schedule.room_id3;
+					add_schedule.department_id6 = add_schedule.department_id3;
+					add_schedule.faculty_id6 = add_schedule.faculty_id3;
+				}
+				
+				if(add_schedule.type1 == 'Lab' && add_schedule.type2 == 'Lab') {
+					if(add_schedule.periods1 == '2' && add_schedule.periods2 == '2') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id2 || add_schedule.subject_id2 == '') {
+							$scope.error.subject_id2 = true;
+							return false;
+						} if(!add_schedule.room_id2 || add_schedule.room_id2 == '') {
+							$scope.error.room_id2 = true;
+							return false;
+						} if(!add_schedule.faculty_id2 || add_schedule.faculty_id2 == '') {	
+							$scope.error.faculty_id2 = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						} if(!add_schedule.subject_id5 || add_schedule.subject_id5 == '') {
+							$scope.error.subject_id5 = true;
+							return false;
+						} if(!add_schedule.room_id5 || add_schedule.room_id5 == '') {
+							$scope.error.room_id5 = true;
+							return false;
+						} if(!add_schedule.faculty_id5 || add_schedule.faculty_id5 == '') {	
+							$scope.error.faculty_id5 = true;
+							return false;
+						}
+					} 
+					else if(add_schedule.periods1 == '2' && add_schedule.periods2 == '3') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id2 || add_schedule.subject_id2 == '') {
+							$scope.error.subject_id2 = true;
+							return false;
+						} if(!add_schedule.room_id2 || add_schedule.room_id2 == '') {
+							$scope.error.room_id2 = true;
+							return false;
+						} if(!add_schedule.faculty_id2 || add_schedule.faculty_id2 == '') {	
+							$scope.error.faculty_id2 = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						}
+					} 
+					else if(add_schedule.periods1 == '3' && add_schedule.periods2 == '2') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						} if(!add_schedule.subject_id5 || add_schedule.subject_id5 == '') {
+							$scope.error.subject_id5 = true;
+							return false;
+						} if(!add_schedule.room_id5 || add_schedule.room_id5 == '') {
+							$scope.error.room_id5 = true;
+							return false;
+						} if(!add_schedule.faculty_id5 || add_schedule.faculty_id5 == '') {	
+							$scope.error.faculty_id5 = true;
+							return false;
+						}
+					} 
+					else if(add_schedule.periods1 == '3' && add_schedule.periods2 == '3') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						}
+					}
+				} 
+				else if(add_schedule.type1 == 'Lab' && add_schedule.type2 == 'Tutorial') {
+					if(add_schedule.periods1 == '2' && add_schedule.periods2 == '1') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id2 || add_schedule.subject_id2 == '') {
+							$scope.error.subject_id2 = true;
+							return false;
+						} if(!add_schedule.room_id2 || add_schedule.room_id2 == '') {
+							$scope.error.room_id2 = true;
+							return false;
+						} if(!add_schedule.faculty_id2 || add_schedule.faculty_id2 == '') {	
+							$scope.error.faculty_id2 = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						} if(!add_schedule.subject_id5 || add_schedule.subject_id5 == '') {
+							$scope.error.subject_id5 = true;
+							return false;
+						} if(!add_schedule.room_id5 || add_schedule.room_id5 == '') {
+							$scope.error.room_id5 = true;
+							return false;
+						} if(!add_schedule.faculty_id5 || add_schedule.faculty_id5 == '') {	
+							$scope.error.faculty_id5 = true;
+							return false;
+						}
+					} 
+					else if(add_schedule.periods1 == '2' && add_schedule.periods2 == '3') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id2 || add_schedule.subject_id2 == '') {
+							$scope.error.subject_id2 = true;
+							return false;
+						} if(!add_schedule.room_id2 || add_schedule.room_id2 == '') {
+							$scope.error.room_id2 = true;
+							return false;
+						} if(!add_schedule.faculty_id2 || add_schedule.faculty_id2 == '') {	
+							$scope.error.faculty_id2 = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						} if(!add_schedule.subject_id5 || add_schedule.subject_id5 == '') {
+							$scope.error.subject_id5 = true;
+							return false;
+						} if(!add_schedule.room_id5 || add_schedule.room_id5 == '') {
+							$scope.error.room_id5 = true;
+							return false;
+						} if(!add_schedule.faculty_id5 || add_schedule.faculty_id5 == '') {	
+							$scope.error.faculty_id5 = true;
+							return false;
+						} if(!add_schedule.subject_id6 || add_schedule.subject_id6 == '') {
+							$scope.error.subject_id6 = true;
+							return false;
+						} if(!add_schedule.room_id6 || add_schedule.room_id6 == '') {
+							$scope.error.room_id6 = true;
+							return false;
+						} if(!add_schedule.faculty_id6 || add_schedule.faculty_id6 == '') {	
+							$scope.error.faculty_id6 = true;
+							return false;
+						}
+					} 
+					else if(add_schedule.periods1 == '3' && add_schedule.periods2 == '1') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						} if(!add_schedule.subject_id5 || add_schedule.subject_id5 == '') {
+							$scope.error.subject_id5 = true;
+							return false;
+						} if(!add_schedule.room_id5 || add_schedule.room_id5 == '') {
+							$scope.error.room_id5 = true;
+							return false;
+						} if(!add_schedule.faculty_id5 || add_schedule.faculty_id5 == '') {	
+							$scope.error.faculty_id5 = true;
+							return false;
+						}
+					} 
+					else if(add_schedule.periods1 == '3' && add_schedule.periods2 == '3') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						} if(!add_schedule.subject_id5 || add_schedule.subject_id5 == '') {
+							$scope.error.subject_id5 = true;
+							return false;
+						} if(!add_schedule.room_id5 || add_schedule.room_id5 == '') {
+							$scope.error.room_id5 = true;
+							return false;
+						} if(!add_schedule.faculty_id5 || add_schedule.faculty_id5 == '') {	
+							$scope.error.faculty_id5 = true;
+							return false;
+						} if(!add_schedule.subject_id6 || add_schedule.subject_id6 == '') {
+							$scope.error.subject_id6 = true;
+							return false;
+						} if(!add_schedule.room_id6 || add_schedule.room_id6 == '') {
+							$scope.error.room_id6 = true;
+							return false;
+						} if(!add_schedule.faculty_id6 || add_schedule.faculty_id6 == '') {	
+							$scope.error.faculty_id6 = true;
+							return false;
+						}
+					}
+				} 
+				else if(add_schedule.type1 == 'Tutorial' && add_schedule.type2 == 'Lab') {
+					if(add_schedule.periods1 == '1' && add_schedule.periods2 == '2') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id2 || add_schedule.subject_id2 == '') {
+							$scope.error.subject_id2 = true;
+							return false;
+						} if(!add_schedule.room_id2 || add_schedule.room_id2 == '') {
+							$scope.error.room_id2 = true;
+							return false;
+						} if(!add_schedule.faculty_id2 || add_schedule.faculty_id2 == '') {	
+							$scope.error.faculty_id2 = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						} if(!add_schedule.subject_id5 || add_schedule.subject_id5 == '') {
+							$scope.error.subject_id5 = true;
+							return false;
+						} if(!add_schedule.room_id5 || add_schedule.room_id5 == '') {
+							$scope.error.room_id5 = true;
+							return false;
+						} if(!add_schedule.faculty_id5 || add_schedule.faculty_id5 == '') {	
+							$scope.error.faculty_id5 = true;
+							return false;
+						}
+					} 
+					else if(add_schedule.periods1 == '1' && add_schedule.periods2 == '3') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id2 || add_schedule.subject_id2 == '') {
+							$scope.error.subject_id2 = true;
+							return false;
+						} if(!add_schedule.room_id2 || add_schedule.room_id2 == '') {
+							$scope.error.room_id2 = true;
+							return false;
+						} if(!add_schedule.faculty_id2 || add_schedule.faculty_id2 == '') {	
+							$scope.error.faculty_id2 = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						}
+					} 
+					else if(add_schedule.periods1 == '3' && add_schedule.periods2 == '2') 
+					{
+						
+						
+						console.log(add_schedule);
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id2 || add_schedule.subject_id2 == '') {
+							$scope.error.subject_id2 = true;
+							return false;
+						} if(!add_schedule.room_id2 || add_schedule.room_id2 == '') {
+							$scope.error.room_id2 = true;
+							return false;
+						} if(!add_schedule.faculty_id2 || add_schedule.faculty_id2 == '') {	
+							$scope.error.faculty_id2 = true;
+							return false;
+						} if(!add_schedule.subject_id3 || add_schedule.subject_id3 == '') {
+							$scope.error.subject_id3 = true;
+							return false;
+						} if(!add_schedule.room_id3 || add_schedule.room_id3 == '') {
+							$scope.error.room_id3 = true;
+							return false;
+						} if(!add_schedule.faculty_id3 || add_schedule.faculty_id3 == '') {	
+							$scope.error.faculty_id3 = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						} if(!add_schedule.subject_id5 || add_schedule.subject_id5 == '') {
+							$scope.error.subject_id5 = true;
+							return false;
+						} if(!add_schedule.room_id5 || add_schedule.room_id5 == '') {
+							$scope.error.room_id5 = true;
+							return false;
+						} if(!add_schedule.faculty_id5 || add_schedule.faculty_id5 == '') {	
+							$scope.error.faculty_id5 = true;
+							return false;
+						}
+					} 
+					else if(add_schedule.periods1 == '3' && add_schedule.periods2 == '3') {
+						if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+							$scope.error.subject_id = true;
+							return false;
+						} if(!add_schedule.room_id || add_schedule.room_id == '') {
+							$scope.error.room_id = true;
+							return false;
+						} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+							$scope.error.faculty_id = true;
+							return false;
+						} if(!add_schedule.subject_id2 || add_schedule.subject_id2 == '') {
+							$scope.error.subject_id2 = true;
+							return false;
+						} if(!add_schedule.room_id2 || add_schedule.room_id2 == '') {
+							$scope.error.room_id2 = true;
+							return false;
+						} if(!add_schedule.faculty_id2 || add_schedule.faculty_id2 == '') {	
+							$scope.error.faculty_id2 = true;
+							return false;
+						} if(!add_schedule.subject_id3 || add_schedule.subject_id3 == '') {
+							$scope.error.subject_id3 = true;
+							return false;
+						} if(!add_schedule.room_id3 || add_schedule.room_id3 == '') {
+							$scope.error.room_id3 = true;
+							return false;
+						} if(!add_schedule.faculty_id3 || add_schedule.faculty_id3 == '') {	
+							$scope.error.faculty_id3 = true;
+							return false;
+						} if(!add_schedule.subject_id4 || add_schedule.subject_id4 == '') {
+							$scope.error.subject_id4 = true;
+							return false;
+						} if(!add_schedule.room_id4 || add_schedule.room_id4 == '') {
+							$scope.error.room_id4 = true;
+							return false;
+						} if(!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '') {	
+							$scope.error.faculty_id4 = true;
+							return false;
+						}
+					}
+				}
+			}
+		}
+		else if(add_schedule.type == 'Project') 
+		{
+			if(!add_schedule.subject_id || add_schedule.subject_id == '') {
+				$scope.error.subject_id = true;
+				return false;
+			} if(!add_schedule.room_id || add_schedule.room_id == '') {
+				$scope.error.room_id = true;
+				return false;
+			} if(!add_schedule.faculty_id || add_schedule.faculty_id == '') {	
+				$scope.error.faculty_id = true;
+				return false;
+			}
+			add_schedule.periods="2";
+		}
+		else if(add_schedule.type == 'CT') 
+		{
+			//alert('in CT');
+			//alert('periods - '+add_schedule.periods);
+			if(add_schedule.combined_lab == '1') 
+			{
+				add_schedule.subject_id4 = add_schedule.subject_id;
+				add_schedule.room_id4 = add_schedule.room_id;
+				add_schedule.department_id4 = add_schedule.department_id;
+				add_schedule.faculty_id4 = add_schedule.faculty_id;
+			}
+
+			if(!add_schedule.subject_id || add_schedule.subject_id == '') 
+			{
+				$scope.error.subject_id = true;
+				return false;
+			} 
+			if(!add_schedule.room_id || add_schedule.room_id == '') 
+			{
+				$scope.error.room_id = true;
+				return false;
+			} 
+			if(!add_schedule.faculty_id || add_schedule.faculty_id == '') 
+			{	
+				$scope.error.faculty_id = true;
+				return false;
+			}
+			if(($scope.add_schedule.isElective == '1' && add_schedule.combined_lab == '0') && (!add_schedule.subject_id4 || add_schedule.subject_id4 == '')) {
+				$scope.error.subject_id4 = true;
+				return false;
+			} if(($scope.add_schedule.isElective == '1' && add_schedule.combined_lab == '0') && (!add_schedule.room_id4 || add_schedule.room_id4 == '')) {
+				$scope.error.room_id4 = true;
+				return false;
+			} if(($scope.add_schedule.isElective == '1' && add_schedule.combined_lab == '0') && (!add_schedule.faculty_id4 || add_schedule.faculty_id4 == '')) {	
+				$scope.error.faculty_id4 = true;
+				return false;
+			}
+			//add_schedule.periods="1";
+		}
+		
+		if(($scope.role == '2' || $scope.rank == 'HOD') && add_schedule.schedule_id && add_schedule.schedule_id != '')
+		{
+			add_schedule.repeat = confirm("Update all future occurences?") ? '1' : '0';
+		} 
+		else if($scope.role == '3' && $scope.rank != 'HOD') 
+		{
+			add_schedule.repeat = '0';
+		}
+		
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/add_schedule",
+			data: add_schedule
+		}).success(function(response) 
+		{
+			loading.finish();
+			console.log(response);
+			if(typeof response != "string") 
+			{
+				//alert($scope.editable_schedule_id);
+				if($scope.editable_schedule_id) 
+				{
+					$scope.api.data.remove([{'id': add_schedule.start_date, 'tasks': [{'id': $scope.editable_schedule_id}]}]);
+				}
+				if(response[1].length > 0) 
+				{
+					for(var xx = 0; xx < response[1].length; xx++) 
+					{
+						$scope.api.data.remove([{'id': add_schedule.start_date, 'tasks': [{'id': response[1][xx]}]}]);
+					}
+				}
+				$scope.api.data.load(response[0]);
+				$scope.popScheduler			= false;
+				$scope.faculty_already_assigned 	= true;
+				$scope.faculty_already_assigned2 	= true;
+				$scope.faculty_already_assigned3 	= true;
+				$scope.faculty_already_assigned4 	= true;
+				$scope.faculty_already_assigned5 	= true;
+				$scope.faculty_already_assigned6 	= true;
+				
+				/*for (var i = 0; i < $scope.data.length; i++) {
+					if($scope.data[i].id == add_schedule.start_date) {
+						if($scope.data[i].tasks.length);
+						$scope.data[i].tasks.splice(0, 1);
+						$scope.api.data.remove([{'id': date, 'tasks': $scope.data[i].tasks}]);
+						break;
+					}
+				}*/
+			} else {
+				alert(response);
+				$scope.error = true;
+				$scope.message = response;
+			}
+		});
+	}
+	
+	var TaskDblClicked = function(eventName, task) 
+	{
+		/*console.log(task)
+		console.log(eventName);*/
+		if(!$scope.isWorking) {
+			$scope.editable_schedule_id = task.id;
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/edit_schedule",
+				data: "schedule_id="+task.id,
+			}).success(function(response) {
+				
+				//alert('response aya');
+				//console.log(response);
+				loading.finish();
+				if(response[0] == '1') {
+					$scope.showPopScheduler(response[1], "", "", "");
+				} else if(response[0] == '2') {//Lecture
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.showPopScheduler(response[3], "", "", "");
+				} else if(response[0] == '3') {//Lecture Elective
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list4 = response[3];
+					$scope.showPopScheduler(response[4], "", "", "");
+				} else if(response[0] == '4') {//Tutorial
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list4 = response[3];
+					$scope.showPopScheduler(response[4], "", "", "");
+				} else if(response[0] == '5') {//lab 2/lab2
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list4 = response[3];
+					$scope.showPopScheduler(response[4], "", "", "");
+				} else if(response[0] == '6') {
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list4 = response[3];
+					$scope.faculty_list5 = response[4];
+					$scope.showPopScheduler(response[5], "", "", "");
+				} else if(response[0] == '7') {
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list2 = response[3];
+					$scope.faculty_list4 = response[4];
+					$scope.showPopScheduler(response[5], "", "", "");
+				} else if(response[0] == '8') {
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list2 = response[2];
+					$scope.faculty_list3 = response[2];
+					$scope.faculty_list4 = response[2];
+					$scope.faculty_list5 = response[2];
+					$scope.faculty_list6 = response[2];
+					$scope.showPopScheduler(response[3], "", "", "");
+				} else {
+					//alert('Schedule has been changed!!!');	
+					alert(response);
+				}
+			});
+		}
+	};
+	/////////////////////////////////////////
+	
+	$scope.canEdit = false;
+	$scope.editSchedule = function(add_schedule) 
+	{
+		if(confirm("Are you sure?")) 
+		{
+			$scope.editable_schedule_id = add_schedule.schedule_id;
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/edit_schedule",
+				data: {"schedule_id":add_schedule.schedule_id, "can_edit":'1'}
+			}).success(function(response) {
+				loading.finish();
+				
+				$scope.canEdit = true;
+				$scope.popScheduler2 = false;
+				if(response[0] == '1') {
+					$scope.showPopScheduler(response[1], "", "", "");
+				} else if(response[0] == '2') {
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.showPopScheduler(response[3], "", "", "");
+				} else if(response[0] == '3') {
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list4 = response[3];
+					$scope.showPopScheduler(response[4], "", "", "");
+				} else if(response[0] == '4') {
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list4 = response[3];
+					$scope.showPopScheduler(response[4], "", "", "");
+				} else if(response[0] == '5') {
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list4 = response[3];
+					$scope.showPopScheduler(response[4], "", "", "");
+				} else if(response[0] == '6') {
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list4 = response[3];
+					$scope.faculty_list5 = response[4];
+					$scope.showPopScheduler(response[5], "", "", "");
+				} else if(response[0] == '7') {
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list2 = response[3];
+					$scope.faculty_list4 = response[4];
+					$scope.showPopScheduler(response[5], "", "", "");
+				} else if(response[0] == '8') {
+					$scope.room_list = response[1];
+					$scope.faculty_list1 = response[2];
+					$scope.faculty_list2 = response[2];
+					$scope.faculty_list3 = response[2];
+					$scope.faculty_list4 = response[2];
+					$scope.faculty_list5 = response[2];
+					$scope.faculty_list6 = response[2];
+					$scope.showPopScheduler(response[3], "", "", "");
+				}
+			});
+		}
+	}
+	
+	$scope.showSwapSchedulePopup = function() 
+	{
+		var start_time = $scope.add_schedule.start_time_hh + ':' + $scope.add_schedule.start_time_mm;
+		for(var i in $scope.period_list) {
+			if(start_time == $scope.period_list[i].start_time) {
+				$scope.add_schedule.my_period = $scope.period_list[i].period;
+				$scope.add_schedule.show_save_button = '0';
+				break;
+			}
+		}
+		
+		// BY VINEET FOR HIDE LUNCH FROM DROPDOWN
+		if(($scope.add_schedule.year == 1) || ($scope.add_schedule.stream_id == 9) || ($scope.add_schedule.course_id == 11)) 
+		{
+			$scope.add_schedule.lunch_period = 'Period '+6;
+		}
+		else
+		{
+			$scope.add_schedule.lunch_period = 'Period '+6;
+		}
+		
+		$scope.popScheduler2 = false;
+		$scope.popScheduler3 = true;
+	}
+	
+	$scope.checkSwapingSchedule = function(add_schedule) 
+	{
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/check_swaping_schedule",
+			data: add_schedule
+		}).success(function(response) 
+		{
+			loading.finish();
+			
+			if(response[0] == '0') 
+			{
+				$scope.add_schedule.show_save_button = '0';
+				alert(response[1]);
+				$scope.error = true;
+				$scope.message = response;
+			} 
+			else if(response[0] == '1') 
+			{
+				$scope.add_schedule.my_schedule_name = response[2][1];
+				
+				$scope.add_schedule.swapping_schedule_id = response[3][0];
+				$scope.add_schedule.swapping_schedule_name = response[3][1];
+				
+				$scope.add_schedule.my_schedule_on_swapping_time_id = response[4][0];
+				$scope.add_schedule.my_schedule_on_swapping_time_name = response[4][1];
+				$scope.add_schedule.my_schedule_on_swapping_time_section = response[4][2];
+				
+				$scope.add_schedule.swapping_schedule_on_my_time_id = response[5][0];
+				$scope.add_schedule.swapping_schedule_on_my_time_name = response[5][1];
+				
+				$scope.add_schedule.show_save_button = '1';
+			}
+			else if(response[0] == '2') 
+			{
+				$scope.add_schedule.my_schedule_name = response[2][1];
+				
+				$scope.add_schedule.swapping_schedule_id = response[3][0];
+				$scope.add_schedule.swapping_schedule_name = response[3][1];
+				
+				$scope.add_schedule.my_schedule_on_swapping_time_id = response[4][0];
+				$scope.add_schedule.my_schedule_on_swapping_time_name = response[4][1];
+				$scope.add_schedule.my_schedule_on_swapping_time_section = response[4][2];
+				
+				$scope.add_schedule.swapping_schedule_on_my_time_name = undefined;
+				
+				$scope.add_schedule.show_save_button = '1';
+			} 
+			else if(response[0] == '3') 
+			{
+				$scope.add_schedule.my_schedule_name = response[2][1];
+				
+				$scope.add_schedule.swapping_schedule_name = undefined;
+				
+				$scope.add_schedule.my_schedule_on_swapping_time_id = response[3][0];
+				$scope.add_schedule.my_schedule_on_swapping_time_name = response[3][1];
+				$scope.add_schedule.my_schedule_on_swapping_time_section = response[3][2];
+				
+				$scope.add_schedule.swapping_schedule_on_my_time_name = undefined;
+				
+				$scope.add_schedule.show_save_button = '1';
+			}
+			else if(response[0] == '4') 
+			{
+				$scope.add_schedule.my_schedule_name = response[2][1];
+				
+				$scope.add_schedule.swapping_schedule_name = undefined;
+				
+				$scope.add_schedule.my_schedule_on_swapping_time_name = undefined;
+				$scope.add_schedule.my_schedule_on_swapping_time_section = undefined;
+				
+				$scope.add_schedule.swapping_schedule_on_my_time_name = undefined;
+				
+				$scope.add_schedule.show_save_button = '1';
+			} 
+			else if(response[0] == '5') 
+			{
+				//alert('ddd');
+				//alert(response[3][1]);
+				$scope.add_schedule.my_schedule_name = response[2][1];
+				
+				$scope.add_schedule.swapping_schedule_id = response[3][0];
+				$scope.add_schedule.swapping_schedule_name = response[3][1];
+				
+				$scope.add_schedule.my_schedule_on_swapping_time_name = undefined;
+				$scope.add_schedule.my_schedule_on_swapping_time_section = undefined;
+				
+				$scope.add_schedule.swapping_schedule_on_my_time_name = undefined;
+				
+				$scope.add_schedule.show_save_button = '1';
+			} 
+			else if(response[0] == '6') 
+			{
+				$scope.add_schedule.my_schedule_name = response[2][1];
+				
+				$scope.add_schedule.swapping_schedule_id = response[3][0];
+				$scope.add_schedule.swapping_schedule_name = response[3][1];
+				
+				$scope.add_schedule.my_schedule_on_swapping_time_name = undefined;
+				$scope.add_schedule.my_schedule_on_swapping_time_section = undefined;
+				
+				$scope.add_schedule.swapping_schedule_on_my_time_id = response[4][0];
+				$scope.add_schedule.swapping_schedule_on_my_time_name = response[4][1];
+				
+				$scope.add_schedule.show_save_button = '1';
+			}
+			
+			$scope.popScheduler = false;
+		});
+	}
+	
+	$scope.swapSchedule = function(add_schedule) 
+	{
+		console.log(add_schedule);
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/swap_schedule",
+			data: add_schedule
+		}).success(function(response) {
+			loading.finish();
+			alert("Swaping is done!!! Please refresh the page to view updates.");
+		});
+	}
+	
+	$scope.deleteSchedule = function(add_schedule) 
+	{
+		if(confirm("Are you sure?11")) {
+			var repeat = confirm("Delete all future occurences?") ? '1' : '0';
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/delete_schedule",
+				data: {'schedule_id' : add_schedule.schedule_id, 'repeat' : repeat}
+			}).success(function(response) {
+				loading.finish();
+				if(response != 'Some error occured. Please try again!!') {
+					if(add_schedule.schedule_id) {
+						$scope.api.data.remove([{'id': add_schedule.start_date, 'tasks': [{'id': add_schedule.schedule_id}]}]);
+					}
+				} else {
+					alert(response);
+					$scope.error = true;
+					$scope.message = response;
+				}
+				
+				$scope.popScheduler	= false;
+			});
+		}
+	}
+	
+	var addEventName = function(eventName, func) 
+	{
+		return function(data) {
+			return func(eventName, data);
+		};
+	};
+		
+	var logTaskEvent = function(eventName, task) 
+	{
+		/*var start_time = task.from._d.getHours() + ':' + task.from._d.getMinutes();
+		var end_time = task.to._d.getHours() + ':' + task.to._d.getMinutes();
+		
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/resize_schedule",
+			data: {'schedule_id':task.id, 'date':task.row.id, 'start_time':start_time, 'end_time':end_time}
+		}).success(function(response) {
+			loading.finish();
+			if(response != '') {
+				alert(response);
+				$scope.error = true;
+				$scope.message = response;
+			}
+		});*/
+	};
+	
+	$scope.getCourse = function(financial_year_id) 
+	{
+		if(financial_year_id != '') 
+		{
+			loading.start();
+			$http({
+				method: "post",
+				url: "enquiry/get_course",
+				data: {'financial_year_id':financial_year_id},
+			}).success(function(response) 
+			{ 	
+				loading.finish();
+				$scope.course_list = response;
+			});	
+		}
+	}
+	
+	
+	///////////////////Reports///////////////////////
+	///////////subject wise////////
+	$scope.getAttendance = function(financial_year_id, course_id, stream_id, year, subject_id, section) 
+	{
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '' && (subject_id && subject_id != '') && (section && section != '')) 
+		{
+			$location.path("/subject_wise_attendence/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + subject_id + "/" + section);
+		}
+	}
+	
+	////////schedule wise///////////
+	$scope.getAttendanceForSchedule = function(financial_year_id, course_id, stream_id, year, subject_id, section, schedule_id) 
+	{
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '' && subject_id != '' && section != '' && schedule_id != '') 
+		{
+			$location.path("/schedule_wise_attendence/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + subject_id + "/" + section + "/" + schedule_id);
+		}
+	}
+		$scope.saveReceiveDate = function(i,financial_year_id, course_id, stream_id, year, section) {
+			//alert(document.querySelector('input[name=recivedData_'+i+']').value);
+		//alert('saveReceiveDate'+financial_year_id+'------'+course_id+'------'+stream_id+'------'+year+'------'+section);
+
+		if(document.querySelector('input[name=recivedData_'+i+']').value != '') 
+		{
+			var submitDate = document.querySelector('input[name=recivedData_'+i+']').value;
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/save_RegSubmit",
+				data: {'submitDate':submitDate,'financial_year_id':financial_year_id,'course_id':course_id,'stream_id':stream_id,'year':year,'section':section},
+			}).success(function(response) 
+			{ 	
+				loading.finish();
+				location.reload();
+
+				//$scope.course_list = response;
+			});	
+		}
+	
+
+		
+		}	
+		
+		
+
+	
+	$scope.getadmitCardInSection = function(course_id, stream_id, year, section, sessional,admission_no) 
+	{
+			//alert('scholer');
+			if((course_id && course_id != '' && stream_id && stream_id != '' && year && year != '' && section && section != '') || admission_no && admission_no != '') 
+			{
+				//$scope.dataTable();
+				admission_no = admission_no ? admission_no : "-";
+				course_id = course_id ? course_id : "-";				
+				stream_id = stream_id ? stream_id : "-";
+				year = year ? year : "-";
+				section = section ? section : "-";
+				
+				//alert("/admitCard/"+ course_id + "/" + stream_id + "/" + year + "/" + section+ "/" + sessional+ "/page1" );
+				admission_no = admission_no ? admission_no : '-';
+				$location.path("/admitCard/"+ course_id + "/" + stream_id + "/" + year + "/" + section+ "/" + sessional+ "/" + admission_no+ "/page1" );
+			}
+		}	
+
+	$scope.getAttendanceForAllSubjectInSection = function(financial_year_id, course_id, stream_id, year, section, scholer) {
+	//	alert(scholer);
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && stream_id && stream_id != '' && year && year != '' && section && section != '') 
+		{
+			//$scope.dataTable();
+			$location.path("/section_wise_attendence/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + scholer);
+		}
+	}	
+	$scope.getAttendanceletterReport = function(financial_year_id, course_id, stream_id, year, section, from_date='02-01-2021', to_date='07-01-2021') {
+	
+		if(financial_year_id && financial_year_id != '' && from_date != '' && to_date != '') 
+		{	
+				stream_id = stream_id ? stream_id : "-";
+				course_id = course_id ? course_id : "-";
+				year = year ? year : "-";
+				section = section ? section : "-";
+				$location.path("/attendence_letterReport/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + from_date + "/" + to_date);
+		
+		}
+	}
+	$scope.getAttendanceletter = function(financial_year_id, course_id, stream_id, year, section, from_date='02-01-2021', to_date='07-01-2021') {
+	
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != ''  && from_date != '' && to_date != '') 
+		{	
+				stream_id = stream_id ? stream_id : "-";
+				year = year ? year : "-";
+				section = section ? section : "-";
+				$location.path("/attendence_letter/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + from_date + "/" + to_date);
+		
+		}
+	}
+	$scope.printStudent_admitCard = function(sessional,admission_id, base_url) 
+	{	 
+		//alert(base_url + 'schedule/printStudent_admitCard/' + admission_id+'/'+sessional);
+		if(admission_id != '') 
+		{	
+	//	alert((base_url + 'schedule/printStudent_admitCard/' + admission_id + '/' + financial_year_id + '/' + course_id + '/' + stream_id + '/' + year + '/' + section + '/' + from_date + '/' + to_date));
+			window.open(base_url + 'schedule/printStudent_admitCard/' + admission_id +'/' + sessional);
+		}/**/
+	}
+	
+	$scope.printfeedback = function(feedback, base_url) 
+	{	 
+		//alert('printfeedback_grade');
+		console.log(feedback.to_date);
+		
+		if(feedback.to_date != '' && feedback.from_date != '') 
+		{	
+
+		faculty_id = feedback.faculty_id ? feedback.faculty_id : '-';
+		//alert((base_url + 'schedule/printfeedback/' + feedback.to_date +'/' + feedback.from_date + '/' + feedback.course_id + '/' + feedback.stream_id+ '/' + faculty_id));
+			window.open(base_url + 'schedule/printfeedback/' + feedback.to_date +'/' + feedback.from_date + '/' + feedback.course_id + '/' + feedback.stream_id+ '/' + faculty_id);
+		}/**/
+	}
+	
+	$scope.printfeedback_grade = function(feedback, base_url) 
+	{	 
+		//alert('printfeedback_grade');
+		console.log(feedback.to_date);
+		
+		if(feedback.to_date != '' && feedback.from_date != '') 
+		{	
+	//	alert((base_url + 'schedule/printStudent_admitCard/' + admission_id + '/' + financial_year_id + '/' + course_id + '/' + stream_id + '/' + year + '/' + section + '/' + from_date + '/' + to_date));
+			window.open(base_url + 'schedule/printfeedback_grade/' + feedback.to_date +'/' + feedback.from_date + '/' + feedback.course_id + '/' + feedback.stream_id);
+		}/**/
+	}
+	
+	$scope.printStudent_attendence_report = function(add_schedule, admission_id, base_url) {		
+	 
+		financial_year_id	 = add_schedule.financial_year_id; 
+		course_id			 = add_schedule.course_id;
+		stream_id			 = add_schedule.stream_id;
+		year				 = add_schedule.year;
+		section				 = add_schedule.section;
+		to_date = add_schedule.to_date;
+		from_date = add_schedule.from_date;
+		
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && from_date !='' && to_date != '') 
+		{	
+	//	alert((base_url + 'schedule/printStudent_attendence_report/' + admission_id + '/' + financial_year_id + '/' + course_id + '/' + stream_id + '/' + year + '/' + section + '/' + from_date + '/' + to_date));
+			window.open(base_url + 'schedule/printStudent_attendence_report/' + admission_id + '/' + financial_year_id + '/' + course_id + '/' + stream_id + '/' + year + '/' + section + '/' + from_date + '/' + to_date);
+		}
+	}
+	
+	$scope.getShortAttendance = function(financial_year_id, course_id, stream_id, year, section, attendance_less_than, start_time, end_time) {
+		//if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && stream_id && stream_id != '' && year && year != '' && section && section != '' && attendance_less_than && attendance_less_than != '') {
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && attendance_less_than && attendance_less_than != ''&& start_time != '' && end_time != '') 
+		{	
+			if(parseFloat(attendance_less_than) < 0 || parseFloat(attendance_less_than) > 100) 
+			{
+				alert('Attendance should be between 0 to 100');
+			} else {
+				stream_id = stream_id ? stream_id : "-";
+				year = year ? year : "-";
+				section = section ? section : "-";
+				$location.path("/short_attendence/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + attendance_less_than+ "/" + start_time+ "/" + end_time);
+			}
+		}
+	}
+	
+	$scope.getDailyAttendance = function(financial_year_id, course_id, date) {
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '') {
+			if(date && date != '') $location.path("/daily_attendence/" + financial_year_id + "/" + course_id + "/" + date);
+			else $location.path("/daily_attendence/" + financial_year_id + "/" + course_id);
+		}
+	}
+	
+	$scope.getStudentList = function(financial_year_id, course_id, stream_id, year, section) {
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && stream_id && stream_id != '' && year && year != '' && section && section != '') {
+			$location.path("/student_list/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section);
+		}
+	}
+	$scope.subjectlist = [];
+	
+	$scope.getElectiveSubject = function(financial_year_id, course_id, stream_id, year, section) {
+		
+		//alert('getElectiveSubject ==> ' +financial_year_id+' <==> '+course_id+' <==> '+stream_id+' <==> '+year+' <==> '+section);
+		
+		if(financial_year_id == '' )
+		{
+			
+			alert("Please select course/stream/section/year/section");
+		} else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/getElectiveSubject",
+				data: {'financial_year_id': financial_year_id, 'course_id': course_id, 'stream_id': stream_id, 'year': year, 'section': section}
+			}).success(function(response) 
+			{
+				$scope.subjectlist= response;
+				loading.finish();
+				
+			});
+		}
+		/**/
+		
+	}
+	
+	
+	$scope.getElectiveSubjectSetting = function(financial_year_id, course_id, stream_id, year, section,subjectId) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '' && section != '' && subjectId != '' ) 
+		{
+			$location.path("/elective_subject_setting/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + subjectId);
+		}
+		else if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '' && section != '')
+		{
+			$location.path("/elective_subject_setting/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section);
+		}
+	}
+	
+	$scope.copy = function(date) {
+		alert(date);
+		console.log($scope.add_schedule);	
+		if(!$scope.add_schedule.financial_year_id && !$scope.add_schedule.course_id && !$scope.add_schedule.stream_id && !$scope.add_schedule.year && !$scope.add_schedule.section) {
+			$scope.isWorking = false;
+			alert("Please select course/stream/section/year");
+		} else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/copy_schedule",
+				data: {'financial_year_id': $scope.add_schedule.financial_year_id, 'course_id': $scope.add_schedule.course_id, 'stream_id': $scope.add_schedule.stream_id, 'year': $scope.add_schedule.year, 'section': $scope.add_schedule.section, 'date':date}
+			}).success(function(response) 
+			{
+				loading.finish();
+				$scope.isWorking = false;
+				console.log(response);
+				
+				if(response != '') {
+					$scope.api.data.load(response);
+				}
+			});
+		}
+	}
+	
+	$scope.delete = function(date) {
+		if(!$scope.add_schedule.financial_year_id && !$scope.add_schedule.course_id && !$scope.add_schedule.stream_id && !$scope.add_schedule.year && !$scope.add_schedule.section) {
+			$scope.isWorking = false;
+			alert("Please select course/stream/section/year");
+		} else {
+			if(confirm("Are you sure?")) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "schedule/delete_all_day_schedule",
+					data: {'financial_year_id': $scope.add_schedule.financial_year_id, 'course_id': $scope.add_schedule.course_id, 'stream_id': $scope.add_schedule.stream_id, 'year': $scope.add_schedule.year, 'section': $scope.add_schedule.section, 'date':date}
+				}).success(function(response) {
+					loading.finish();
+					$scope.isWorking = false;
+					
+					for (var i = 0; i < $scope.data.length; i++) {
+						if($scope.data[i].id == date) {
+							$scope.data[i].tasks.splice(0, 1);
+							$scope.api.data.remove([{'id': date, 'tasks': $scope.data[i].tasks}]);
+							break;
+						}
+					}
+				});
+			}
+		}
+	}
+	
+	$scope.exportSchedule = function(base_url, financial_year_id, course_id, stream_id, year, section, role) 
+	{
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && stream_id && stream_id != '' && year && year != '' && section && section != '') 
+		{
+			var previous_week_start = new Date($scope.previous_week_start);
+			var start_time = new Date(previous_week_start.getTime() + 7 * 24 * 60 * 60 * 1000);
+			start_time = start_time.getFullYear() + '-' + (start_time.getMonth() + 1) + '-' + start_time.getDate();
+			window.open(base_url + 'schedule/export_schedule/' + financial_year_id + '/' + course_id + '/' + stream_id + '/' + year + '/' + section + '/' + start_time);
+		} 
+		else if(role == '3') 
+		{
+			financial_year_id = financial_year_id && financial_year_id != '' ? financial_year_id : '-';
+			course_id = course_id && course_id != '' ? course_id : '-';
+			stream_id = stream_id && stream_id != '' ? stream_id : '-';
+			year = year && year != '' ? year : '-';
+			section = section && section != '' ? section : '-';
+			
+			var previous_week_start = new Date($scope.previous_week_start);
+			var start_time = new Date(previous_week_start.getTime() + 7 * 24 * 60 * 60 * 1000);
+			start_time = start_time.getFullYear() + '-' + (start_time.getMonth() + 1) + '-' + start_time.getDate();
+			window.open(base_url + 'schedule/export_schedule/' + financial_year_id + '/' + course_id + '/' + stream_id + '/' + year + '/' + section + '/' + start_time);
+		}
+	}
+	
+	$scope.getFaculty = function(department_id, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/get_faculty_from_department",
+			data: {'financial_year_id': $scope.add_schedule.financial_year_id, 'course_id': $scope.add_schedule.course_id, 'stream_id': $scope.add_schedule.stream_id, 'year': $scope.add_schedule.year, 'section': $scope.add_schedule.section, 'subject_id': $scope.add_schedule.subject_id, 'department_id': department_id, 'hh':$scope.add_schedule.start_time_hh, 'mm':$scope.add_schedule.start_time_mm, 'date':$scope.add_schedule.start_date, 'type':$scope.add_schedule.type},
+		}).success(function(response) {	
+			loading.finish();
+			/*console.log(response);
+			if(response == "Missing Arguments!!!") {
+				alert(response);	
+			} else {*/
+				if(index == '1') $scope.faculty_list1 = response;
+				else if(index == '2') $scope.faculty_list2 = response;
+				else if(index == '3') $scope.faculty_list3 = response;
+				else if(index == '4') $scope.faculty_list4 = response;
+				else if(index == '5') $scope.faculty_list5 = response;
+				else if(index == '6') $scope.faculty_list6 = response;
+			//}
+		});	
+	}
+	
+	///////////////////Attandence///////////////////////////
+	$scope.checkuncheckall1 = function() {
+		if($scope.checkall1 == '1') {
+			for(var i in $scope.admission_list) {
+				var obj = $scope.admission_list[i];
+				if(obj.is_registered == '1') {
+					$scope.attendence.today[obj.admission_id][1] = "1";
+				}
+			}
+		} else {
+			for(var i in $scope.admission_list) {
+				var obj = $scope.admission_list[i];
+				if(obj.is_registered == '1') {
+					$scope.attendence.today[obj.admission_id][1] = "0";
+				}
+			}
+		}
+	}
+	
+	$scope.checkuncheckall2 = function() {
+		$scope.checkall2 = $scope.checkall2 == '1' ? '0' : '1';
+		if($scope.checkall2 == '1') {
+			for(var i in $scope.admission_list) {
+				var obj = $scope.admission_list[i];
+				if(obj.is_registered == '1') {
+					$scope.attendence.today[obj.admission_id][2] = "1";
+				}
+			}
+		} else {
+			for(var i in $scope.admission_list) {
+				var obj = $scope.admission_list[i];
+				if(obj.is_registered == '1') {
+					$scope.attendence.today[obj.admission_id][2] = "0";
+				}
+			}
+		}
+	}
+	
+	$scope.checkuncheckall3 = function() {
+		$scope.checkall3 = $scope.checkall3 == '1' ? '0' : '1';
+		if($scope.checkall3 == '1') {
+			for(var i in $scope.admission_list) {
+				var obj = $scope.admission_list[i];
+				if(obj.is_registered == '1') {
+					$scope.attendence.today[obj.admission_id][3] = "1";
+				}
+			}
+		} else {
+			for(var i in $scope.admission_list) {
+				var obj = $scope.admission_list[i];
+				if(obj.is_registered == '1') {
+					$scope.attendence.today[obj.admission_id][3] = "0";
+				}
+			}
+		}
+	}
+	
+	$scope.viewTakeAttendance = function(add_schedule) {
+		$location.path("attendance/" + add_schedule.schedule_id);
+	}
+	
+	$scope.disableAttendenceSaveButton = false;
+	$scope.getPeriodAttendance = function(schedule_id, period) {
+		if(schedule_id != '' && period != '') {
+			$scope.disableAttendenceSaveButton = true;
+			$location.path("/attendance/" + schedule_id + "/" + period);
+		}
+	}
+	
+	$scope.saveAttendence = function(attendence, period) 
+	{
+			
+		console.log(attendence);
+		if(!attendence.topic || attendence.topic == '') {
+			alert('Please add topic !!');
+			return false;
+		}
+		
+		$scope.saveall 	= true;
+		
+		attendence.period = period;
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/save_attendence",
+			data: attendence,
+		}).success(function(response) {	
+			loading.finish();
+			
+			if(response == "Missing Arguments!!!") {
+				alert(response);	
+			} else {
+				$scope.attendence_enabled[period-1] = '0';
+				alert("Attendence Saved!!!");
+			}
+			$scope.saveall 	= false;
+		});
+	}
+	
+	$scope.deleteAttendence = function(attendence, period) {
+		attendence.period = period;
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/delete_attendence",
+			data: attendence,
+		}).success(function(response) {	
+			loading.finish();
+			
+			if(response == "Missing Arguments!!!") {
+				alert(response);	
+			} else {
+				$scope.attendence_enabled[period-1] = '1';
+				alert("Attendence Deleted!!!");
+			}
+		});
+	}
+	
+	$scope.maxFeedbackCriteriaLimit = 0;	
+	$scope.addFeedbackCriteriaLimit = function() {
+		$scope.maxFeedbackCriteriaLimit++;
+	}
+	
+	$scope.getFeedbackCriteria = function(financial_year_id, course_id, year) {	
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && year && year != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/get_feedback_criteria",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'year':year}
+			}).success(function(response) {
+				loading.finish();
+				
+				if(response[0] == '0') {
+					alert("All fields are required!!!");
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+				} else {
+					$scope.feedback_criteria.criteria = response[1];
+					$scope.maxFeedbackCriteriaLimit = response[1].length;
+				}
+			});
+		}
+	}
+	
+	$scope.save_feedback_criteria = function(feedback_criteria) {
+		console.log(feedback_criteria.criteria);
+		if(!feedback_criteria.financial_year_id || feedback_criteria.financial_year_id == '') {
+			alert('Financial Year is required');
+		} else if(!feedback_criteria.course_id || feedback_criteria.course_id == '') {
+			alert('Course is required');
+		} else if(!feedback_criteria.year || feedback_criteria.year == '') {
+			alert('Year is required');
+		} else if(!feedback_criteria.criteria[0]) {
+			alert('Criteria is required');
+		} else if(!feedback_criteria.criteria[0].feedback_criteria || feedback_criteria.criteria[0].feedback_criteria == '') {
+			alert('Feedback Criteria is required');
+		} else if(parseFloat(feedback_criteria.criteria[0].feedback_criteria) < 0 || parseFloat(feedback_criteria.criteria[0].feedback_criteria) > 100) {
+			alert('Feedback Criteria should be between 0 to 100 ');
+		} else if(!feedback_criteria.criteria[0].feedback || feedback_criteria.criteria[0].feedback == '') {
+			alert('Feedback is required');
+		} else {
+			var count = feedback_criteria.criteria.length;
+			var error = 0;
+			
+			if(count > 1) {
+				for(var i = 1; i < count; i++) {
+					if((feedback_criteria.criteria[i].feedback_criteria && feedback_criteria.criteria[i].feedback_criteria != '') && (!feedback_criteria.criteria[i].feedback || feedback_criteria.criteria[i].feedback == '')) {
+						error++;
+						alert('Feedback is required');
+						break;
+					} else if((!feedback_criteria.criteria[i].feedback_criteria || feedback_criteria.criteria[i].feedback_criteria == '') && (feedback_criteria.criteria[i].feedback && feedback_criteria.criteria[i].feedback != '')) {
+						error++;
+						alert('Feedback Criteria is required');
+						break;
+					} else if(parseFloat(feedback_criteria.criteria[i].feedback_criteria) < 0 || parseFloat(feedback_criteria.criteria[i].feedback_criteria) > 100) {
+						error++;
+						alert('Feedback Criteria should be between 0 to 100');
+						break;
+					}
+				}
+			}
+			
+			if(error == 0) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "schedule/feedback_criteria",
+					data: feedback_criteria,
+				}).success(function(response) {
+					loading.finish();
+					response = $.trim(response);
+						
+					if(response == '0') {
+						alert('Criteria Updated Successfully!!!');
+					} else {
+						alert('Some error occured. Please try again!!!');
+					}
+				});
+			}
+		}
+	}
+	
+	$scope.is_running = '0';
+	$scope.enable_feedback = function() {
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/enable_feedback",
+			data: {},
+		}).success(function(response) {	
+			loading.finish();
+			//response = $.trim(response);
+			//$scope.is_running = response;
+			if(response[0] == '1') {
+				$scope.is_running = '1';
+				$scope.feedback_list = response[1];
+			} else {
+				alert(response[1]);	
+			}
+		});	
+	}
+	
+	$scope.feedback_list = [];
+	$scope.disable_feedback = function() {
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/disable_feedback",
+			data: {},
+		}).success(function(response) {	
+			loading.finish();
+			if(response[0] == '0') {
+				$scope.is_running = '0';
+				$scope.feedback_list = response[1];
+			}
+		});	
+	}
+	
+	$scope.getStudentFeedback = function(feedback_id, financial_year_id, course_id, stream_id, year, section) {
+		if(feedback_id != '' && financial_year_id != '' && course_id != '' && stream_id != '' && year != '' && section != '') {
+			$location.path("/view_feedback/" + feedback_id + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section);
+		}
+	}
+	
+	$scope.student = {};
+	$scope.is_feedback_given = '0';
+	
+	$scope.isClicked = false;
+	$scope.save_feedback = function(student,subject_list) 
+	{
+		//alert('save_feedback');
+		subject_list = angular.copy(subject_list);
+		console.log(student);
+		var error = 0;
+		$.each(student.feedback,function(index,arr){
+			$.each(arr,function(key,value){
+				if(value == 0) error++;
+			});	
+		});	
+		if(error == 0){
+			loading.start();
+			$scope.isClicked = true;
+			$http({
+				method: "post",
+				url: "schedule/save_feedback",
+				data: {'student': student ,'subject_list':subject_list},
+			}).success(function(response) {	// console.log(response);
+				loading.finish();
+				$scope.isClicked = false;
+				response = $.trim(response);
+				
+				if(response == '0') {
+					alert('Some error occured. Please try again!!!');
+				} else {
+					$scope.is_feedback_given = '1';
+				}
+			});	
+		}else{
+			alert('Please provide feedback for all the teachers.');	
+		}
+	}
+	
+	$scope.save_elective_subject_setting = function(elective) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/save_elective_subject_setting",
+			data: elective,
+		}).success(function(response) {	
+			loading.finish();
+			console.log(response);
+			alert('Settings saved successfully!!!');
+		});
+	}
+	
+	$scope.change_sub_section_schedule = function(from_schedule_id, to_schedule_id) {
+		if(from_schedule_id != '' && to_schedule_id != '') {
+			if(from_schedule_id != to_schedule_id) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "schedule/change_sub_section_schedule",
+					data: {'from_schedule_id':from_schedule_id, 'to_schedule_id':to_schedule_id},
+				}).success(function(response) {	
+					loading.finish();
+					response = $.trim(response);
+					if(response != '') {
+						alert(response);
+					} else {
+						alert("Schedule changed!!!");
+					}
+				});
+			} else {
+				alert('Please select different from/to schedule!!!');	
+			}
+		} else {
+			alert('Please select from/to schedule!!!');
+		}
+	}
+	
+	$scope.getAllSubjectAndFacultyInSection = function(financial_year_id, course_id, stream_id, year, section) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '' && section != '') {
+			$location.path("/subject_faculty_setting/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section);
+		}
+	}
+	
+	$scope.update_subject_faculty = function(subject_list, add_schedule) {
+		loading.start();
+		subject_list = angular.copy(subject_list);
+		$http({
+			method: "post",
+			url: "schedule/update_subject_faculty",
+			data: {'subject_list':subject_list, 'add_schedule':add_schedule},
+		}).success(function(response) {	
+			loading.finish();
+			response = $.trim(response);
+			if(response != '') {
+				alert(response);
+			} else {
+				alert("Faculty updated!!!");
+			}
+		});
+	}
+	
+	$scope.exportMissingFeedback = function(base_url, financial_year_id, feedback_id, course_id, stream_id, year, section) {
+		if(financial_year_id && financial_year_id != '' &&  feedback_id && feedback_id != ''){
+			course_id = course_id && course_id != '' ? course_id : '-';
+			stream_id = stream_id && stream_id != '' ? stream_id : '-';
+			year = year && year != '' ? year : '-';
+			section = section && section != '' ? section : '-';
+			
+			window.open(base_url + 'schedule/exportMissingFeedback/' + financial_year_id + '/' + feedback_id + '/' + course_id + '/' + stream_id + '/' + year + '/' + section);	
+		}else{
+			alert('Missing Feedback details. Please try again.');
+		}
+	}
+	
+	$scope.search_feedback_all = function(feedback){
+		from_date = feedback.from_date ? feedback.from_date : '-';
+		to_date = feedback.to_date ? feedback.to_date : '-';
+		
+		course_id = feedback.course_id ? feedback.course_id : '-';
+		stream_id = feedback.stream_id ? feedback.stream_id : '-';
+		faculty_id = feedback.faculty_id ? feedback.faculty_id : '-';
+		
+		$location.path("/feedback_all/" + from_date + "/" + to_date + "/" + course_id + "/" + stream_id+ "/" + faculty_id);
+	}
+	
+	$scope.search_feedback_grade = function(feedback){
+		from_date = feedback.from_date ? feedback.from_date : '-';
+		to_date = feedback.to_date ? feedback.to_date : '-';
+		course_id = feedback.course_id ? feedback.course_id : '-';
+		stream_id = feedback.stream_id ? feedback.stream_id : '-';
+		if(from_date != '-' && to_date != '-' && course_id != '-' && stream_id != '-' )
+		{		
+			$location.path("/feedback_grade/" + from_date + "/" + to_date+"/" + course_id + "/" + stream_id);
+		}
+	}
+		
+	$scope.exportFeedback = function(base_url, feedback) {
+		
+		console.log(feedback);
+		from_date = feedback.from_date ? feedback.from_date : '-';
+		to_date = feedback.to_date ? feedback.to_date : '-';
+		course_id = feedback.course_id ? feedback.course_id : '-';
+		stream_id = feedback.stream_id ? feedback.stream_id : '-';
+		faculty_id = feedback.faculty_id ? feedback.faculty_id : '-';
+		
+		if(from_date != '-' && to_date != '-'){			
+			
+			window.open(base_url + 'schedule/exportFeedback/' + from_date + '/' + to_date+'/' + course_id+'/' + stream_id+'/' + faculty_id);	
+		}else{
+			alert('Missing Feedback Duration. Please try again.');
+		}
+	}	
+	
+	$scope.printStudent_performance_report = function(add_schedule, admission_id, base_url) {		
+		financial_year_id	 = add_schedule.financial_year_id;
+		course_id			 = add_schedule.course_id;
+		stream_id			 = add_schedule.stream_id;
+		year				 = add_schedule.year;
+		section				 = add_schedule.section;
+		attendance_less_than = add_schedule.attendance_less_than;
+		
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && attendance_less_than && attendance_less_than != '') {	
+			window.open(base_url + 'schedule/printStudent_performance_report/' + admission_id + '/' + financial_year_id + '/' + course_id + '/' + stream_id + '/' + year + '/' + section + '/' + attendance_less_than);
+		}
+	}
+	/*Add here enable Feedback form*/
+	$scope.enable_feedback_popup = false;	
+	$scope.feedback_frm = {};
+	$scope.hide_enable_feedback_popup = function(){
+		$scope.enable_feedback_popup = false;	
+		$scope.feedback_frm = {};
+	}	
+	$scope.show_enable_feedback_popup = function(){
+		$scope.enable_feedback_popup = true;	
+	}
+	
+	$scope.enable_admitCard = function(feedback_frm) 
+	{ 
+		console.log(feedback_frm);
+	
+		//alert('enable_admitCard');
+		var error = 0; var msg = '';  $scope.feedback_frm.msg = '';
+		if(!feedback_frm.financial_year_id || feedback_frm.financial_year_id == '')
+		{
+			error++;
+			msg = 'Financial Year is required.';			
+		}
+		else if(!feedback_frm.course_id || feedback_frm.course_id == '')
+		{
+			error++;
+			msg = 'Course is required.';			
+		}
+		else if(!feedback_frm.course_year || feedback_frm.course_year == '')
+		{
+			error++;
+			msg = 'Year is required.';						
+		}else if(!feedback_frm.stream_id || feedback_frm.stream_id == ''){
+			error++;
+			msg = 'Stream is required.';						
+		}
+		else if(!feedback_frm.semester || feedback_frm.semester == '')
+		{
+			error++;
+			msg = 'Semester is required.';						
+		}else if(!feedback_frm.section || feedback_frm.section == ''){
+			error++;
+			msg = 'Section is required.';						
+		}
+		else if(!feedback_frm.examFor || feedback_frm.examFor == ''){
+			error++;
+			msg = 'Is required.';						
+		}
+		else if(!feedback_frm.miniFee || feedback_frm.miniFee == ''){
+			error++;
+			msg = 'Is required.';						
+		}
+		else if(!feedback_frm.miniDue || feedback_frm.miniDue == ''){
+			error++;
+			msg = 'Is required.';						
+		}
+		if(error == 0){
+			$scope.isClicked = true;	
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/enable_card",
+				data: feedback_frm,
+			}).success(function(response) {	 //console.log(response);
+				loading.finish();
+				$scope.isClicked = false;
+				if(response[0] == '1') {
+					$scope.feedback_list = response[1];
+					$scope.hide_enable_feedback_popup();
+				} else {
+					alert(response[1]);	
+				}
+			});	
+		}else{
+			$scope.feedback_frm.msg = msg;
+		}
+	}
+	
+	$scope.add_feedback_master = function(feedback_frm) { //console.log(feedback_frm);
+		var error = 0; var msg = '';  $scope.feedback_frm.msg = '';
+		if(!feedback_frm.financial_year_id || feedback_frm.financial_year_id == ''){
+			error++;
+			msg = 'Financial Year is required.';			
+		}else if(!feedback_frm.req_percenrage || feedback_frm.req_percenrage == ''){
+			error++;
+			msg = '% is required.';			
+		}else if(!feedback_frm.course_id || feedback_frm.course_id == ''){
+			error++;
+			msg = 'Course is required.';			
+		}else if(!feedback_frm.course_year || feedback_frm.course_year == ''){
+			error++;
+			msg = 'Year is required.';						
+		}else if(!feedback_frm.stream_id || feedback_frm.stream_id == ''){
+			error++;
+			msg = 'Stream is required.';						
+		}
+		else if(!feedback_frm.semester || feedback_frm.semester == '')
+		{
+			error++;
+			msg = 'Semester is required.';						
+		}else if(!feedback_frm.section || feedback_frm.section == ''){
+			error++;
+			msg = 'Section is required.';						
+		}
+		if(error == 0){
+			$scope.isClicked = true;	
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/add_feedback_master",
+				data: feedback_frm,
+			}).success(function(response) {	 //console.log(response);
+				loading.finish();
+				$scope.isClicked = false;
+				if(response[0] == '1') {
+					$scope.feedback_list = response[1];
+					$scope.hide_enable_feedback_popup();
+				} else {
+					alert(response[1]);	
+				}
+			});	
+		}else{
+			$scope.feedback_frm.msg = msg;
+		}
+	}
+	$scope.close_printAdmitcard = function(id, index) {
+		if(confirm('Are you sure?')){
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/close_printing",
+				data: {'id':id}
+			}).success(function(response) {	//console.log(response);
+				loading.finish();
+				if(response[0] == '0') {
+					//$scope.feedback_list = response[1];
+					$scope.feedback_list[index].end_date = response[1];
+				}else if(response[0] == '1') {
+					alert(response[1]);
+				}
+			});	
+		}
+	}
+	
+	$scope.disable_feedback_master = function(feedback_id, index) {
+		if(confirm('Are you sure?')){
+			loading.start();
+			$http({
+				method: "post",
+				url: "schedule/disable_feedback_master",
+				data: {'feedback_id':feedback_id}
+			}).success(function(response) {	//console.log(response);
+				loading.finish();
+				if(response[0] == '0') {
+					//$scope.feedback_list = response[1];
+					$scope.feedback_list[index].end_date = response[1];
+				}else if(response[0] == '1') {
+					alert(response[1]);
+				}
+			});	
+		}
+	}
+	
+	/*End here enable feedback form*/
+	/*
+	$scope.count_schedule= 0;
+	$scope.getScheduleRemove = function(financial_year_id, course_id, stream_id, year, section, from_date, to_date) { 
+		financial_year_id = financial_year_id != '' ? financial_year_id : '-';
+		course_id = course_id != '' ? course_id : '-';
+		stream_id = stream_id != '' ? stream_id : '-';
+		year = year != '' ? year : '-';
+		section = section != '' ? section : '-';
+		from_date = from_date != '' ? from_date : '-';
+		to_date = to_date != '' ? to_date : '-';
+		
+		loading.start();
+		$http({
+			method: "post",
+			url: "schedule/remove_schedule",
+			data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year, 'section':section, 'from_date':from_date, 'to_date':to_date},
+		}).success(function(response) {	
+			loading.finish();
+			console.log(response);
+			$scope.count_schedule=response;
+			response = $.trim(response);
+			if(response != '') {
+				alert(response);
+			} else {
+				alert("Faculty updated!!!");
+			}
+		});
+		//$location.path("/remove_schedule/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + from_date + "/" + to_date);	
+	}
+	$scope.getScheduleRemove = function(financial_year_id, course_id, stream_id, year, section, from_date, to_date) { 
+		financial_year_id = financial_year_id != '' ? financial_year_id : '-';
+		course_id = course_id != '' ? course_id : '-';
+		stream_id = stream_id != '' ? stream_id : '-';
+		year = year != '' ? year : '-';
+		section = section != '' ? section : '-';
+		from_date = from_date != '' ? from_date : '-';
+		to_date = to_date != '' ? to_date : '-';
+		
+		$location.path("/remove_schedule/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + from_date + "/" + to_date);	
+	}
+	*/
+}]);
+
+'use strict';
+
+/**
+ * @ngdoc service
+ * @name angularGanttDemoApp.Uuid
+ * @description
+ * # Uuid
+ * Service in the angularGanttDemoApp.
+ */
+angular.module('User').service('Uuid', function Uuid() {
+	return {
+		s4: function() {
+			return Math.floor((1 + Math.random()) * 0x10000)
+				.toString(16)
+				.substring(1);
+		},
+		randomUuid: function() {
+			return this.s4() + this.s4() + '-' + this.s4() + '-' + this.s4() + '-' +
+				this.s4() + '-' + this.s4() + this.s4() + this.s4();
+		}
+	};
+});

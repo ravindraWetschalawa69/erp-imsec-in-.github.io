@@ -1,0 +1,1084 @@
+angular.module("User").controller('committee', ['$scope', '$http', 'loading', '$location','FileUploader', function($scope, $http, loading, $location,FileUploader){
+	$scope.committee = {};
+	$scope.committee_list = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.fd = new FormData();
+	
+	$scope.openAmazonFile = function(key) {
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key	};
+		s3.getSignedUrl('getObject', params, function (err, url) {
+			if(err) alert('No such key exist!!!');
+			else window.open(url);
+		});
+	}
+	
+	$scope.save_committee = function(committee) {
+		$scope.error = {};
+		 
+		var grad_err = 0;
+		if(!committee.committee_name || committee.committee_name == '') {
+			$scope.error.committee_name = true;
+			return false;
+		}
+		if(!committee.is_student_event || committee.is_student_event == '') {
+			$scope.error.is_student_event = true;
+			return false;
+		}
+		if(!committee.purpose || committee.purpose == '') {
+			$scope.error.purpose = true;
+			return false;
+		}
+		if(!committee.start_date || committee.start_date == '') {
+			$scope.error.start_date = true;
+			return false;
+		}
+		if(!committee.end_date || committee.end_date == '') {
+			$scope.error.end_date = true;
+			return false;
+		}
+		if(!committee.start_time || committee.start_time == '') {
+			$scope.error.start_time = true;
+			return false;
+		}
+		if(!committee.end_time || committee.end_time == '') {
+			$scope.error.end_time = true;
+			return false;
+		}
+		if(committee.start_time && committee.end_time) {
+			var timefrom = new Date();
+			temp = committee.start_time.split(":");
+			timefrom.setHours((parseInt(temp[0]) - 1 + 24) % 24);
+			timefrom.setMinutes(parseInt(temp[1]));
+			
+			var timeto = new Date();
+			temp = committee.end_time.split(":");
+			timeto.setHours((parseInt(temp[0]) - 1 + 24) % 24);
+			timeto.setMinutes(parseInt(temp[1]));
+			
+			if (timeto < timefrom){
+				alert('Start time should be smaller than End time!');
+				return false;
+			}
+		}
+		if(!committee.grading_scale || committee.grading_scale == '') {
+			$scope.error.grading_scale = true;
+			return false;
+		}else{
+			for (var j = 1; j <= committee.grading_scale; j++) {
+				if(!committee.grading[j].name || committee.grading[j].name == '') {
+					grad_err = 1;
+				}
+			}
+		}
+		if(grad_err == 1){
+			$scope.error.grading_meaning = true;
+			return false;
+		}
+		if(!committee.member || committee.member == '') {
+			$scope.error.member = true;
+			return false;
+		}
+		var hodcount = 0;
+		var mem_err = 0;
+	
+		for (var i = 0; i <= 49; i++) {
+			if(committee.member[i].designation == 'hod'){
+				hodcount++;
+			}
+			if(committee.member[i].designation && committee.member[i].designation != '') {
+				if(!committee.member[i].member_name || committee.member[i].member_name == '') {
+					mem_err = 1;
+				}
+			}
+		}
+		if(mem_err == 1){
+			$scope.error.mem_err = true;
+			return false;
+		}
+		if(hodcount == 0){
+			alert("Please Choose One HOD Designation");
+			return false;
+		}else if(hodcount > 1){
+			alert("HOD not more than one!");	
+			return false;
+		}
+
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee/add_committee",
+			data: committee
+		}).success(function(response) {
+			loading.finish();
+			if(response != '') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert(response);
+			} else {
+				$location.path("/committee_list");
+			}
+		});
+
+	}
+
+	$scope.add_grade = function(grade){
+		$scope.error = {};
+		var range = [];
+		for(var i=1;i<=grade;i++) {
+			range.push(i);
+		}
+		$scope.range = range;
+	}
+
+	$scope.member_list = {};
+	$scope.get_comm_mem = function(member_name, index)
+	{
+		$scope.member_list[index] = {};
+		if(member_name == ''){
+			$scope.member_list[index] = {};
+		}else{
+			$http({
+				method: "post",
+				url: "committee/get_member_list",
+				data: {'member_name':member_name}
+			}).success(function(response)
+			{
+				$scope.member_list[index] = response;
+			});
+		}
+	}
+	$scope.ddselectfaculty = function(index, Value, name){
+		 $scope.committee.member[index].member_id = Value;
+		  $scope.committee.member[index].member_name = name;
+		  $scope.member_list = {};
+	}
+	$scope.change_status = function(committee_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee/change_status",
+			data: {'committee_id':committee_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			
+			if(response == '') {
+				$scope.committee_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	var committee_notice  = $scope.committee_notice  = new FileUploader({url: $scope.s3url});
+	committee_notice .filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|pdf|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .pdf are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	committee_notice .onAfterAddingFile = function(fileItem) {
+			var subbucket = 'committee/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		
+	};
+	committee_notice .onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.committee.committee_notice  = fileItem.formData[0].key;
+	};
+	
+	$scope.delete_member = function(committee_member_id, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee/delete_member",
+			data: {'committee_member_id':committee_member_id}
+		}).success(function(response) {
+			loading.finish();
+			
+			if(response == '') {
+				$scope.committee.member[index].status = '0';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	var event_notice  = $scope.event_notice  = new FileUploader({url: $scope.s3url});
+	event_notice .filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|pdf|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .PDF are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	event_notice .onAfterAddingFile = function(fileItem) {
+			var subbucket = 'committee/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		
+	};
+	event_notice .onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.event_data.event_notice  = fileItem.formData[0].key;
+	};
+	$scope.event_data = {};
+	$scope.save_event = function(event_data) {
+		$scope.error = {};
+		 
+		var grad_err = 0;
+		if(!event_data.event_name || event_data.event_name == '') {
+			$scope.error.event_name = true;
+			return false;
+		}
+		
+		if(!event_data.start_date || event_data.start_date == '') {
+			$scope.error.start_date = true;
+			return false;
+		}
+		if(!event_data.end_date || event_data.end_date == '') {
+			$scope.error.end_date = true;
+			return false;
+		}
+		if(!event_data.start_time || event_data.start_time == '') {
+			$scope.error.start_time = true;
+			return false;
+		}
+		if(!event_data.end_time || event_data.end_time == '') {
+			$scope.error.end_time = true;
+			return false;
+		}
+		if(event_data.start_time && event_data.end_time) {
+			var timefrom = new Date();
+			temp = event_data.start_time.split(":");
+			timefrom.setHours((parseInt(temp[0]) - 1 + 24) % 24);
+			timefrom.setMinutes(parseInt(temp[1]));
+			
+			var timeto = new Date();
+			temp = event_data.end_time.split(":");
+			timeto.setHours((parseInt(temp[0]) - 1 + 24) % 24);
+			timeto.setMinutes(parseInt(temp[1]));
+			
+			if (timeto < timefrom){
+				alert('Start time should be smaller than End time!');
+				return false;
+			}
+		}
+		if(!event_data.event_status || event_data.event_status == '') {
+			$scope.error.event_status = true;
+			return false;
+		}
+		var chek =0;
+		for (var i = 0; i < $scope.event_data.member_list.length; i++) {
+			if ($scope.event_data.member_list[i].Selected==1) {
+				chek=1;
+			}   
+		}
+		if(chek == 0){
+			alert("Please Choose atleast one member.");
+			return false;
+		}
+		$scope.event_data.member_list = angular.copy($scope.event_data.member_list);
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee/add_event",
+			data: event_data
+		}).success(function(response) {
+			loading.finish();
+			if(response != '') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert(response);
+			} else {
+				$location.path("/view_committee/"+event_data.committee_id);
+			}
+		});
+
+	}
+	
+	$scope.update_grade = function(committee_grading_scale_id, event_member_id, event_id){
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee/update_grade",
+			data: {'committee_grading_scale_id':committee_grading_scale_id, 'event_member_id':event_member_id}
+		}).success(function(response) {
+			loading.finish();
+			if(response != '') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert(response);
+			} else {
+				$location.path("/view_event/"+event_id);
+			}
+		});
+	}
+	
+	var minutes_of_meeting  = $scope.minutes_of_meeting  = new FileUploader({url: $scope.s3url});
+	minutes_of_meeting .filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|jpeg|pdf|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PDF are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	minutes_of_meeting .onAfterAddingFile = function(fileItem) {
+			var subbucket = 'committee/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		
+	};
+	minutes_of_meeting .onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.event_data.minutes_of_meeting  = fileItem.formData[0].key;
+	};
+	
+	var reports  = $scope.reports  = new FileUploader({url: $scope.s3url});
+	reports .filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|jpeg|pdf|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PDF are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	reports .onAfterAddingFile = function(fileItem) {
+			var subbucket = 'committee/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		
+	};
+	reports .onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.event_data.reports  = fileItem.formData[0].key;
+	};
+	
+	var closer_reports  = $scope.closer_reports  = new FileUploader({url: $scope.s3url});
+	closer_reports .filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|jpeg|pdf|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PDF are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	closer_reports .onAfterAddingFile = function(fileItem) {
+			var subbucket = 'committee/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		
+	};
+	closer_reports .onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.event_data.closer_reports  = fileItem.formData[0].key;
+	};
+	
+	var event_photo  = $scope.event_photo  = new FileUploader({url: $scope.s3url});
+	event_photo .filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|jpeg|pdf|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PDF are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	event_photo .onAfterAddingFile = function(fileItem) {
+			var subbucket = 'committee/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) +'_'+Math.round(new Date().getTime() / 100)+ '.' + filename;
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		
+	};
+	var event_photos = [];
+	event_photo .onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		event_photos.push(fileItem.formData[0].key);
+		//console.log(event_photos);
+		$scope.event_data.event_photo = event_photos;
+	};
+	$scope.event_data.event_photo = {};
+	$scope.update_event_document_file = function(event_data) {
+		loading.start();
+		event_data  = angular.copy(event_data);
+		$http({
+			method: "post",
+			url: "committee/update_event_document_file",
+			data: {'event_data':event_data}
+		}).success(function(response) {
+			loading.finish();
+			
+			if(response[0] == '1') {
+				document.getElementById('popup-hop').style.display = 'none';
+				document.getElementById('popup-hop-bg').style.display = 'none';
+				$scope.event_data.event_photo = response[1];
+				//$location.path("/view_event/"+event_data.event_id);
+				
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.export_event_detail = function(event_id, base_url){              // Export bank detail
+		event_id = event_id ? event_id : '-';
+		//alert(event_id);
+		window.open(base_url + 'committee/export_event_detail/' + event_id);
+	}
+	
+	$scope.hide_popup = function(p1, p2){ 
+		document.getElementById(p1).style.display = 'none';
+		document.getElementById(p2).style.display = 'none';
+	}
+	
+	$scope.upload_document = function(){ 
+		document.getElementById('popup-hop').style.display = 'block';
+		document.getElementById('popup-hop-bg').style.display = 'block';
+	}
+	var uploaded_file  = $scope.uploaded_file  = new FileUploader({url: $scope.s3url});
+	uploaded_file .filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|jpg|jpeg|pdf|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .JPEG, .JPG, .PDF are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	uploaded_file .onAfterAddingFile = function(fileItem) {
+			var subbucket = 'committee/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		
+	};
+	uploaded_file .onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.event_data.uploaded_file  = fileItem.formData[0].key;
+	};
+	/*$scope.event_list  = {};
+	$scope.get_event = function(committee_id) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee_report/get_event",
+			data: {'committee_id':committee_id}
+		}).success(function(response) {
+			loading.finish();
+			if(response[0] == '1') {
+				$scope.event_list = response[1];
+				
+			} else {
+				$scope.event_list  = {};
+			}
+		});
+	}
+	
+	$scope.report_list  = {};
+	$scope.get_report = function(committee) {
+		committee_id = committee.committee_id ? committee.committee_id : '-';
+		event_id = committee.event_id ? committee.event_id : '-';
+		$location.path("/report_list/" + committee_id + "/" + event_id);
+	}*/
+	
+	$scope.create_report = function(event_id, base_url){              // Export bank detail
+		event_id = event_id ? event_id : '-';
+		window.open(base_url + 'committee/create_report/' + event_id);
+	}
+	$scope.case = {};
+	$scope.case.accused_student_list = [];
+	$scope.check_proctor = function(is_proctor, committee_id){   
+		if(is_proctor == '1'){
+				$http({
+				method: "post",
+				url: "committee/check_proctor",
+				data:  {'is_proctor':is_proctor}
+			}).success(function(response) {
+				if(response[0]== '1') {				
+					if(response[2] != committee_id){
+						alert(response[1]);
+						$scope.committee.is_proctor = 0;
+						return false;
+					}
+				}
+			});
+		}
+	}
+	$scope.search_accused = function(admission_no){   
+		if(admission_no != ''){
+				$http({
+				method: "post",
+				url: "committee/search_accused",
+				data:  {'admission_no':admission_no}
+			}).success(function(response) {
+				if(response[0]== '1') {				
+					 $scope.case.admission_no = '';
+					 $scope.case.accused_student_list.push(response[1]);
+				}
+			});
+		}
+	}
+	
+
+	
+	var case_document  = $scope.case_document  = new FileUploader({url: $scope.s3url});
+	case_document .filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|pdf|jpeg|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .pdf,.jpeg are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	case_document .onAfterAddingFile = function(fileItem) {
+			var subbucket = 'case/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		
+	};
+	case_document .onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.case.case_document  = fileItem.formData[0].key;
+	};
+	
+	$scope.save_case = function(case_data) {
+		$scope.error = {};
+		if(!case_data.case_area || case_data.case_area == '') {
+			$scope.error.case_area = true;
+			return false;
+		}
+		if(!case_data.complaint_type_id || case_data.complaint_type_id == '') {
+			$scope.error.complaint_type_id = true;
+			return false;
+		}
+		if(!case_data.title || case_data.title == '') {
+			$scope.error.title = true;
+			return false;
+		}
+		if(!case_data.description || case_data.description == '') {
+			$scope.error.description = true;
+			return false;
+		}
+		if(!case_data.case_document || case_data.case_document == '') {
+			$scope.error.case_document = true;
+			return false;
+		}
+		if(!case_data.reporting_date || case_data.reporting_date == '') {
+			$scope.error.reporting_date = true;
+			return false;
+		}
+		if(!case_data.accused_student_list || case_data.accused_student_list.length <=0) {
+			alert("Accused Details is Required!")
+			return false;
+		}
+		$scope.case_data = angular.copy(case_data)
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee/add_case",
+			data: $scope.case_data
+		}).success(function(response) {
+			loading.finish();
+			if(response != '') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert(response);
+			} else {
+				$location.path("/case_list");
+			}
+		});
+
+	}
+	$scope.case_arr = {};
+	$scope.case_arr.student_faculty_list = [];
+	$scope.search_record = function(search_data){   
+		if(search_data != ''){
+				$http({
+				method: "post",
+				url: "committee/search_record",
+				data:  {'search_data':search_data}
+			}).success(function(response) {
+				if(response[0]== '1') {				
+					$scope.case_arr.search_data = '';
+					 $scope.case_arr.student_faculty_list.push(response[1]);
+				}
+			});
+		}
+	}
+	$scope.save_case_witness = function(case_data) {
+		$scope.error = {};
+		if(!case_data.type || case_data.type == '') {
+			$scope.error.type = true;
+			return false;
+		}
+		
+		if(!case_data.student_faculty_list || case_data.student_faculty_list.length <=0) {
+			alert("Person Details is Required!")
+			return false;
+		}
+		$scope.case_data = angular.copy(case_data)
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee/add_case_witness",
+			data: $scope.case_data
+		}).success(function(response) {
+			loading.finish();
+			if(response != '') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert(response);
+			} else {
+				$location.path("/view_case/"+$scope.case_data.case_id);
+			}
+		});
+
+	}
+	
+	
+	$scope.statement = {};
+	$scope.student_faculty_list = {};
+	var case_statement  = $scope.case_statement  = new FileUploader({url: $scope.s3url});
+	case_statement .filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|'.indexOf(type) !== -1;
+			if('|pdf|jpeg|'.indexOf(type) === -1){
+				alert('Invalid Image Type.\nOnly .pdf,.jpeg are valied image type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	case_statement .onAfterAddingFile = function(fileItem) {
+			var subbucket = 'case/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		
+	};
+	case_statement .onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.statement.case_statement  = fileItem.formData[0].key;
+	};
+	
+	$scope.get_acc_wit_vic = function(case_id, type){ 
+		$scope.student_faculty_list = {};
+		if(case_id!= '' && type!= '' && type=='1' || type=='2' || type=='3'){
+				$http({
+				method: "post",
+				url: "committee/get_acc_wit_vic",
+				data:  {'case_id':case_id,'type':type}
+			}).success(function(response) {
+				if(response[0]== '1') {				
+					 $scope.student_faculty_list = response[1];
+				}
+			});
+		}
+	}
+	
+	$scope.save_statement = function(statement) {
+		$scope.error = {};
+		if(!statement.type || statement.type == '') {
+			$scope.error.type = true;
+			return false;
+		}
+		if(statement.type == '1' || statement.type == '2' || statement.type == '3'){
+			if(!statement.case_accused_id || statement.case_accused_id == '') {
+				$scope.error.case_accused_id = true;
+				return false;
+			}
+		}
+		if(!statement.description || statement.description == '') {
+			$scope.error.description = true;
+			return false;
+		}
+		if(!statement.case_statement || statement.case_statement == '') {
+			$scope.error.case_statement = true;
+			return false;
+		}
+		if(!statement.date || statement.date == '') {
+			$scope.error.date = true;
+			return false;
+		}
+		if(statement.type == '6'){
+			if(!statement.closer_date || statement.closer_date == '') {
+				$scope.error.closer_date = true;
+				return false;
+			}
+		}
+		$scope.statement = angular.copy(statement)
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee/add_statement",
+			data: $scope.statement
+		}).success(function(response) {
+			loading.finish();
+			if(response != '') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert(response);
+			} else {
+				$location.path("/view_case/"+$scope.statement.case_id);
+			}
+		});
+
+	}
+	
+	$scope.statement_list = {};
+	$scope.record = {};
+	$scope.show_statement = function(statement_list, record){
+		$scope.statement_list = statement_list;
+		$scope.record = record;
+		$('#popup-bgstatement').show();
+		$('#popup-bodystatement').show();
+	}
+	$scope.close_statement = function(){
+		$scope.statement_list = {};
+		$('#popup-bgstatement').hide();
+		$('#popup-bodystatement').hide();
+	}
+	
+	$scope.event_data.event_student_list = [];
+	$scope.search_student = function(admission_no){   
+		if(admission_no != ''){
+				$http({
+				method: "post",
+				url: "committee/search_accused",
+				data:  {'admission_no':admission_no}
+			}).success(function(response) {
+				if(response[0]== '1') {				
+					 $scope.event_data.admission_no = '';
+					 $scope.event_data.event_student_list.push(response[1]);
+				}
+			});
+		}
+	}
+	
+	$scope.save_student_event = function(event_data) {
+		$scope.error = {};
+		 
+		var grad_err = 0;
+		if(!event_data.event_name || event_data.event_name == '') {
+			$scope.error.event_name = true;
+			return false;
+		}
+		
+		if(!event_data.start_date || event_data.start_date == '') {
+			$scope.error.start_date = true;
+			return false;
+		}
+		if(!event_data.end_date || event_data.end_date == '') {
+			$scope.error.end_date = true;
+			return false;
+		}
+		if(!event_data.start_time || event_data.start_time == '') {
+			$scope.error.start_time = true;
+			return false;
+		}
+		if(!event_data.end_time || event_data.end_time == '') {
+			$scope.error.end_time = true;
+			return false;
+		}
+		if(event_data.start_time && event_data.end_time) {
+			var timefrom = new Date();
+			temp = event_data.start_time.split(":");
+			timefrom.setHours((parseInt(temp[0]) - 1 + 24) % 24);
+			timefrom.setMinutes(parseInt(temp[1]));
+			
+			var timeto = new Date();
+			temp = event_data.end_time.split(":");
+			timeto.setHours((parseInt(temp[0]) - 1 + 24) % 24);
+			timeto.setMinutes(parseInt(temp[1]));
+			
+			if (timeto < timefrom){
+				alert('Start time should be smaller than End time!');
+				return false;
+			}
+		}
+		if(!event_data.event_status || event_data.event_status == '') {
+			$scope.error.event_status = true;
+			return false;
+		}
+		if(!event_data.event_marks_grade_result || event_data.event_marks_grade_result == '') {
+			$scope.error.event_marks_grade_result = true;
+			return false;
+		}
+		if(!event_data.grading_scale || event_data.grading_scale == '') {
+			$scope.error.grading_scale = true;
+			return false;
+		}else{
+			for (var j = 1; j <= event_data.grading_scale; j++) {
+				if(!event_data.grading[j].name || event_data.grading[j].name == '') {
+					grad_err = 1;
+				}
+			}
+		}
+		if(grad_err == 1){
+			$scope.error.grading_meaning = true;
+			return false;
+		}
+		if(!event_data.event_student_list || event_data.event_student_list.length <=0) {
+			alert("Student is Required!")
+			return false;
+		}
+		
+		$scope.even_stu_list = [];
+		for (var i = 0; i < event_data.event_student_list.length; i++) {
+			   $scope.even_stu_list.push({'admission_id' : event_data.event_student_list[i].admission_id,
+									'semester' : event_data.event_student_list[i].semester,
+									'admitted_year' : event_data.event_student_list[i].admitted_year,
+									'financial_year_id' : event_data.event_student_list[i].financial_year_id,
+									'current_financial_year_id' : event_data.event_student_list[i].current_financial_year_id,
+									'comm_event_student_id' : event_data.event_student_list[i].comm_event_student_id
+									});
+		}
+		event_data.event_student_list = $scope.even_stu_list;
+		//console.log(event_data.event_student_list); return false;
+		$scope.event_data = angular.copy(event_data);
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee/add_student_event",
+			data: $scope.event_data
+		}).success(function(response) {
+			loading.finish();
+			if(response != '') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert(response);
+			} else {
+				$location.path("/view_committee/"+event_data.committee_id);
+			}
+		});
+
+	}
+	
+	$scope.update_student_grade = function(event_grading_scale_id, comm_event_student_id, student_event_id){
+		loading.start();
+		$http({
+			method: "post",
+			url: "committee/update_student_grade",
+			data: {'event_grading_scale_id':event_grading_scale_id, 'comm_event_student_id':comm_event_student_id}
+		}).success(function(response) {
+			loading.finish();
+			if(response != '') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert(response);
+			} else {
+				$location.path("/view_student_event/"+student_event_id);
+			}
+		});
+	}
+	
+	$scope.copy_content2 = function($id){
+		$('.'+$id).fadeIn();
+		setTimeout(function () { $('.'+$id).fadeOut() }, 2000);
+		var copyText = document.getElementById($id);
+		copyText.select();
+		copyText.setSelectionRange(0, 99999)
+		document.execCommand("copy");		
+	}
+	$scope.block_member_list = {};
+	$scope.view_block_member = function(committee_id){ 
+		$scope.block_member_list = {};
+			$http({
+				method: "post",
+				url: "committee/viewblockmember",
+				data: {'committee_id':committee_id}
+			}).success(function(response) { 
+				if(response[0] == '1')
+				{
+					$scope.block_member_list = response[1];
+					document.getElementById('popup-hop').style.display = 'block';
+					document.getElementById('popup-hop-bg').style.display = 'block';
+				}else
+				{
+					alert(response[1]);
+				}
+			});
+	}
+	$scope.block_eventmember_list = {};
+	$scope.view_block_eventmember = function(event_id){ 
+		$scope.block_eventmember_list = {};
+			$http({
+				method: "post",
+				url: "committee/viewblockeventmember",
+				data: {'event_id':event_id}
+			}).success(function(response) { 
+				if(response[0] == '1')
+				{
+					$scope.block_eventmember_list = response[1];
+					document.getElementById('popup-hop1').style.display = 'block';
+					document.getElementById('popup-hop-bg1').style.display = 'block';
+				}else
+				{
+					alert(response[1]);
+				}
+			});
+	}
+	
+	 $scope.CheckUncheckAll = function (){
+		var check =0;
+		for (var i = 0; i < $scope.event_data.member_list.length; i++) {
+			$scope.event_data.member_list[i].Selected  = $scope.IsAllChecked; 
+			if($scope.event_data.member_list[i].Selected==1){
+				check=1;
+			}
+		}
+
+		if(check==1){
+			$scope.is_checkbox= false;
+		}else{
+			$scope.is_checkbox= true;
+		}
+	}
+	 $scope.CheckUncheckHeader = function () {
+		 var check =0; var allcheck=0;
+		for (var i = 0; i < $scope.event_data.member_list.length; i++) {
+			if(typeof $scope.event_data.member_list[i].Selected != "undefined" && $scope.event_data.member_list[i].Selected==1){
+				check=1;
+			}else{
+				allcheck=1;
+			}
+		}
+		if(allcheck==0){
+			$scope.IsAllChecked = 1;
+		}else{
+			$scope.IsAllChecked = 0;
+		}
+
+		if(check==1){
+			$scope.is_checkbox= false;
+		}else{
+			$scope.is_checkbox= true;
+		}
+	}
+	$scope.create_student_eventreport = function(student_event_id, base_url){              // Export bank detail
+		student_event_id = student_event_id ? student_event_id : '-';
+		window.open(base_url + 'committee/create_student_eventreport/' + student_event_id);
+	}
+	/*$scope.hide_popup = function(p1, p2){ 
+		document.getElementById(p1).style.display = 'none';
+		document.getElementById(p2).style.display = 'none';
+	}*/
+	$scope.cultural_list = {};
+	$scope.sport_list = {};
+	$scope.view_more = function(committee_id){ 
+			$http({
+				method: "post",
+				url: "committee/view_more",
+				data: {'committee_id':committee_id}
+			}).success(function(response) { 
+				if(response[0] == '1')
+				{
+					if(committee_id == '19'){
+						$scope.cultural_list = {};
+						$scope.cultural_list = response[1];
+						document.getElementById("cmore").style.display = "none";
+						document.getElementById("cless").style.display = "block";
+					}else if(committee_id == '32'){
+						$scope.sport_list = {};
+						$scope.sport_list = response[1];
+						document.getElementById("smore").style.display = "none";
+						document.getElementById("sless").style.display = "block";
+					}
+				}
+			});
+	}
+	
+	$scope.view_less = function(committee_id){ 
+			$http({
+				method: "post",
+				url: "committee/view_less",
+				data: {'committee_id':committee_id}
+			}).success(function(response) { 
+				if(response[0] == '1')
+				{
+					if(committee_id == '19'){
+						$scope.cultural_list = {};
+						$scope.cultural_list = response[1];
+						document.getElementById("cless").style.display = "none";
+						document.getElementById("cmore").style.display = "block";
+						
+					}else if(committee_id == '32'){
+						$scope.sport_list = {};
+						$scope.sport_list = response[1];
+						document.getElementById("sless").style.display = "none";
+						document.getElementById("smore").style.display = "block";
+					}
+				}
+			});
+	}
+	
+}]);

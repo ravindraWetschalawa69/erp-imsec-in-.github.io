@@ -1,0 +1,416 @@
+angular.module("User").controller('scholarship', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+	$scope.admission = {};
+	$scope.admission_list = {};
+	$scope.course_list = {};
+	$scope.scholarship = {};
+	$scope.scholarship_list = {};
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.pagination = {};	
+	$scope.error = {};
+	$scope.isClicked = false;
+	$scope.duplicate_scholarsip = false;
+	
+	$scope.validate_scholarship = function() {
+		$scope.error = {};
+		$error = 0;
+		if(!$scope.scholarship.register_no || $scope.scholarship.register_no == '') {
+			$scope.error.register_no = true;
+			$error++;
+		}
+		if(!$scope.scholarship.category_id || $scope.scholarship.category_id == '') {
+			$scope.error.category_id = true;
+			$error++;
+		}
+		if(!$scope.scholarship.year || $scope.scholarship.year == '') {
+			$scope.error.year = true;
+			$error++;
+		}
+		if(!$scope.scholarship.semester || $scope.scholarship.semester == '') {
+			$scope.error.semester = true;
+			$error++;
+		}
+		if(!$scope.scholarship.prv_yr_obt_marks || $scope.scholarship.prv_yr_obt_marks == '') {
+			$scope.error.prv_yr_obt_marks = true;
+			$error++;
+		}
+		if(!$scope.scholarship.prv_yr_max_marks || $scope.scholarship.prv_yr_max_marks == '') {
+			$scope.error.prv_yr_max_marks = true;
+			$error++;
+		}
+		if(!$scope.document_file.queue || $scope.document_file.queue == '') {
+			$scope.error.document_file = true;
+			$error++;
+		}
+		if(!$scope.scholarship.bank_name || $scope.scholarship.bank_name == '') {
+			$scope.error.bank_name = true;
+			$error++;
+		}
+		if(!$scope.scholarship.branch || $scope.scholarship.branch == '') {
+			$scope.error.branch = true;
+			$error++;
+		}
+		if(!$scope.scholarship.account_no || $scope.scholarship.account_no == '') {
+			$scope.error.account_no = true;
+			$error++;
+		}
+		if($scope.scholarship.is_last_year_received == '1'){
+			if(!$scope.scholarship.last_amount || $scope.scholarship.last_amount == '' || $scope.scholarship.last_amount == '0.00' || $scope.scholarship.last_amount == '0'){
+				$scope.error.last_amount = true;
+				$error++;
+			}
+		}
+		if($scope.scholarship.is_father_change_occupation == '1'){
+			if(!$scope.scholarship.father_occupation_id || $scope.scholarship.father_occupation_id == '') {
+				$scope.error.father_occupation_id = true;
+				$error++;
+			}
+			if($scope.scholarship.father_occupation_id == 13) {
+				if(!$scope.scholarship.occupation_name || $scope.scholarship.occupation_name == '') {
+					$scope.error.father_occupation_id = true;
+					$error++;
+				}
+			}
+			if(!$scope.scholarship.parent_income || $scope.scholarship.parent_income == '' || $scope.scholarship.parent_income == '0.00' || $scope.scholarship.parent_income == '0') {
+				$scope.error.parent_income = true;
+				$error++;
+			}
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save = function(scholarship) { 	//console.log($scope.scholarship);
+		$scope.error = {};	$error = 0;
+		if(!$scope.scholarship.register_no || $scope.scholarship.register_no == '') {
+			$scope.error.register_no = true;
+			$error++;
+		}
+		if(!$scope.scholarship.category_id || $scope.scholarship.category_id == '') {
+			$scope.error.category_id = true;
+			$error++;
+		}
+		if(!$scope.scholarship.prv_yr_obt_marks || $scope.scholarship.prv_yr_obt_marks == '') {
+			$scope.error.prv_yr_obt_marks = true;
+			$error++;
+		}
+		if(!$scope.scholarship.prv_yr_max_marks || $scope.scholarship.prv_yr_max_marks == '') {
+			$scope.error.prv_yr_max_marks = true;
+			$error++;
+		}
+		if(!$scope.scholarship.document_path || $scope.scholarship.document_path == '' || $scope.scholarship.document_path == 'undefined') {
+			$scope.error.document_file = true;
+			$error++;
+		}		
+		if(!$scope.scholarship.bank_name || $scope.scholarship.bank_name == ''){
+			$scope.error.bank_name = true;
+			$error++;
+		}
+		if(!$scope.scholarship.branch || $scope.scholarship.branch == ''){
+			$scope.error.branch = true;
+			$error++;
+		}
+		if(!$scope.scholarship.account_no || $scope.scholarship.account_no == ''){
+			$scope.error.account_no = true;
+			$error++;
+		}
+		if($scope.scholarship.is_last_year_received == '1'){
+			if(!$scope.scholarship.last_amount || $scope.scholarship.last_amount == '' || $scope.scholarship.last_amount == '0.00' || $scope.scholarship.last_amount == '0'){
+				$scope.error.last_amount = true;
+				$error++;
+			}
+		}
+		if($scope.scholarship.is_father_change_occupation == '1'){
+			if(!$scope.scholarship.father_occupation_id || $scope.scholarship.father_occupation_id == '') {
+				$scope.error.father_occupation_id = true;
+				$error++;
+			}
+			if($scope.scholarship.father_occupation_id == 13) {
+				if(!$scope.scholarship.occupation_name || $scope.scholarship.occupation_name == '') {
+					$scope.error.father_occupation_id = true;
+					$error++;
+				}
+			}
+			if(!$scope.scholarship.parent_income || $scope.scholarship.parent_income == '' || $scope.scholarship.parent_income == '0.00' || $scope.scholarship.parent_income == '0') {
+				$scope.error.parent_income = true;
+				$error++;
+			}
+		}
+		if($error > 0) return false;
+		$scope.isClicked = true;
+		$scope.scholarship.admission_id = $scope.admission.admission_id;
+		
+		loading.start();		
+		$http({
+			method: "post",
+			url: "scholarship/apply_scholarship",
+			data: $scope.scholarship
+		}).success(function(response) {
+			loading.finish();
+			$scope.isClicked = false;
+			if(response[0] == 'success') {
+				alert(response[1]);	
+				$location.path("/scholarship");
+			}else if(response[0] == 'error') {
+				alert(response[1]);
+			}
+		});
+	}	
+	
+	var document_file = $scope.document_file = new FileUploader({url: $scope.s3url});	
+	document_file.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|pdf|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .PDF is valid file type.');	
+				return false;
+			} else if((item.size / 1024) < 500) {
+				alert('File size should be greater than 500Kb.');
+				return false; 
+			}
+			return true;
+		}
+	});
+	document_file.onAfterAddingFile = function(fileItem) {
+		$scope.scholarship.admission_id = $scope.admission.admission_id;
+		$scope.check_duplicate_scholarship();
+		var subbucket = $scope.admission.admission_id;
+		if(subbucket) {
+			subbucket = 'scholarship/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = $scope.scholarship.admission_no + '.' + filename; //Math.round(new Date().getTime() / 1000) + '.' + filename;
+			
+			$scope.scholarship.document_name = fileItem.file.name;
+			//console.log($scope.scholarship.document_name);
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured, Please try again!!!!!');	
+		}	
+		//console.log($scope.duplicate_scholarsip);
+	};
+	document_file.onProgressItem = function(fileItem, progress) {
+		$scope.isClicked = true;	
+		$scope.scholarship.admission_id = $scope.admission.admission_id;
+		if(!$scope.validate_scholarship()){ fileItem.cancel();	 $scope.isClicked = false;	}
+		if($scope.duplicate_scholarsip){fileItem.remove();	}
+		//console.log($scope.duplicate_scholarsip);
+	};
+	document_file.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.scholarship.document_path = fileItem.formData[0].key;		//console.log($scope.scholarship.document_path);
+		$scope.save($scope.scholarship);
+	};
+	
+	$scope.openAmazonFile = function(key) { 
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key};
+		s3.getSignedUrl('getObject', params, function (err, url) { 
+			if(err) alert('No such key exist!!!');
+			else window.open(url);
+		});
+	}
+	
+	$scope.check_duplicate_scholarship = function() {
+		$http({
+			method: "post",
+			url: "scholarship/check_duplicate_scholarship",
+			data: $scope.scholarship
+		}).success(function(response) {//console.log(response);
+			if(response == 'true') {
+				$scope.duplicate_scholarsip = false;
+				//return true;
+			} else {
+				$scope.duplicate_scholarsip = true;
+				alert('You have already applied for selected period.\nYou could not apply scholarship twice for same period.');
+				//console.log($scope.duplicate_scholarsip);
+				//$scope.isClicked = false;
+				//return false;
+			}
+		});
+	}
+				
+	$scope.check_duplicate_register_no = function(register_no, scholarship_id){
+		register_no = $.trim(register_no);
+		if(register_no){
+			loading.start();
+			$http({
+				method: "post",
+				url: "scholarship/check_duplicate_register_no",
+				data: {'register_no':register_no, 'scholarship_id': scholarship_id}
+			}).success(function(response) {
+				loading.finish();
+				if(response == 'false') {
+					$scope.scholarship.register_no = '';
+					alert('This Registeration No. already used.\nPlease try again.');
+				}
+			});
+		}
+	}
+	
+	$scope.change_status = function(scholarship_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "scholarship/change_status",
+			data: {'scholarship_id':scholarship_id, 'current_status':current_status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			
+			if(response[0] == "success") {
+				$scope.scholarship_list[index].status = current_status;
+				$scope.scholarship_list[index].approval_date = response[1];
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.getCourse = function(financial_year_id) {		
+		if(financial_year_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_course",
+				data: {'financial_year_id':financial_year_id},
+			}).success(function(response) { 	
+				loading.finish();
+				$scope.course_list	=	response;
+			});	
+		}
+	}
+	
+	$scope.search_scholarship = function(admission){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		name = admission.name ? admission.name : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		category_id = admission.category_id ? admission.category_id : '-';
+		
+		$location.path("/scholarship/" + admission_no + "/" + from_date + "/" + to_date  + "/" + name + "/" + financial_year_id + "/" + course_id + "/" + admitted_year + "/" + admission_status + "/" + category_id + "/page1");
+	}
+		
+	$scope.export_all_excel = function(admission, base_url, with_photo){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		name = admission.name ? admission.name : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		category_id = admission.category_id ? admission.category_id : '-';
+		page_no = '0';
+		
+		window.open(base_url + 'scholarship/export_excel/' + admission_no + "/" + from_date + "/" + to_date + "/" + to_date  + "/" + financial_year_id + "/" + course_id + "/" + admitted_year + "/" + admission_status + "/" + category_id + "/" + with_photo + "/" + page_no);		
+	}
+	
+	$scope.export_excel = function(admission, base_url, with_photo){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		name = admission.name ? admission.name : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		category_id = admission.category_id ? admission.category_id : '-';
+		page_no = admission.page_no ? admission.page_no : 1;
+		
+		window.open(base_url + 'scholarship/export_excel/' + admission_no + "/" + from_date + "/" + to_date + "/" + to_date  + "/" + financial_year_id + "/" + course_id + "/" + admitted_year + "/" + admission_status + "/" + category_id + "/" + with_photo + "/" + page_no);		
+	}
+	
+	$scope.setting_popup = false;	
+	$scope.settings 	= {};
+	
+	$scope.hideSettingPopup = function(){
+		$scope.error		= {};
+		$scope.setting_popup = false;
+	}
+	
+	$scope.showSettingPopup = function(){
+		$scope.setting_popup = true;
+	}
+	
+	$scope.applySettings = function(settings) {
+		$scope.error		= {};
+		$scope.message	=	'';
+		if(!settings.start_date_formated || settings.start_date_formated == '') {
+			$scope.error.error_date = true;
+			return false;
+		} else if(!settings.end_date_formated || settings.end_date_formated == '') {
+			$scope.error.error_date1 = true;
+			return false;
+		} else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "scholarship/applySettings",
+				data: settings
+			}).success(function(response) { //console.log(response);
+				if(response[0]	==	1) {
+					alert(response[1]);
+					$scope.settings 	= response[2];
+					$scope.hideSettingPopup();				
+				} else  if(response[0] == 0) {
+					$scope.error = true;
+					$scope.message = response[1];
+				}
+				loading.finish();
+			});
+		}
+	}
+	
+	$scope.delete_scholarship = function(scholarship_id, index) {
+		if(confirm('Are You Sure?')){
+			loading.start();
+			$http({
+				method: "post",
+				url: "scholarship/delete_scholarship",
+				data: {'scholarship_id':scholarship_id}
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				
+				if(response[0] == "success") {
+					$scope.scholarship_list.splice(index, 1);
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+	
+	$scope.openScholarshipForPrinting = function(base_url, scholarship_id) {
+		window.open(base_url + 'scholarship/print_scholarship/' + scholarship_id);
+	}
+	//export admission form here	
+	$scope.export_admission_form = function(admission, base_url){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		name = admission.name ? admission.name : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		category_id = admission.category_id ? admission.category_id : '-';
+		page_no = admission.page_no ? admission.page_no : 1;
+		
+		window.open(base_url + 'scholarship/export_admission_form/' + admission_no + "/" + from_date + "/" + to_date + "/" + to_date  + "/" + financial_year_id + "/" + course_id + "/" + admitted_year + "/" + admission_status + "/" + category_id + "/" + page_no);		
+	}
+		
+	$scope.openApplicationFormForPrinting = function(base_url, admission_id) {
+		window.open(base_url + 'scholarship/print_admission_form/' + admission_id);
+	}
+	
+}]);

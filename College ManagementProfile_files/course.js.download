@@ -1,0 +1,53 @@
+angular.module("User").controller('course', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+	$scope.course = {};
+	$scope.course_list = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	
+	$scope.save = function(course) {
+		var noOfErrors = 0;
+		if(!course.course_name || course.course_name == '') {
+			$scope.error.course = true;
+			noOfErrors++;
+		}
+		if(!course.no_of_semester || course.no_of_semester == '') {
+			$scope.error.no_of_semester = true;
+			noOfErrors++;
+		}
+		if(noOfErrors > 0) return false;
+		else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "course/add_course",
+				data: course
+			}).success(function(response) {
+				$location.path("/course_list");				
+				if(response != '') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+				loading.finish();				
+			});
+		}
+	}	
+	
+	$scope.change_status = function(course_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "course/change_status",
+			data: {'course_id':course_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			
+			if(response == '') {
+				$scope.course_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+}]);

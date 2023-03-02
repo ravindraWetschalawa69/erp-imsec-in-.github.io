@@ -1,0 +1,158 @@
+angular.module("User").controller('subject', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+	$scope.subject = {};
+	$scope.subject_list = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	
+	$scope.subject.no_of_semester = 0;
+	
+	$scope.save = function(subject) {
+		subject = angular.copy(subject);
+		var noOfErrors = 0;
+		if(!subject.financial_year_id || subject.financial_year_id == '') {
+			$scope.error.financial_year_id = true;
+			noOfErrors++;
+		}
+		if(!subject.course_id || subject.course_id == '') {
+			$scope.error.course_id = true;
+			noOfErrors++;
+		}	
+		if(!subject.stream_id || subject.stream_id == '') {
+			$scope.error.stream_id = true;
+			noOfErrors++;
+		}	
+		if(!subject.year || subject.year == '') {
+			$scope.error.year = true;
+			noOfErrors++;
+		}	
+		if(!subject.no_of_semester || subject.no_of_semester == '') {
+			$scope.error.no_of_semester = true;
+			noOfErrors++;
+		}		
+		if(!subject.subject_name || subject.subject_name == '') {
+			$scope.error.subject_name = true;
+			noOfErrors++;
+		}	
+		if(!subject.subject_code || subject.subject_code == '') {
+			$scope.error.subject_code = true;
+			noOfErrors++;
+		}		
+		if(noOfErrors > 0) return false;
+		else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "subject/add_subject",
+				data: subject
+			}).success(function(response) {
+				loading.finish();
+				if(response == ''){
+					$location.path("/subject_list");
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+					alert(response);
+				}
+			});
+		}
+	}	
+	
+	$scope.getCourse = function(financial_year_id) {
+		if(financial_year_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "enquiry/get_course",
+				data: {'financial_year_id':financial_year_id},
+			}).success(function(response) { 	
+				loading.finish();
+				$scope.course_list = response;
+			});	
+		}
+	}
+	
+	$scope.getStream = function(financial_year_id, course_id) {
+		if(financial_year_id != '' && course_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "enquiry/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id},
+			}).success(function(response) {	
+				loading.finish();
+				$scope.stream_list = response;
+			});	
+		} else {
+			$scope.stream_list = {};
+		}
+	}
+			$scope.getScheduledYear = function(financial_year_id, course_id, stream_id) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_scheduled_year",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id},
+			}).success(function(response) {
+				loading.finish();				
+				$scope.year_list = response;
+			});	
+		} else {
+			$scope.year_list = [];
+		}
+		
+		$scope.add_schedule.year = "";
+		$scope.add_schedule.subject_id = "";
+		$scope.add_schedule.section = "";
+		
+	}
+	
+	$scope.getsubjectSearched = function(financial_year_id, course_id, stream_id, year, subjectCode, semsters) {
+		//alert(subjectCode);
+			financial_year_id = financial_year_id ? financial_year_id : "-";
+			course_id = course_id ? course_id : "-";
+			stream_id = stream_id ? stream_id : "-";
+			year = year ? year : "-";
+			subjectCode = subjectCode  ? subjectCode : "-";
+			semsters = semsters  ? semsters : "-";
+		//if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && stream_id && stream_id != '' && year && year != '' && section && section != '') 
+		{
+			//$scope.dataTable();
+			//alert("/subject_list/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + subjectCode + "/" + "page1");
+			$location.path("/subject_list/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + subjectCode + "/"+ semsters + "/" + "page1");
+			
+		}
+	}
+		
+	$scope.change_status = function(subject_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "subject/change_status",
+			data: {'subject_id':subject_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			
+			if(response == '') {
+				$scope.subject_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.search_subject = function(query) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "subject/search_subject",
+			data: {'subject_code':query}
+		}).success(function(response) {
+			loading.finish();
+			
+			$scope.subject_list = response;
+		});
+	}
+}]);

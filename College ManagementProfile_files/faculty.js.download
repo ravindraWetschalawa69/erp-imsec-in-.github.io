@@ -1,0 +1,2224 @@
+angular.module("User").controller('faculty', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+	$scope.faculty = {};
+	$scope.faculty_list = {};
+	$scope.faculty.photo = {};
+	$scope.faculty.faculty_resume = {};
+    $scope.error = {};
+    $scope.flashMessageType = "success";
+    $scope.flashMessage = "";
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.isClicked = false;
+	//children
+	$scope.faculty.children = [];
+			
+	$scope.check_duplicate_email = function(faculty_id, email){
+		loading.start();
+		$http({
+			method: "post",
+			url: "faculty/check_duplicate_email",
+			data: {'faculty_id':faculty_id, 'email' : email}
+		}).success(function(response) {
+			loading.finish();
+			if(response != '') {
+				alert(response);
+				$scope.faculty.email = '';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.$watch('faculty.same_as_present_address', function() {						
+		if($scope.faculty.same_as_present_address) {
+			$scope.permanent_city_list = $scope.present_city_list;
+			$scope.faculty.permanent_address = $scope.faculty.present_address;
+			$scope.faculty.permanent_pincode = $scope.faculty.present_pincode;
+			$scope.faculty.permanent_state_id = $scope.faculty.present_state_id;
+			$scope.faculty.permanent_city_id = $scope.faculty.present_city_id;
+		}
+	});
+	
+	$scope.currentTab = 1;
+	$scope.noOfErrors = 0;
+	$scope.callFocus = function(index, faculty, callNext) {
+		$scope.error = {};
+		$scope.noOfErrors = 0;
+		
+		if(index > 1) {
+			if(!faculty.title_id || faculty.title_id == '') {
+				$scope.error.title_id = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			} 
+			if(!faculty.date_of_joining_formated || faculty.date_of_joining_formated == '') {
+				$scope.error.date_of_joining = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			} else if(!$scope.validateDate(faculty.date_of_joining_formated)) {
+				$scope.error.doj_invalid = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.employee_name || faculty.employee_name == '') {
+				$scope.error.employee_name = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			/*if(!faculty.last_name || faculty.last_name == '') {
+				$scope.error.last_name = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}*/
+			if(!faculty.dob_formated || faculty.dob_formated == '') {
+				//$scope.error.dob = true;
+				//$scope.currentTab = 1;
+				//$scope.noOfErrors++;
+			} else if(!$scope.validateDate(faculty.dob_formated)) {
+				$scope.error.dob = false;
+				$scope.error.dob_invalid = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.phone_no || faculty.phone_no == '') {
+				$scope.error.phone_no = true;	
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.email || faculty.email == '') {
+				$scope.error.email = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			} else if(!$scope.validateEmail(faculty.email)) {
+				$scope.error.email = false;
+				$scope.error.email_invalid = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			/*if(!faculty.father_name || faculty.father_name == '') {
+				$scope.error.father_name = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.father_age || faculty.father_age == '') {
+				$scope.error.father_age = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.mother_name || faculty.mother_name == '') {
+				$scope.error.mother_name = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.mother_age || faculty.mother_age == '') {
+				$scope.error.mother_age = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}*/
+			if(!faculty.present_pincode || faculty.present_pincode == '') {
+			} else if(isNaN(faculty.present_pincode)){
+				$scope.error.present_pincode = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			/*if(!faculty.present_address || faculty.present_address == '') {
+				$scope.error.present_address = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.present_state_id || faculty.present_state_id == '') {
+				$scope.error.present_state_id = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.present_city_id || faculty.present_city_id == '') {
+				$scope.error.present_city_id = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			*/
+			if(!faculty.permanent_pincode || faculty.permanent_pincode == '') {
+			} else if(isNaN(faculty.permanent_pincode)){
+				$scope.error.permanent_pincode = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.anniversary_date_formated || faculty.anniversary_date_formated == '' || faculty.anniversary_date_formated == '00-00-0000') {
+			} else if(!$scope.validateDate(faculty.anniversary_date_formated)) {
+				$scope.error.anniversary_date = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			/*if(!faculty.nominee_name || faculty.nominee_name == '') {
+				$scope.error.nominee_name = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.nominee_relation || faculty.nominee_relation == '') {
+				$scope.error.nominee_relation = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.nominee_aadharcard || faculty.nominee_aadharcard == '') {
+				$scope.error.nominee_aadharcard = true;
+				$scope.currentTab = 1;
+				$scope.noOfErrors++;
+			}*/
+			if(faculty.nominee_aadharcard && faculty.nominee_aadharcard != '') {
+				var adha_length = faculty.nominee_aadharcard.length;
+				if(adha_length !=12){
+					$scope.error.nominee_proaadharcard = true;
+					$scope.currentTab = 1;
+					$scope.noOfErrors++;
+				}
+			}
+		}
+		if($scope.noOfErrors > 0) return false;
+		if(index > 2) {
+			if(!faculty.department_id || faculty.department_id == '') {
+				$scope.error.department_id = true;
+				$scope.currentTab = 2;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.rank_id || faculty.rank_id == '') {
+				$scope.error.rank_id = true;
+				$scope.currentTab = 2;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.designation_id || faculty.designation_id == '') {
+				$scope.error.designation_id = true;
+				$scope.currentTab = 2;
+				$scope.noOfErrors++;
+			}
+			if(!faculty.type || faculty.type == '') {
+				$scope.error.type = true;
+				$scope.currentTab = 2;
+				$scope.noOfErrors++;
+			}
+			if(faculty.is_apply_study_leave == '1') {
+				if(!faculty.study_leave_start_formated || faculty.study_leave_start_formated == '') {
+					$scope.error.study_leave_start = true;
+					$scope.currentTab = 2;
+					$scope.noOfErrors++;
+				}
+				if(!faculty.study_leave_end_formated || faculty.study_leave_end_formated == '') {
+					$scope.error.study_leave_end = true;
+					$scope.currentTab = 2;
+					$scope.noOfErrors++;
+				}
+			}			
+		}
+		if($scope.noOfErrors > 0) return false;
+		if(index > 6) {
+			if(faculty.is_visit_abroad == '1' && (!faculty.country_visited || faculty.country_visited == '')) {
+				$scope.error.country_visited = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			} else if(faculty.is_visit_abroad == '1' && (!faculty.passport_no || faculty.passport_no == '')) {
+				$scope.error.passport_no = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			} else if(faculty.is_visit_abroad == '1' && (!faculty.duration || faculty.duration == '')) {
+				$scope.error.duration = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			} else if(faculty.is_visit_abroad == '1' && (!faculty.purpose || faculty.purpose == '')) {
+				$scope.error.purpose = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			} else if(faculty.know_driving == '1' && (!faculty.license_no || faculty.license_no == '')) {
+				$scope.error.license_no = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			} else if(faculty.convicted_by_court == '1' && (!faculty.conviction_detail || faculty.conviction_detail == '')) {
+				$scope.error.conviction_detail = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			} else if(faculty.any_political_affiliation == '1' && (!faculty.political_affiliation_detail || faculty.political_affiliation_detail == '')) {
+				$scope.error.political_affiliation_detail = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			} else if(faculty.is_interviewed_before == '1' && (!faculty.interviewed_for_post || faculty.interviewed_for_post == '')) {
+				$scope.error.interviewed_for_post = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			} else if(faculty.is_interviewed_before == '1' && (!faculty.interviewed_formatted_date || faculty.interviewed_formatted_date == '')) {
+				$scope.error.interviewed_date = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			}
+			
+			/*else if(!faculty.min_salary_acceptable || faculty.min_salary_acceptable == '') {
+				$scope.error.min_salary_acceptable = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			} else if(!faculty.notice_period || faculty.notice_period == '') {
+				$scope.error.notice_period = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			}*/
+			
+			else if(faculty.is_member_pf_scheme == '1' && (!faculty.pf_details || faculty.pf_details == '')) {
+				$scope.error.pf_details = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			} else if(faculty.is_removed_from_previous_job == '1' && (!faculty.removed_job_details || faculty.removed_job_details == '')) {
+				$scope.error.removed_job_details = true;
+				$scope.currentTab = 6;
+				$scope.noOfErrors++;
+			}
+		}
+		if($scope.noOfErrors > 0) return false;
+		if(callNext) $scope.currentTab = index;
+		return true;
+    }
+	
+	$scope.callBack = function(index) {
+		$scope.currentTab = index;
+	}
+	
+	//faculty_photo
+	var faculty_photo = $scope.faculty_photo = new FileUploader({ url: $scope.s3url });	
+	faculty_photo.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	faculty_photo.onAfterAddingFile = function(fileItem) {
+		if($scope.faculty.faculty_id != undefined){
+			//var subbucket = $scope.faculty.employee_name ? $scope.faculty.employee_name : '';
+			//subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+			//subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+			var subbucket = $scope.faculty.faculty_id;
+			if(subbucket) {
+				subbucket = 'faculty/' + subbucket + '/';
+				var filename = fileItem.file.name.split(".");
+				filename = filename[filename.length - 1];
+				filename = 'faculty.' + filename;
+				console.log(subbucket);
+				fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			} else {
+				alert('some error occured!!!!!');	
+			}
+		}else{
+			alert('some error occured, while uploading photo!!!');	
+		}
+	};
+	faculty_photo.onProgressItem = function(fileItem, progress) {
+		if(!$scope.faculty.faculty_id || $scope.faculty.faculty_id == '') fileItem.cancel();
+	};
+	faculty_photo.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.faculty.photo = fileItem.formData[0].key;
+		$http({
+			method: "post",
+			url: "faculty/update_faculty_photo",
+			data: {'faculty_id':$scope.faculty.faculty_id, 'photo':$scope.faculty.photo}
+		});		
+		//$scope.currentTab++;
+	};
+	//document submitted
+	
+	$scope.tmp = {};
+	$scope.save = function(faculty) {
+		if($scope.callFocus($scope.currentTab + 1, faculty, false)) {
+			//alert($scope.currentTab);
+			faculty.currentTab = $scope.currentTab;
+		
+			//console.log(faculty);
+			 //below force fully to reset faculty.leave_type variable, so that at least required variable must be post to server, excepting unnecessary variables post to server.
+			faculty.leave_type = {};	 
+			if($scope.currentTab != 3) {	
+				loading.start();
+				var serialized = JSON.stringify(faculty);
+				//faculty = angular.copy(faculty);
+				//$scope.tmp = angular.copy(faculty);
+			//	console.log(serialized);
+				//var serialized = serializeJSON(faculty);
+				
+				$http({
+					method: "post",
+					url: "faculty/add_faculty",
+					data: {data : serialized}
+				}).success(function(response) { //console.log(response);
+					loading.finish();
+					if($scope.currentTab == 7) { 
+						if(response == 'Some error occured. Please try again.') {
+							$scope.flashMessageType = "error";
+							$scope.flashMessage = response;
+						} else {
+							$location.path("/view_faculty/" + response);
+						}
+					}else if($scope.currentTab == 6 && faculty.add_right == '0') { //console.log(faculty.add_right);
+						if(response == 'Some error occured. Please try again.') {
+							$scope.flashMessageType = "error";
+							$scope.flashMessage = response;
+						} else {
+							$location.path("/view_faculty/" + response);
+						}
+					} else {
+						if(parseInt(response)) {
+							$scope.faculty.faculty_id = parseInt(response);
+							if($scope.currentTab == 1 && faculty_photo.queue != '') {
+								faculty_photo.queue[0].upload();
+							}if($scope.currentTab == 6 && faculty_resume.queue != '') {
+								faculty_resume.queue[0].upload();
+							} else {
+								$scope.currentTab++; 
+							}
+						} else { // alert('aaaa');
+						//	alert(response);
+							$scope.flashMessageType = "error";
+							$scope.flashMessage = response;
+						}
+					}					
+				});	
+			} else {
+				$scope.currentTab++; 
+			}
+		}
+		return false;
+    }
+	
+	$scope.openAmazonFile = function(key) {
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key};
+		s3.getSignedUrl('getObject', params, function (err, url) {
+			if(err) alert('No such key exist!!!');
+			else window.open(url);
+		});
+	}
+	
+	$scope.deleteAmazonFile = function(key) {
+		var isDeleted = true;
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId, region: 'ap-southeast-1'});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key};
+		s3.deleteObject(params, function (err, data) {
+			if (err) isDeleted = false;
+			else isDeleted = true;
+		});
+		return isDeleted;
+	}
+	
+	//document submitted
+	$scope.document_submitted = {};
+	$scope.document_submitted.error = {};
+	
+	$scope.validate_document_submitted = function() {
+		$scope.document_submitted.error = {};
+		$error = 0;
+		if(!$scope.document_submitted.document_name || $scope.document_submitted.document_name == '') {
+			$scope.document_submitted.error.document_name = true;
+			$error++;
+		}
+		
+		if($error > 0) return false;
+		$scope.isClicked = true;
+		return true;
+	}
+	
+	$scope.save_document_submitted = function(document_submitted) {
+		if($scope.validate_document_submitted()) {
+			$scope.document_submitted.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_document_submitted",
+				data: document_submitted
+			}).success(function(response) {
+				loading.finish();
+				$scope.isClicked = false;
+				if(response != '') {
+					$scope.faculty.document_submitted.push(response);
+					$scope.document_submitted = {};
+					$scope.document_submitted.error = {};
+				}
+			});
+		}
+	}
+	
+	$scope.deleteSubmittedDocument = function(document_submitted_id, index, key) {
+		if(confirm('Are you sure?')) {
+			var shouldContinue = false;
+			if(key == '') shouldContinue = true;
+			else if($scope.deleteAmazonFile(key)) shouldContinue = true;
+			
+			if(shouldContinue) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "faculty/delete_document_submitted",
+					data: {'document_submitted_id':document_submitted_id}
+				}).success(function(response) {
+					loading.finish();
+					if(response == '') {
+						$scope.faculty.document_submitted.splice(index, 1);
+					}
+				});
+			} else {
+				alert('Some error occured!!!');	
+			}
+		}
+	}
+	
+	var document_file = $scope.document_file = new FileUploader({ url: $scope.s3url });	
+	document_file.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	document_file.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/document_submitted/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	document_file.onProgressItem = function(fileItem, progress) {
+		if(!$scope.validate_document_submitted()) fileItem.cancel();
+	};
+	document_file.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.document_submitted.image = fileItem.formData[0].key;
+		$scope.save_document_submitted($scope.document_submitted);
+	};
+	//document submitted
+	
+	//academic qualification
+	$scope.academic = {};
+	$scope.academic.error = {};
+	
+	$scope.validate_academic = function() {
+		$scope.academic.error = {};
+		$error = 0;
+		if(!$scope.academic.qualification_id || $scope.academic.qualification_id == '') {
+			$scope.academic.error.qualification_id = true;
+			$error++;
+		}
+		if(!$scope.academic.university_board_name || $scope.academic.university_board_name == '') {
+			$scope.academic.error.university_board_name = true;
+			$error++;
+		}
+		if($scope.academic.exam_status == 'Passed'){
+			if(!$scope.academic.passing_year || $scope.academic.passing_year == '') {
+				$scope.academic.error.passing_year = true;
+				$error++;
+			} else if($scope.academic.passing_year < 1902 || $scope.academic.passing_year > (new Date()).getFullYear()) {
+				$scope.academic.error.passing_year = true;
+				$error++;
+			}
+			/*if(!$scope.academic.marks || $scope.academic.marks == '') {
+				$scope.academic.error.marks = true;
+				$error++;
+			} else if(parseFloat($scope.academic.marks) < 0 || parseFloat($scope.academic.marks) > 100) {
+				$scope.academic.error.marks = true;
+				$error++;
+			}*/
+		}		
+		if(!$scope.academic.subjects || $scope.academic.subjects == '') {
+			$scope.academic.error.subjects = true;
+			$error++;
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_academic_qualification = function(academic) {
+		if($scope.validate_academic()) {
+			$scope.academic.faculty_id = $scope.faculty.faculty_id;			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_academic_qualification",
+				data: academic
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					//$scope.faculty.academic.push(response);
+					$scope.faculty.academic = response;
+					$scope.academic = {};
+					$scope.academic.exam_status = 'Passed';
+					$scope.academic.error = {};
+				}
+			});
+		}
+	}	
+	
+	$scope.delete_academic_qualification = function(academic_qualification_id, index) {
+		if(confirm('Are you sure?')) {
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/delete_academic_qualification",
+				data: {'academic_qualification_id':academic_qualification_id}
+			}).success(function(response) {
+				loading.finish();
+				if(response == '') {
+					$scope.faculty.academic.splice(index, 1);
+				}
+			});
+		}
+	}
+	//academic qualification
+	
+	//technical qualification
+	$scope.technical = {};
+	$scope.technical.error = {};
+	
+	$scope.validate_technical = function() { //console.log($scope.technical.exam_status);
+		$scope.technical.error = {};
+		$error = 0;
+		if(!$scope.technical.exam_passed || $scope.technical.exam_passed == '') {
+			$scope.technical.error.exam_passed = true;
+			$error++;
+		}
+		if(!$scope.technical.university_board_name || $scope.technical.university_board_name == '') {
+			$scope.technical.error.university_board_name = true;
+			$error++;
+		}
+		if($scope.technical.exam_status == 'Passed'){
+			if(!$scope.technical.passing_year || $scope.technical.passing_year == '') {
+				$scope.technical.error.passing_year = true;
+				$error++;
+			} else if($scope.technical.passing_year < 1902 || $scope.technical.passing_year > (new Date()).getFullYear()) {
+				$scope.technical.error.passing_year = true;
+				$error++;
+			}
+			/*if(!$scope.technical.marks || $scope.technical.marks == '') {
+				$scope.technical.error.marks = true;
+				$error++;
+			} else if(parseFloat($scope.technical.marks) < 0 || parseFloat($scope.technical.marks) > 100) {
+				$scope.technical.error.marks = true;
+				$error++;
+			}*/
+		}
+		if(!$scope.technical.subjects || $scope.technical.subjects == '') {
+			$scope.technical.error.subjects = true;
+			$error++;
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_technical_qualification = function(technical) {
+		if($scope.validate_technical()) {
+			$scope.technical.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_technical_qualification",
+				data: technical
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response != '') {
+					$scope.faculty.technical.push(response);
+					$scope.technical = {};
+					$scope.technical.exam_status = 'Passed';
+					$scope.technical.error = {};
+				}
+			});
+		}
+	}	
+	
+	$scope.delete_technical_qualification = function(technical_qualification_id, index) {
+		if(confirm('Are you sure?')) {
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/delete_technical_qualification",
+				data: {'technical_qualification_id':technical_qualification_id}
+			}).success(function(response) {
+				loading.finish();
+				if(response == '') {
+					$scope.faculty.technical.splice(index, 1);
+				}
+			});
+		}
+	}
+	//technical qualification
+	
+	//apprentice qualification
+	$scope.apprentice = {};
+	$scope.apprentice.error = {};
+	
+	$scope.validate_apprentice = function() {
+		$scope.apprentice.error = {};
+		$error = 0;
+		if(!$scope.apprentice.establishment_name || $scope.apprentice.establishment_name == '') {
+			$scope.apprentice.error.establishment_name = true;
+			$error++;
+		}
+		if(!$scope.apprentice.duration_from || $scope.apprentice.duration_from == '') {
+			$scope.apprentice.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.apprentice.duration_from)) {
+			$scope.apprentice.error.duration = true;
+			$error++;
+		}
+		if(!$scope.apprentice.duration_to || $scope.apprentice.duration_to == '') {
+			$scope.apprentice.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.apprentice.duration_to)) {
+			$scope.apprentice.error.duration = true;
+			$error++;
+		}
+		if(!$scope.apprentice.training_name || $scope.apprentice.training_name == '') {
+			$scope.apprentice.error.training_name = true;
+			$error++;
+		}
+		if(!$scope.apprentice.stipend || $scope.apprentice.stipend == '') {
+			$scope.apprentice.error.stipend = true;
+			$error++;
+		}
+		if(!$scope.apprentice.remarks || $scope.apprentice.remarks == '') {
+			$scope.apprentice.error.remarks = true;
+			$error++;
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_apprentice_detail = function(apprentice) {
+		if($scope.validate_apprentice()) {
+			$scope.apprentice.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_apprentice_detail",
+				data: apprentice
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.faculty.apprentice.push(response);
+					$scope.apprentice = {};
+					$scope.apprentice.error = {};
+				}
+			});
+		}
+	}
+	
+	$scope.delete_apprentice_detail = function(apprentice_detail_id, index) {
+		if(confirm('Are you sure?')) {
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/delete_apprentice_detail",
+				data: {'apprentice_detail_id':apprentice_detail_id}
+			}).success(function(response) {
+				loading.finish();
+				if(response == '') {
+					$scope.faculty.apprentice.splice(index, 1);
+				}
+			});
+		}
+	}
+	//apprentice qualification
+	
+	//book published
+	$scope.book_published = {};
+	$scope.book_published.error = {};
+	
+	$scope.validate_book_published = function() {
+		$scope.book_published.error = {};
+		$error = 0;
+		if(!$scope.book_published.name || $scope.book_published.name == '') {
+			$scope.book_published.error.name = true;
+			$error++;
+		}
+		/*if(!$scope.book_published.publisher || $scope.book_published.publisher == '') {
+			$scope.book_published.error.publisher = true;
+			$error++;
+		}*/
+		if(!$scope.book_published.year || $scope.book_published.year == '') {
+			$scope.book_published.error.year = true;
+			$error++;
+		} else if($scope.book_published.year < 1902 || $scope.book_published.year > (new Date()).getFullYear()) {
+			$scope.book_published.error.year = true;
+			$error++;
+		}
+		/*if(!$scope.book_published.no_of_authors || $scope.book_published.no_of_authors == '') {
+			$scope.book_published.error.no_of_authors = true;
+			$error++;
+		}*/
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_book_published = function(book_published) {
+		if($scope.validate_book_published()) {
+			$scope.book_published.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_book_published",
+				data: book_published
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.faculty.book_published.push(response);
+					$scope.book_published = {};
+					$scope.book_published.error = {};
+				}
+			});
+		}
+	}
+	
+	$scope.delete_book_published = function(book_published_id, index, key) {			
+		if(confirm('Are you sure?')) {
+			var shouldContinue = false;
+			if(key == '') shouldContinue = true;
+			else if($scope.deleteAmazonFile(key)) shouldContinue = true;
+			
+			if(shouldContinue) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "faculty/delete_book_published",
+					data: {'book_published_id':book_published_id}
+				}).success(function(response) {
+					loading.finish();
+					if(response == '') {
+						$scope.faculty.book_published.splice(index, 1);
+					}
+				});
+			} else {
+				alert('Some error occured!!!');	
+			}
+		}
+	}
+	
+	var book_published_cover_page = $scope.book_published_cover_page = new FileUploader({url: $scope.s3url});	
+	book_published_cover_page.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	book_published_cover_page.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/book_published/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	book_published_cover_page.onProgressItem = function(fileItem, progress) {
+		if(!$scope.validate_book_published()) fileItem.cancel();
+	};
+	book_published_cover_page.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.book_published.image = fileItem.formData[0].key;
+		$scope.save_book_published($scope.book_published);
+	};
+	//book published
+	
+	//workshop_attended
+	$scope.workshop_attended = {};
+	$scope.workshop_attended.error = {};
+	
+	$scope.validate_workshop_attended = function() {
+		$scope.workshop_attended.error = {};
+		$error = 0;
+		if(!$scope.workshop_attended.name || $scope.workshop_attended.name == '') {
+			$scope.workshop_attended.error.name = true;
+			$error++;
+		}
+		if(!$scope.workshop_attended.place || $scope.workshop_attended.place == '') {
+			$scope.workshop_attended.error.place = true;
+			$error++;
+		}
+		if(!$scope.workshop_attended.duration_from || $scope.workshop_attended.duration_from == '') {
+			$scope.workshop_attended.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.workshop_attended.duration_from)) {
+			$scope.workshop_attended.error.duration = true;
+			$error++;
+		}
+		if(!$scope.workshop_attended.duration_to || $scope.workshop_attended.duration_to == '') {
+			$scope.workshop_attended.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.workshop_attended.duration_to)) {
+			$scope.workshop_attended.error.duration = true;
+			$error++;
+		}
+		if($scope.workshop_attended.got_financial_aid == '1') {
+			if(!$scope.workshop_attended.financial_aid || $scope.workshop_attended.financial_aid == '') {
+				$scope.workshop_attended.error.financial_aid = true;
+				$error++;
+			}
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_workshop_attended = function(workshop_attended) {
+		if($scope.validate_workshop_attended()) {
+			$scope.workshop_attended.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_workshop_attended",
+				data: workshop_attended
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.faculty.workshop_attended.push(response);
+					$scope.workshop_attended = {};
+					$scope.workshop_attended.error = {};
+					$scope.workshop_attended.got_certificate = '1';
+				}
+			});
+		}
+	}
+	
+	$scope.delete_workshop_attended = function(workshop_attended_id, index, key) {
+		if(confirm('Are you sure?')) {
+			var shouldContinue = false;
+			if(key == '') shouldContinue = true;
+			else if($scope.deleteAmazonFile(key)) shouldContinue = true;
+			
+			if(shouldContinue) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "faculty/delete_workshop_attended",
+					data: {'workshop_attended_id':workshop_attended_id}
+				}).success(function(response) {
+					loading.finish();
+					if(response == '') {
+						$scope.faculty.workshop_attended.splice(index, 1);
+					}
+				});
+			} else {
+				alert('Some error occured!!!');	
+			}
+		}
+	}
+	
+	var workshop_attended_certificate = $scope.workshop_attended_certificate = new FileUploader({url: $scope.s3url});	
+	workshop_attended_certificate.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	workshop_attended_certificate.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/workshop_attended/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	workshop_attended_certificate.onProgressItem = function(fileItem, progress) {
+		if(!$scope.validate_workshop_attended()) fileItem.cancel();
+	};
+	workshop_attended_certificate.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.workshop_attended.image = fileItem.formData[0].key;
+		$scope.save_workshop_attended($scope.workshop_attended);
+	};
+	//workshop_attended
+	
+	//seminar_attended
+	$scope.seminar_attended = {};
+	$scope.seminar_attended.error = {};
+	
+	$scope.validate_seminar_attended = function() {
+		$scope.seminar_attended.error = {};
+		$error = 0;
+		if(!$scope.seminar_attended.name || $scope.seminar_attended.name == '') {
+			$scope.seminar_attended.error.name = true;
+			$error++;
+		}
+		if(!$scope.seminar_attended.place || $scope.seminar_attended.place == '') {
+			$scope.seminar_attended.error.place = true;
+			$error++;
+		}
+		if(!$scope.seminar_attended.duration_from || $scope.seminar_attended.duration_from == '') {
+			$scope.seminar_attended.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.seminar_attended.duration_from)) {
+			$scope.seminar_attended.error.duration = true;
+			$error++;
+		}
+		if(!$scope.seminar_attended.duration_to || $scope.seminar_attended.duration_to == '') {
+			$scope.seminar_attended.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.seminar_attended.duration_to)) {
+			$scope.seminar_attended.error.duration = true;
+			$error++;
+		}		
+		if($scope.seminar_attended.got_financial_aid == '1') {
+			if(!$scope.seminar_attended.financial_aid || $scope.seminar_attended.financial_aid == '') {
+				$scope.seminar_attended.error.financial_aid = true;
+				$error++;
+			}
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_seminar_attended = function(seminar_attended) {
+		if($scope.validate_seminar_attended()) {
+			$scope.seminar_attended.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_seminar_attended",
+				data: seminar_attended
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.faculty.seminar_attended.push(response);
+					$scope.seminar_attended = {};
+					$scope.seminar_attended.error = {};
+					$scope.seminar_attended.got_certificate = '1';
+				}
+			});
+		}
+	}
+	
+	$scope.delete_seminar_attended = function(seminar_attended_id, index, key) {
+		if(confirm('Are you sure?')) {
+			var shouldContinue = false;
+			if(key == '') shouldContinue = true;
+			else if($scope.deleteAmazonFile(key)) shouldContinue = true;
+			
+			if(shouldContinue) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "faculty/delete_seminar_attended",
+					data: {'seminar_attended_id':seminar_attended_id}
+				}).success(function(response) {
+					loading.finish();
+					if(response == '') {
+						$scope.faculty.seminar_attended.splice(index, 1);
+					}
+				});
+			} else {
+				alert('Some error occured!!!');	
+			}
+		}
+	}
+	
+	var seminar_attended_certificate = $scope.seminar_attended_certificate = new FileUploader({url: $scope.s3url});	
+	seminar_attended_certificate.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');
+				return false;
+			}	
+			return true;
+		}
+	});
+	seminar_attended_certificate.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/seminar_attended/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	seminar_attended_certificate.onProgressItem = function(fileItem, progress) {
+		if(!$scope.validate_seminar_attended()) fileItem.cancel();
+	};
+	seminar_attended_certificate.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.seminar_attended.image = fileItem.formData[0].key;
+		$scope.save_seminar_attended($scope.seminar_attended);
+	};
+	//seminar_attended
+	
+	//international_conference_attended
+	$scope.international_conference_attended = {};
+	$scope.international_conference_attended.error = {};
+	
+	$scope.validate_international_conference_attended = function() {
+		$scope.international_conference_attended.error = {};
+		$error = 0;
+		if(!$scope.international_conference_attended.name || $scope.international_conference_attended.name == '') {
+			$scope.international_conference_attended.error.name = true;
+			$error++;
+		}
+		if(!$scope.international_conference_attended.place || $scope.international_conference_attended.place == '') {
+			$scope.international_conference_attended.error.place = true;
+			$error++;
+		}
+		if(!$scope.international_conference_attended.duration_from || $scope.international_conference_attended.duration_from == '') {
+			$scope.international_conference_attended.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.international_conference_attended.duration_from)) {
+			$scope.international_conference_attended.error.duration = true;
+			$error++;
+		}
+		if(!$scope.international_conference_attended.duration_to || $scope.international_conference_attended.duration_to == '') {
+			$scope.international_conference_attended.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.international_conference_attended.duration_to)) {
+			$scope.international_conference_attended.error.duration = true;
+			$error++;
+		}		
+		if($scope.international_conference_attended.got_financial_aid == '1') {
+			if(!$scope.international_conference_attended.financial_aid || $scope.international_conference_attended.financial_aid == '') {
+				$scope.international_conference_attended.error.financial_aid = true;
+				$error++;
+			}
+		}
+		if($scope.international_conference_attended.got_certificate == '1') {
+			if(!$scope.international_conference_attended.image || $scope.international_conference_attended.image == '') {
+				$scope.international_conference_attended.error.certificate = true;
+				$error++;
+			}
+		}
+		
+		if($scope.international_conference_attended.paper_present == '1') {
+			if(!$scope.international_conference_attended.paper_title || $scope.international_conference_attended.paper_title == '') {
+				$scope.international_conference_attended.error.paper_title = true;
+				$error++;
+			}
+			if(!$scope.international_conference_attended.no_of_author || $scope.international_conference_attended.no_of_author == '') {
+				$scope.international_conference_attended.error.no_of_author = true;
+				$error++;
+			}
+			if(!$scope.international_conference_attended.paper_front_page || international_conference_attended_paper_front_page.paper_front_page == '') {
+				$scope.international_conference_attended.error.paper_front_page = true;
+				$error++;
+			}
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_international_conference_attended = function(international_conference_attended) {
+		if($scope.validate_international_conference_attended()) {
+			$scope.international_conference_attended.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_international_conference_attended",
+				data: international_conference_attended
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.faculty.international_conference_attended.push(response);
+					$scope.international_conference_attended = {};
+					$scope.international_conference_attended.error = {};
+					$scope.international_conference_attended.got_certificate = '1';
+					$scope.international_conference_attended.paper_present = '1';
+				}
+			});
+		}
+	}
+	
+	$scope.delete_international_conference_attended = function(international_conference_attended_id, index, key) {
+		if(confirm('Are you sure?')) {
+			var shouldContinue = false;
+			if(key == '') shouldContinue = true;
+			else if($scope.deleteAmazonFile(key)) shouldContinue = true;
+			
+			if(shouldContinue) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "faculty/delete_international_conference_attended",
+					data: {'international_conference_attended_id':international_conference_attended_id}
+				}).success(function(response) {
+					loading.finish();
+					if(response == '') {
+						$scope.faculty.international_conference_attended.splice(index, 1);
+					}
+				});
+			} else {
+				alert('Some error occured!!!');	
+			}
+		}
+	}
+	
+	var international_conference_attended_certificate = $scope.international_conference_attended_certificate = new FileUploader({url: $scope.s3url});	
+	international_conference_attended_certificate.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	international_conference_attended_certificate.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/international_conference_attended/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	international_conference_attended_certificate.onProgressItem = function(fileItem, progress) {
+		//if(!$scope.validate_international_conference_attended()) 
+		//fileItem.cancel();
+	};
+	international_conference_attended_certificate.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.international_conference_attended.image = fileItem.formData[0].key;
+		//$scope.save_international_conference_attended($scope.international_conference_attended);
+	};
+	//international_conference_attended
+	
+	//upload paper front page in international_conference
+	var international_conference_attended_paper_front_page = $scope.international_conference_attended_paper_front_page = new FileUploader({url: $scope.s3url});	
+	international_conference_attended_paper_front_page.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	international_conference_attended_paper_front_page.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/international_conference_attended/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = 'paper_front_page_'+ Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	international_conference_attended_paper_front_page.onProgressItem = function(fileItem, progress) {
+		//if(!$scope.validate_international_conference_attended())
+		//fileItem.cancel();
+	};
+	international_conference_attended_paper_front_page.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.international_conference_attended.paper_front_page = fileItem.formData[0].key;
+		//$scope.save_international_conference_attended($scope.international_conference_attended);
+	};
+	//End upload paper front page in international_conference
+	//international_conference_attended
+	
+	//conference_attended
+	$scope.conference_attended = {};
+	$scope.conference_attended.error = {};
+	
+	$scope.validate_conference_attended = function() {
+		$scope.conference_attended.error = {};
+		$error = 0;
+		if(!$scope.conference_attended.name || $scope.conference_attended.name == '') {
+			$scope.conference_attended.error.name = true;
+			$error++;
+		}
+		if(!$scope.conference_attended.place || $scope.conference_attended.place == '') {
+			$scope.conference_attended.error.place = true;
+			$error++;
+		}
+		if(!$scope.conference_attended.duration_from || $scope.conference_attended.duration_from == '') {
+			$scope.conference_attended.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.conference_attended.duration_from)) {
+			$scope.conference_attended.error.duration = true;
+			$error++;
+		}
+		if(!$scope.conference_attended.duration_to || $scope.conference_attended.duration_to == '') {
+			$scope.conference_attended.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.conference_attended.duration_to)) {
+			$scope.conference_attended.error.duration = true;
+			$error++;
+		}		
+		if($scope.conference_attended.got_financial_aid == '1') {
+			if(!$scope.conference_attended.financial_aid || $scope.conference_attended.financial_aid == '') {
+				$scope.conference_attended.error.financial_aid = true;
+				$error++;
+			}
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_conference_attended = function(conference_attended) {
+		if($scope.validate_conference_attended()) {
+			$scope.conference_attended.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_conference_attended",
+				data: conference_attended
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.faculty.conference_attended.push(response);
+					$scope.conference_attended = {};
+					$scope.conference_attended.error = {};
+					$scope.conference_attended.got_certificate = '1';
+				}
+			});
+		}
+	}
+	
+	$scope.delete_conference_attended = function(conference_attended_id, index, key) {
+		if(confirm('Are you sure?')) {
+			var shouldContinue = false;
+			if(key == '') shouldContinue = true;
+			else if($scope.deleteAmazonFile(key)) shouldContinue = true;
+			
+			if(shouldContinue) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "faculty/delete_conference_attended",
+					data: {'conference_attended_id':conference_attended_id}
+				}).success(function(response) {
+					loading.finish();
+					if(response == '') {
+						$scope.faculty.conference_attended.splice(index, 1);
+					}
+				});
+			} else {
+				alert('Some error occured!!!');	
+			}
+		}
+	}
+	
+	var conference_attended_certificate = $scope.conference_attended_certificate = new FileUploader({url: $scope.s3url});	
+	conference_attended_certificate.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	conference_attended_certificate.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/conference_attended/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	conference_attended_certificate.onProgressItem = function(fileItem, progress) {
+		if(!$scope.validate_conference_attended()) fileItem.cancel();
+	};
+	conference_attended_certificate.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.conference_attended.image = fileItem.formData[0].key;
+		$scope.save_conference_attended($scope.conference_attended);
+	};
+	//***************************************
+	var conference_attended_paper_front_page = $scope.conference_attended_paper_front_page = new FileUploader({url: $scope.s3url});	
+	conference_attended_paper_front_page.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	conference_attended_paper_front_page.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/conference_attended/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = 'paper_front_page_'+ Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	conference_attended_paper_front_page.onProgressItem = function(fileItem, progress) {
+		//if(!$scope.validate_conference_attended())
+		//fileItem.cancel();
+	};
+	conference_attended_paper_front_page.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.conference_attended.paper_front_page = fileItem.formData[0].key;
+		//$scope.save_conference_attended($scope.conference_attended);
+	};
+	//conference_attended
+	
+	//guest_lecture_attended
+	$scope.guest_lecture_attended = {};
+	$scope.guest_lecture_attended.error = {};
+	
+	$scope.validate_guest_lecture_attended = function() {
+		$scope.guest_lecture_attended.error = {};
+		$error = 0;
+		if(!$scope.guest_lecture_attended.name || $scope.guest_lecture_attended.name == '') {
+			$scope.guest_lecture_attended.error.name = true;
+			$error++;
+		}
+		if(!$scope.guest_lecture_attended.place || $scope.guest_lecture_attended.place == '') {
+			$scope.guest_lecture_attended.error.place = true;
+			$error++;
+		}
+		if(!$scope.guest_lecture_attended.duration_from || $scope.guest_lecture_attended.duration_from == '') {
+			$scope.guest_lecture_attended.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.guest_lecture_attended.duration_from)) {
+			$scope.guest_lecture_attended.error.duration = true;
+			$error++;
+		}
+		if(!$scope.guest_lecture_attended.duration_to || $scope.guest_lecture_attended.duration_to == '') {
+			$scope.guest_lecture_attended.error.duration = true;
+			$error++;
+		} else if(!$scope.validateDate($scope.guest_lecture_attended.duration_to)) {
+			$scope.guest_lecture_attended.error.duration = true;
+			$error++;
+		}	
+		if($scope.guest_lecture_attended.got_financial_aid == '1') {
+			if(!$scope.guest_lecture_attended.financial_aid || $scope.guest_lecture_attended.financial_aid == '') {
+				$scope.guest_lecture_attended.error.financial_aid = true;
+				$error++;
+			}
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_guest_lecture_attended = function(guest_lecture_attended) {
+		if($scope.validate_guest_lecture_attended()) {
+			$scope.guest_lecture_attended.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_guest_lecture_attended",
+				data: guest_lecture_attended
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.faculty.guest_lecture_attended.push(response);
+					$scope.guest_lecture_attended = {};
+					$scope.guest_lecture_attended.error = {};
+					$scope.guest_lecture_attended.got_certificate = '1';
+				}
+			});
+		}
+	}
+	
+	$scope.delete_guest_lecture_attended = function(guest_lecture_attended_id, index, key) {
+		if(confirm('Are you sure?')) {
+			var shouldContinue = false;
+			if(key == '') shouldContinue = true;
+			else if($scope.deleteAmazonFile(key)) shouldContinue = true;
+			
+			if(shouldContinue) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "faculty/delete_guest_lecture_attended",
+					data: {'guest_lecture_attended_id':guest_lecture_attended_id}
+				}).success(function(response) {
+					loading.finish();
+					if(response == '') {
+						$scope.faculty.guest_lecture_attended.splice(index, 1);
+					}
+				});
+			} else {
+				alert('Some error occured!!!');	
+			}
+		}
+	}
+	
+	var guest_lecture_attended_certificate = $scope.guest_lecture_attended_certificate = new FileUploader({url: $scope.s3url});	
+	guest_lecture_attended_certificate.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	guest_lecture_attended_certificate.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/guest_lecture_attended/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	guest_lecture_attended_certificate.onProgressItem = function(fileItem, progress) {
+		if(!$scope.validate_guest_lecture_attended()) fileItem.cancel();
+	};
+	guest_lecture_attended_certificate.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.guest_lecture_attended.image = fileItem.formData[0].key;
+		$scope.save_guest_lecture_attended($scope.guest_lecture_attended);
+	};
+	//guest_lecture_attended
+	
+	//language
+	$scope.language = {};
+	$scope.language.error = {};
+	
+	$scope.validate_language = function() {
+		$scope.language.error = {};
+		$error = 0;
+		if(!$scope.language.language_known || $scope.language.language_known == '') {
+			$scope.language.error.language_known = true;
+			$error++;
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_language_known = function(language) {
+		if($scope.validate_language()) {
+			$scope.language.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_language_known",
+				data: language
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.faculty.language.push(response);
+					$scope.language = {};
+					$scope.language.error = {};
+					$scope.language.can_speak = '1';
+					$scope.language.can_read = '1';
+					$scope.language.can_write = '1';
+				}
+			});
+		}
+	}
+	
+	$scope.delete_language_known = function(language_known_id, index) {
+		if(confirm('Are you sure?')) {
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/delete_language_known",
+				data: {'language_known_id':language_known_id}
+			}).success(function(response) {
+				loading.finish();
+				if(response == '') {
+					$scope.faculty.language.splice(index, 1);
+				}
+			});
+		}
+	}
+	//language
+	
+	$scope.maxEmploymentQualificationLimit = 0;	
+	$scope.addEmploymentQualificationLimit = function() {
+		$scope.maxEmploymentQualificationLimit++;
+	}
+	
+	$scope.maxStreamBranchLimit = 0;	
+	$scope.addMaxStreamBranchLimit = function() {
+		$scope.maxStreamBranchLimit++;
+	}
+	
+	$scope.getState_City_By_Pincode = function(pincode, type) {
+		pincode = $.trim(pincode);
+		if(pincode != '') {	
+			loading.start();
+			$http({
+				method: "post",
+				url: "pincode/get_state_city_by_pincode",
+				data: {'pincode':pincode},
+			}).success(function(response) { //console.log(response);
+				if(response[0] == 'success'){
+					if(type == 'present'){
+						$scope.faculty.present_state_id = response[1];
+						$scope.present_city_list = response[3];
+						$scope.faculty.present_city_id = response[2];						
+					}else{
+						$scope.faculty.permanent_state_id = response[1];
+						$scope.permanent_city_list = response[3];	
+						$scope.faculty.permanent_city_id = response[2];
+					}
+				}
+				loading.finish();
+			});	
+		}
+	}
+	
+	$scope.getCity = function(state_id, type) {	
+		if(state_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "pincode/get_city",
+				data: {'state_id':state_id},
+			}).success(function(response) { 
+				if(type == 'present'){
+					$scope.present_city_list = response;	
+				}else{
+					$scope.permanent_city_list = response;	
+				}
+				loading.finish();
+			});	
+		}
+	}
+	
+	$scope.getCaste = function(religion_id) {	
+		if(religion_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "user/get_caste_from_religion_id",
+				data: {'religion_id':religion_id},
+			}).success(function(response) { 
+				$scope.caste_list = response;	
+				loading.finish();
+			});	
+		}
+	}
+	
+	$scope.change_status = function(faculty_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "faculty/change_status",
+			data: {'faculty_id':faculty_id, 'current_status':current_status}
+		}).success(function(response) {  
+			if(response == '') {
+				$scope.faculty_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+			loading.finish();
+		});
+	}
+	
+	$scope.delete = function(faculty_id, index) {
+		if(confirm('Are you sure?')){
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/delete_faculty",
+				data: {'faculty_id':faculty_id}
+			}).success(function(response) {  console.log(response);
+				if(response == '') {
+					$scope.faculty_list.splice(index, 1);
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+				loading.finish();
+			});
+		}
+	}
+	
+	$scope.validateEmail = function(email) {
+		var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+		return re.test(email);
+	}
+
+	$scope.validateDate = function(date) {
+		//var dateformat = /^(0?[1-9]|1[012])[\/\-](0?[1-9]|[12][0-9]|3[01])[\/\-]\d{4}$/;
+		var dateformat = /^(0?[1-9]|[12][0-9]|3[01])[\/\-](0?[1-9]|1[012])[\/\-]\d{4}$/;
+			 
+		if(dateformat.test(date)) {
+			var pdate = date.split('-');
+			var dd  = parseInt(pdate[0]);
+			var mm = parseInt(pdate[1]);
+			var yy = parseInt(pdate[2]);
+			
+			
+			var ListofDays = [31,28,31,30,31,30,31,31,30,31,30,31];  
+			if (mm==1 || mm>2) { 
+				if (dd>ListofDays[mm-1]) {
+					return false;  
+				}
+			}
+			if (mm==2) {
+				var lyear = false;  
+				if ( (!(yy % 4) && yy % 100) || !(yy % 400)) {
+					lyear = true;  
+				}  
+				if ((lyear==false) && (dd>=29)) {
+					return false;  
+				}
+				if ((lyear==true) && (dd>29)) {
+					return false;  
+				}  
+			}
+			if(yy < 1902 || yy > (new Date()).getFullYear()) {
+				return false; 
+			}
+			return true;
+		}
+		return false;
+	}
+	$scope.user = {};
+	$scope.update_password = function(user){ //console.log(user);
+		$scope.error = {};
+		if(!user.new_password || user.new_password == ''){
+			$scope.error.new_password = true;
+		}else if(!user.new_confirm_password || user.new_confirm_password == ''){
+			$scope.error.new_confirm_password = true;
+		}else if(user.new_password != user.new_confirm_password){
+			$scope.error.confirm_match_password = true;
+		}else{
+			$scope.isClicked = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/update_password",
+				data: user
+			}).success(function(response) {  //console.log(response);
+				if(response == '') {
+					alert('Password successfully updated.');
+					$scope.user = {};
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+				$scope.isClicked = false;
+				loading.finish();
+			});
+		}
+	}
+	
+	$scope.search_faculty = function(faculty){
+		name = faculty.name ? faculty.name : '-';
+		department_id = faculty.department_id ? faculty.department_id : '-';
+		rank_id = faculty.rank_id ? faculty.rank_id : '-';
+		qualification_id = faculty.qualification_id ? faculty.qualification_id : '-';
+		status = faculty.status ? faculty.status : '-';
+		email = faculty.email ? faculty.email : '-';
+		$scope.email = email.replace("@","_");
+		
+		$location.path("/faculty_list/" + name + "/" + department_id + "/" + rank_id + "/" + qualification_id + "/" + status + "/" + $scope.email + "/page1");
+	}
+	
+	$scope.export_excel = function(faculty, base_url, with_photo){
+		name = faculty.name ? faculty.name : '-';
+		department_id = faculty.department_id ? faculty.department_id : '-';
+		rank_id = faculty.rank_id ? faculty.rank_id : '-';		
+		qualification_id = faculty.qualification_id ? faculty.qualification_id : '-';
+		status = faculty.status ? faculty.status : '-';
+		email = faculty.email ? faculty.email : '-';
+		window.open(base_url + 'faculty/export_excel/' + name + "/" + department_id + "/" + rank_id + "/" + qualification_id + "/" + status + "/" + email + "/" + with_photo);	
+	}
+	
+	//listener on date of birth field
+	$scope.calculateAge = function(){
+		var dateStr = $scope.faculty.dob_formated;
+		if(isDate(dateStr)){
+			var dateParts = dateStr.split("-");
+			dateOfBirth =	new Date(dateParts[2], (dateParts[1] - 1), dateParts[0]);
+			dateToCalculate = 	 new Date();
+			var calculateYear = dateToCalculate.getFullYear();
+			var calculateMonth = dateToCalculate.getMonth();
+			var calculateDay = dateToCalculate.getDate();
+		
+			var birthYear = dateOfBirth.getFullYear();
+			var birthMonth = dateOfBirth.getMonth();
+			var birthDay = dateOfBirth.getDate();
+		
+			var age = calculateYear - birthYear;
+			var ageMonth = calculateMonth - birthMonth;
+			var ageDay = calculateDay - birthDay;
+		
+			if (ageMonth < 0 || (ageMonth == 0 && ageDay < 0)) {
+				age = parseInt(age) - 1;
+			}
+			$scope.faculty.age = age;					
+		}else $scope.faculty.age = '';
+	}
+
+	function isDate(txtDate) {
+		var currVal = txtDate;
+		if (currVal == '' || currVal == 'undefined')
+		return false;
+		
+		//Declare Regex
+		var rxDatePattern = /^(\d{1,2})(\/|-)(\d{1,2})(\/|-)(\d{4})$/;
+		var dtArray = currVal.match(rxDatePattern); // is format OK?
+		
+		if (dtArray == null)
+		return false;
+		
+		//Checks for dd/mm/yyyy format.
+		var dtDay = dtArray[1];
+		var dtMonth = dtArray[3];
+		var dtYear = dtArray[5];
+		
+		if (dtMonth < 1 || dtMonth > 12)
+		return false;
+		else if (dtDay < 1 || dtDay > 31)
+		return false;
+		else if ((dtMonth == 4 || dtMonth == 6 || dtMonth == 9 || dtMonth == 11) && dtDay == 31)
+		return false;
+		else if (dtMonth == 2) {
+		var isleap = (dtYear % 4 == 0 && (dtYear % 100 != 0 || dtYear % 400 == 0));
+		if (dtDay > 29 || (dtDay == 29 && !isleap))
+		return false;
+		}
+		
+		return true;
+	}
+	
+	///Resume upload
+	var faculty_resume = $scope.faculty_resume = new FileUploader({ url: $scope.s3url });	
+	faculty_resume.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	faculty_resume.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = 'faculty_resume.' + filename;
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	faculty_resume.onProgressItem = function(fileItem, progress) {
+		if(!$scope.faculty.faculty_id || $scope.faculty.faculty_id == '') fileItem.cancel();
+	};
+	faculty_resume.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.faculty.faculty_resume = fileItem.formData[0].key;
+		$http({
+			method: "post",
+			url: "faculty/update_faculty_resume",
+			data: {'faculty_id':$scope.faculty.faculty_id, 'faculty_resume':$scope.faculty.faculty_resume}
+		});		
+	};
+	///Resume submitted
+	
+	$scope.maxPramotionLimit = 0;	
+	$scope.addMaxPramotionLimit = function() {
+		$scope.maxPramotionLimit++;
+	}
+	
+	$scope.print_faculty = function(base_url, faculty_id) {
+		window.open(base_url + 'faculty/print_faculty_form/' + faculty_id);
+	}
+	
+	$scope.resignaion_popup = false;
+	$scope.apply_resign 	= {};
+	$scope.hideResignationPopup= function(){
+		$scope.apply_resign 	= {};		
+		$scope.error		= {};
+		$scope.resignaion_popup = false;
+	}
+	
+	$scope.showResignationPopup = function(faculty_id, index){
+		$scope.message = '';
+		$scope.apply_resign = $scope.faculty_list[index].apply_resign;
+		if($scope.faculty_list[index].apply_resign == null){ 
+			$scope.apply_resign 	= {};
+			$scope.apply_resign.faculty_id 	= faculty_id;
+		}
+		$scope.apply_resign.current_index 	= index;		
+		/*$http({
+			method: "post",
+			url: "faculty/getApplyResign",
+			data: {'faculty_id' : faculty_id }
+		}).success(function(response) { console.log(response);
+			if(response != 0){ 
+				$scope.apply_resign = response;
+			}		
+		});	*/
+		$scope.resignaion_popup = true;
+	}
+	
+	$scope.applyResign = function(apply_resign){ //console.log(apply_resign);
+		$scope.message = '';
+		$scope.error		= {};
+		if(!apply_resign.is_resign || apply_resign.is_resign == '') {
+			$scope.error.is_resign = true;
+			return false;
+		}else if(apply_resign.is_resign == 'Yes'){
+			if(!apply_resign.notice_start_date || apply_resign.notice_start_date == '') {
+				$scope.error.notice_period = true;
+				return false;
+			}
+			if(!apply_resign.notice_end_date || apply_resign.notice_end_date == '') {
+				$scope.error.notice_period = true;
+				return false;
+			}
+		}else if(apply_resign.is_resign == 'No'){
+			if(!apply_resign.date_of_leave || apply_resign.date_of_leave == '') {
+				$scope.error.date_of_leave = true;
+				return false;
+			}
+		}
+		if(!apply_resign.details || apply_resign.details == '') {
+			$scope.error.details = true;
+			return false;
+		}else{
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/applyResign",
+				data: apply_resign
+			}).success(function(response) { //console.log(response);
+				if(response[0]	==	0) {
+					$scope.error = true;
+					$scope.message = response[1];
+				} else  if(response[0] == 'success') {
+					$scope.faculty_list[apply_resign.current_index].apply_resign = response[2];
+					alert(response[1]);
+					$scope.error		= {};
+					$scope.apply_resign 	= {};
+					$scope.hideResignationPopup();
+				} 
+				loading.finish();
+			});	
+		}
+	}
+	
+	$scope.faculty_status = {};	
+	$scope.search_faculty_for_assign_shift = function(faculty){
+		name = faculty.name ? faculty.name : '-';
+		department_id = faculty.department_id ? faculty.department_id : '-';
+		rank_id = faculty.rank_id ? faculty.rank_id : '-';
+		status = faculty.status ? faculty.status : '-';
+		$location.path("/assign_shift/" + name + "/" + department_id + "/" + rank_id + "/" + status + "/page1");
+	}
+	$scope.selectAll = function(){
+		//console.log($scope.admission_status['current_status']);
+		angular.forEach($scope.faculty_status['current_status'], function(value, key) {
+			//console.log(key + ': ' + value.id);
+			value.id = $scope.selectedAll;
+			
+		});
+	}	
+	
+	$scope.change_faculty_shift = function(){
+		angular.forEach($scope.faculty_status['current_status'], function(value, key) {
+			//console.log(key + ': ' + value.id);
+			value.emp_work_id = $scope.faculty_status['emp_work_id'];			
+		});
+	}
+	
+	$scope.update_faculty_shift = function(faculty_status){ 
+		loading.start();
+		$http({
+			method: "post",
+			url: "faculty/update_faculty_shift",
+			data: faculty_status,
+		}).success(function(response){ 
+			loading.finish();
+			if(response == 1) {	
+				alert('Shift updated successfully.');
+				$location.path("/assign_shift");
+			} else if(response == 'Some error occured. Please try again.') {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+				alert('Some error occured. Please try again.');
+			}			
+		});	
+	}
+	
+	$scope.change_hostel_shift = function(){
+		angular.forEach($scope.faculty_status['current_status'], function(value, key) {
+			//console.log(key + ': ' + value.hostel_work_hr_id);
+			//console.log($scope.faculty_status['hostel_work_hr_id']);
+			value.hostel_work_hr_id = $scope.faculty_status['hostel_work_hr_id'];			
+		});
+	}
+		
+	$scope.export_retirement_employee = function(base_url){		
+		window.open(base_url + 'faculty/export_retirement_employee');	
+	}
+		
+	$scope.export_probation_employee = function(base_url){		
+		window.open(base_url + 'faculty/export_probation_employee');	
+	}
+	
+	//**********************************************************
+	//book published
+	$scope.research_pulic = {};
+	$scope.research_pulic.error = {};
+	
+	$scope.validate_research_pulic = function() {
+		$scope.research_pulic.error = {};
+		$error = 0;
+		if(!$scope.research_pulic.name || $scope.research_pulic.name == '') {
+			$scope.research_pulic.error.name = true;
+			$error++;
+		}
+		
+		if(!$scope.research_pulic.publication_year || $scope.research_pulic.publication_year == '') {
+			$scope.research_pulic.error.publication_year = true;
+			$error++;
+		} else if($scope.research_pulic.publication_year < 1902 || $scope.research_pulic.publication_year > (new Date()).getFullYear()) {
+			$scope.research_pulic.error.publication_year = true;
+			$error++;
+		}
+		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save_research_pulic_journals = function(research_pulic) {
+		if($scope.validate_research_pulic()) {
+			$scope.research_pulic.faculty_id = $scope.faculty.faculty_id;
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "faculty/add_research_pulic",
+				data: research_pulic
+			}).success(function(response) {
+				loading.finish();
+				if(response != '') {
+					$scope.faculty.research_pulic.push(response);
+					$scope.research_pulic = {};
+					$scope.research_pulic.error = {};
+				}
+			});
+		}
+	}
+	
+	$scope.delete_research_pulic = function(research_journal_id, index, key) {			
+		if(confirm('Are you sure?')) {
+			var shouldContinue = false;
+			if(key == '') shouldContinue = true;
+			else if($scope.deleteAmazonFile(key)) shouldContinue = true;
+			if(shouldContinue) {
+				loading.start();
+				$http({
+				method: "post",
+				url: "faculty/delete_research_pulic",
+				data: {'research_journal_id':research_journal_id}
+			}).success(function(response) {
+				loading.finish();
+				if(response == '') {
+					$scope.faculty.research_pulic.splice(index, 1);
+				}
+			});
+			} else {
+				alert('Some error occured!!!');	
+			}
+
+		}
+	}
+	var research_pulic_paper_front_page = $scope.research_pulic_paper_front_page = new FileUploader({url: $scope.s3url});	
+	research_pulic_paper_front_page.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly .JPEG, .JPG, .PNG, .GIF, .PDF, .DOC, .DOCX are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	research_pulic_paper_front_page.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.faculty.first_name ? $scope.faculty.first_name : '';
+		subbucket += $scope.faculty.middle_name ? $scope.faculty.middle_name : '';
+		subbucket += $scope.faculty.last_name ? $scope.faculty.last_name : '';
+		subbucket += $scope.faculty.faculty_id;
+		if(subbucket) {
+			subbucket = 'faculty/' + subbucket + '/research_pulic/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = 'paper_front_page_'+ Math.round(new Date().getTime() / 1000) + '.' + filename;
+		
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured!!!!!');	
+		}
+	};
+	research_pulic_paper_front_page.onProgressItem = function(fileItem, progress) {
+		//if(!$scope.validate_research_pulic())
+		//fileItem.cancel();
+	};
+	research_pulic_paper_front_page.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.research_pulic.paper_front_page = fileItem.formData[0].key;
+		//$scope.save_research_pulic($scope.research_pulic);
+	};
+	//**********************************************************
+	$scope.search_facultyEducation = function(faculty){
+		name = faculty.name ? faculty.name : '-';
+		department_id = faculty.department_id ? faculty.department_id : '-';
+		rank_id = faculty.rank_id ? faculty.rank_id : '-';
+		qualification_id = faculty.qualification_id ? faculty.qualification_id : '-';
+		status = faculty.status ? faculty.status : '-';
+		email = faculty.email ? faculty.email : '-';
+		$scope.email = email.replace("@","_");
+		
+		$location.path("/employee_education_list/" + name + "/" + department_id + "/" + rank_id + "/" + qualification_id + "/" + status + "/" + $scope.email + "/page1");
+	}
+	
+	$scope.export_excelEducation = function(faculty, base_url, with_photo){
+		name = faculty.name ? faculty.name : '-';
+		department_id = faculty.department_id ? faculty.department_id : '-';
+		rank_id = faculty.rank_id ? faculty.rank_id : '-';		
+		qualification_id = faculty.qualification_id ? faculty.qualification_id : '-';
+		status = faculty.status ? faculty.status : '-';
+		email = faculty.email ? faculty.email : '-';
+		export_edu = faculty.export_edu ? faculty.export_edu : '-';
+		window.open(base_url + 'faculty/export_excelEducation/' + name + "/" + department_id + "/" + rank_id + "/" + qualification_id + "/" + status + "/" + email + "/" + export_edu);	
+	}
+	
+	$scope.auto_fill_shift_time = function(emp_work_id){
+		for(var i = 0;i<$scope.employee_work_hr_list.length;i++){
+			if($scope.employee_work_hr_list[i].emp_work_id == emp_work_id){  
+				$scope.faculty.formatted_time_in = $scope.employee_work_hr_list[i].formatted_start_time;
+				$scope.faculty.formatted_time_out = $scope.employee_work_hr_list[i].formatted_end_time;
+			}
+		}
+	}
+	
+	$scope.print_appointment_letter = function(base_url, faculty_id) {
+		window.open(base_url + 'faculty/print_appointment_letter/' + faculty_id);
+	}
+}]);

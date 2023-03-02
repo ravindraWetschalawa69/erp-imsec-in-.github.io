@@ -1,0 +1,267 @@
+angular.module("User").controller('wi_fi', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+    $scope.wi_fi_role_list = {};
+    $scope.wi_fi_role = {};
+	$scope.wi_fi = {};
+	$scope.wifi_service = {};
+	$scope.wi_fi_request = {};
+	$scope.wi_fi_list = {};
+    $scope.error = {};
+	$scope.flashMessageType = "success";
+    $scope.flashMessage = "";
+	$scope.isClicked = false;
+	
+	/*Start Wi Fi Admin*/
+	$scope.save_wi_fi_role = function(wi_fi_role) {
+		$scope.error = {};
+		$error  = 0;
+		
+		if(!wi_fi_role.user_id || wi_fi_role.user_id == '') {
+			$error++; 
+			$scope.error.user_id = true;
+		}
+		if(!wi_fi_role.role || wi_fi_role.role == '') {
+			$error++; 
+			$scope.error.role = true;
+		}
+		if(!wi_fi_role.hostel_id || wi_fi_role.hostel_id == '') {
+			$error++; 
+			$scope.error.hostel_id = true;
+		} 		
+		if($error > 0){
+			return false;	
+		}else { 
+			$scope.isClicked = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "wi_fi/add_wi_fi_role",
+				data: wi_fi_role
+			}).success(function(response) { console.log(response);
+				loading.finish();
+				$scope.isClicked = false;
+				if(response[0] == 'success') {
+					alert(response[1]);	
+					$location.path("/wi_fi_role");
+				}else if(response[0] == 'error') {
+					alert(response[1]);
+				}
+			});
+		}
+	}
+	
+	$scope.change_wi_fi_role_status = function(wi_fi_role_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "wi_fi/change_wi_fi_role_status",
+			data: {'wi_fi_role_id':wi_fi_role_id, 'current_status': current_status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.wi_fi_role_list[index].is_cancel = current_status == '0' ? '1' : '0';	
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	/*End Wi Fi Admin*/
+	$scope.call_wi_fi_request = function() {
+		loading.start();
+		$http({
+			method: "post",
+			url: "wi_fi/call_wi_fi_request"
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response[0] == 1){
+				$location.path(response[1]);	
+			} else if(response[0] == 0) {
+				alert(response[1]);
+			}
+		});
+	}
+	
+	$scope.save_wi_fi_request = function(wi_fi) {//console.log(wi_fi); 
+		$scope.error = {};
+		$error  = 0;
+		if(!wi_fi.mac_id || wi_fi.mac_id == '') {
+			$error++; 
+			$scope.error.mac_id = true;
+		}else{
+			if(wi_fi.mac_id.length < 17){
+				$error++; 
+				$scope.error.mac_id = true;
+			}
+		}
+		if(!wi_fi.device_type || wi_fi.device_type == '') {
+			$error++; 
+			$scope.error.device_type = true;
+		}		
+		if($error > 0){
+			return false;	
+		}else { 
+			$scope.isClicked = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "wi_fi/add_wi_fi_services",
+				data: wi_fi
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				$scope.isClicked = false;
+				if(response[0] == 'success') {
+					alert(response[1]);	
+					$location.path("/wi_fi_services");
+				}else if(response[0] == 'error') {
+					alert(response[1]);
+				}
+			});
+		}
+	}
+	
+	$scope.change_wi_fi_service_cancelled = function(wi_fi_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "wi_fi/change_wi_fi_service_cancelled",
+			data: {'wi_fi_id':wi_fi_id, 'current_status': current_status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.wi_fi_list[index].is_cancelled = current_status == '0' ? '1' : '0';	
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}	
+	
+	/*$scope.change_wi_fi_service_status = function(wi_fi_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "wi_fi/change_wi_fi_service_status",
+			data: {'wi_fi_id':wi_fi_id, 'current_status': current_status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response == 1) {
+				$scope.wi_fi_list[index].status = current_status;	
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		})
+	}*/
+	
+	$scope.search_wifi_list = function(wifi_service){
+		admission_no = wifi_service.admission_no ? wifi_service.admission_no : '-';
+		name = wifi_service.name ? wifi_service.name : '-';
+		roll_no = wifi_service.roll_no ? wifi_service.roll_no : '-';
+		hostel_id = wifi_service.hostel_id ? wifi_service.hostel_id : '-';
+		room_no = wifi_service.room_no ? wifi_service.room_no : '-';
+		mac_address = wifi_service.mac_address ? wifi_service.mac_address : '-';
+		from_date = wifi_service.from_date ? wifi_service.from_date : '-';
+		to_date = wifi_service.to_date ? wifi_service.to_date : '-';		
+		device_type = wifi_service.device_type ? wifi_service.device_type : '-';
+		complain_type = wifi_service.complain_type ? wifi_service.complain_type : '-';
+		financial_year_id = wifi_service.financial_year_id ? wifi_service.financial_year_id : '-';
+		
+		$location.path("/wi_fi_services/" + name + "/" + admission_no +  "/" + roll_no + "/" + hostel_id + "/" + room_no + "/" + mac_address + "/" + from_date + "/" + to_date + "/" + device_type + "/" + complain_type + "/" + financial_year_id + "/page1");
+	}
+	
+	$scope.export_wifi_list = function(wifi_service, base_url) {
+		admission_no = wifi_service.admission_no ? wifi_service.admission_no : '-';
+		name = wifi_service.name ? wifi_service.name : '-';
+		roll_no = wifi_service.roll_no ? wifi_service.roll_no : '-';
+		hostel_id = wifi_service.hostel_id ? wifi_service.hostel_id : '-';
+		room_no = wifi_service.room_no ? wifi_service.room_no : '-';
+		mac_address = wifi_service.mac_address ? wifi_service.mac_address : '-';
+		from_date = wifi_service.from_date ? wifi_service.from_date : '-';
+		to_date = wifi_service.to_date ? wifi_service.to_date : '-';		
+		device_type = wifi_service.device_type ? wifi_service.device_type : '-';
+		complain_type = wifi_service.complain_type ? wifi_service.complain_type : '-';
+		financial_year_id = wifi_service.financial_year_id ? wifi_service.financial_year_id : '-';
+		
+		window.open(base_url + 'wi_fi/export_wifi_list/' + name + "/" + admission_no +  "/" + roll_no + "/" + hostel_id + "/" + room_no + "/" + mac_address + "/" + from_date + "/" + to_date + "/" + device_type + "/" + complain_type + "/ " + financial_year_id);
+	}
+	
+	
+	$scope.macAddressFormat = function(macAddress){
+		macAddress = macAddress.toUpperCase();
+		var macAddr  = macAddress;
+		var alphaNum= /^[A-Za-z0-9]+$/;
+	
+		// The Input will be changed only if the length is 12 and is alphanumeric
+		if(macAddr.length == 12 && alphaNum.test(macAddr)){
+			// A lot is going on here. 
+			// .replace(/(.{2})/g,"$1:") - adds ':' every other 2 characters
+			// .slice(0,-1) - cuts the last character, because ':' is added
+			// .toUpperCase() - because it's good practice for writing MAC Addresses
+			macAddr = macAddr.replace(/(.{2})/g,"$1:").slice(0,-1).toUpperCase();
+		
+			// Place Formatted MAC Address to Input
+			$scope.wi_fi.mac_id= macAddr;
+		}
+		else if (!alphaNum.test(macAddr)){
+			alert("only alpha-numeric allowed");
+		}
+  	};	
+	
+	$scope.wi_fi_popup = false;	
+	$scope.setting = {};	
+	$scope.showWiFiPopup = function(wi_fi_id, current_status, index, ip_address, reason_for_reject){
+		$scope.wi_fi_popup = true;
+		$scope.setting.wi_fi_id		 	= wi_fi_id;
+		$scope.setting.ip_address	 	= ip_address;
+		$scope.setting.reason_for_reject= reason_for_reject;
+		$scope.setting.current_status	= current_status;
+		$scope.setting.index			= index;
+		$scope.message	=	'';		
+	}	
+	
+	$scope.hideWiFiPopup = function(){
+		$scope.wi_fi_popup = false;
+		$scope.setting = {};
+	}	
+	$scope.apply_wi_fi_status = function(setting) { //console.log(setting);
+		$scope.error		= {}; var error = 0;
+		$scope.message	=	'';
+		if(setting.current_status == '1'){
+			if(!setting.ip_address || setting.ip_address == '') {
+				$scope.message = 'IP Address is missing, Plz try again.';
+				error++;
+			}	
+		}
+		if(setting.current_status == '2'){
+			if(!setting.reason_for_reject || setting.reason_for_reject == '') {
+				$scope.message = 'Reason For Reject is missing, Plz try again.';
+				error++;
+			}	
+		}
+		if(error == 0){
+			loading.start();
+			$http({
+				method: "post",
+				url: "wi_fi/apply_wi_fi_status",
+				data: setting
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response[0] == 1) {
+					var index = setting.index;
+					$scope.wi_fi_list[index].status = setting.current_status;
+					$scope.wi_fi_list[index].ip_address = setting.ip_address;
+					$scope.wi_fi_list[index].reason_for_reject = setting.reason_for_reject;
+					$scope.wi_fi_list[index].approve_reject_date = response[2];
+					
+					$scope.hideWiFiPopup();	
+					alert(response[1]);
+				} else  if(response[0] == 0) {
+					$scope.error = true;
+					$scope.message = response[1];
+				}			
+				loading.finish();
+			});
+		}
+	}
+		
+}]);

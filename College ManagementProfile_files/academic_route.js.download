@@ -1,0 +1,892 @@
+angular.module("User").config(['$routeProvider',
+	function($routeProvider) {
+		$routeProvider.
+		
+		when('/subject_list/:financial_year_id/:course_id/:stream_id/:year/:subjectCode/:semester/:page', {
+				templateUrl: function(params){ return 'subject/subject_list/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.subjectCode + '/' + params.semester + '/' + params.page; },
+				controller: 'subject'
+			}).
+		
+		when('/scheduleNotattendance', {
+				templateUrl: 'schedule/scheduleNotattendance_report',
+				controller: 'schedule'
+			}).
+		when('/confirm_admission', {
+				templateUrl: function(params){ return 'admission/view_registration'; },
+				controller: 'admission'
+			}).	
+		when('/scheduleNotattendance/:financial_year_id/:course_id/:stream_id/:year/:section/:from_date', {
+				templateUrl: function(params){ return 'schedule/scheduleNotattendance_report/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + '/' + params.section + '/' + params.from_date ; },
+				controller: 'schedule'
+			}).
+		when('/overall_attendence', {
+				templateUrl: 'schedule/overall_attendence',
+				controller: 'schedule'
+			}).
+			when('/overall_attendence/:financial_year_id/:course_id/:stream_id/:year/:section', {
+				templateUrl: function(params){ return 'schedule/overall_attendence/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section; },
+				controller: 'schedule'
+			}).
+			when('/subject_wise_student_attendence/:admission_id/:subject_id', {
+				templateUrl: function(params){ return 'schedule/overall_attendence/' + params.admission_id + '/' + params.subject_id; },
+				controller: 'schedule'
+			}).
+			when('/financial_year_list', {
+				templateUrl: 'financial_year/financial_year_list',
+				controller: 'financial_year'
+			}).
+			when('/financial_year_list/:page', {
+				templateUrl: function(params){ return 'financial_year/financial_year_list/' + params.page; },
+				controller: 'financial_year'
+			}).
+			when('/add_financial_year', {
+				templateUrl: 'financial_year/add_financial_year',
+				controller: 'financial_year'
+			}).
+			when('/edit_financial_year/:financial_year_id', {
+				templateUrl: function(params){ return 'financial_year/edit_financial_year/' + params.financial_year_id; },
+				controller: 'financial_year'
+			}).
+			when('/course_list', {
+				templateUrl: 'course/course_list',
+				controller: 'course'
+			}).
+			when('/course_list/:page', {
+				templateUrl: function(params){ return 'course/course_list/' + params.page; },
+				controller: 'course'
+			}).
+			when('/add_course', {
+				templateUrl: 'course/add_course',
+				controller: 'course'
+			}).
+			when('/question_list', {
+				templateUrl: 'schedule/question_list',
+				controller: 'schedule'
+			}).
+			when('/question_list/:page', {
+				templateUrl: function(params){ return 'schedule/question_list/' + params.page; },
+				controller: 'schedule'
+			}).
+			when('/add_question', {
+				templateUrl: 'schedule/add_question',
+				controller: 'schedule'
+			}).
+			when('/edit_course/:course_id', {
+				templateUrl: function(params){ return 'course/edit_course/' + params.course_id; },
+				controller: 'course'
+			}).
+			when('/stream_list', {
+				templateUrl: 'stream/stream_list',
+				controller: 'stream'
+			}).
+			when('/stream_list/:page', {
+				templateUrl: function(params){ return 'stream/stream_list/' + params.page; },
+				controller: 'stream'
+			}).
+			when('/add_stream', {
+				templateUrl: 'stream/add_stream',
+				controller: 'stream'
+			}).
+			when('/edit_stream/:stream_id', {
+				templateUrl: function(params){ return 'stream/edit_stream/' + params.stream_id; },
+				controller: 'stream'
+			}).
+			when('/batch_list', {
+				templateUrl: 'batch/batch_list',
+				controller: 'batch'
+			}).
+			when('/batch_list/:page', {
+				templateUrl: function(params){ return 'batch/batch_list/' + params.page; },
+				controller: 'batch'
+			}).
+			when('/add_batch', {
+				templateUrl: 'batch/add_batch',
+				controller: 'batch'
+			}).
+			when('/edit_batch/:batch_id', {
+				templateUrl: function(params){ return 'batch/edit_batch/' + params.batch_id; },
+				controller: 'batch'
+			}).
+			when('/section_list', {
+				templateUrl: 'section/section_list',
+				controller: 'section'
+			}).
+			when('/section_list/:page', {
+				templateUrl: function(params){ return 'section/section_list/' + params.page; },
+				controller: 'section'
+			}).
+			when('/add_section', {
+				templateUrl: 'section/add_section',
+				controller: 'section'
+			}).
+			when('/edit_section/:financial_year_id/:course_id/:stream_id/:shift_type/:year', {
+				templateUrl: function(params){ return 'section/edit_section/' + params.financial_year_id+'/'+params.course_id+'/'+params.stream_id+'/'+params.shift_type+'/'+params.year; },
+				controller: 'section'
+			}).
+			when('/subject_list', {
+				templateUrl: 'subject/subject_list',
+				controller: 'subject'
+			}).
+			when('/subject_list/:page', {
+				templateUrl: function(params){ return 'subject/subject_list/' + params.page; },
+				controller: 'subject'
+			}).
+			when('/add_subject', {
+				templateUrl: 'subject/add_subject',
+				controller: 'subject'
+			}).
+			when('/edit_subject/:subject_id', {
+				templateUrl: function(params){ return 'subject/edit_subject/' + params.subject_id; },
+				controller: 'subject'
+			}).
+			
+			when('/admission_project', {
+				templateUrl: 'project/admission_project',
+				controller: 'project'
+			}).
+			when('/view_project/:project_id', {
+				templateUrl: function(params){ return 'project/view_project/' + params.project_id; },
+				controller: 'project'
+			}).		
+			
+			when('/project', {
+				templateUrl: 'project/project_list',
+				controller: 'project'
+			}).
+			when('/project_list', {
+				templateUrl: 'project/project_list',
+				controller: 'project'
+			}).
+			when('/project_list/:page', {
+				templateUrl: function(params){ return 'project/project_list/' + params.page; },
+				controller: 'project'
+			}).
+			when('/add_project', {
+				templateUrl: 'project/add_project',
+				controller: 'project'
+			}).
+			when('/edit_project/:project_id', {
+				templateUrl: function(params){ return 'project/edit_project/' + params.project_id; },
+				controller: 'project'
+			}).
+			when('/review_project/:project_id', {
+				templateUrl: function(params){ return 'project/review_project/' + params.project_id; },
+				controller: 'project'
+			}).
+			
+			when('/projectReview/:project_id/:semester/:review', {
+				templateUrl: function(params){ return 'project/projectReview/' + params.project_id + '/' + params.semester + '/' + params.review; },
+				controller: 'project'
+			}).
+			
+			
+			when('/admission_list', {
+				templateUrl: 'admission/admission_list',
+				controller: 'admission'
+			}).
+			
+			
+			when('/room_list', {
+				templateUrl: 'room/room_list',
+				controller: 'room'
+			}).
+			when('/room_list/:page', {
+				templateUrl: function(params){ return 'room/room_list/' + params.page; },
+				controller: 'room'
+			}).
+			when('/add_room', {
+				templateUrl: 'room/add_room',
+				controller: 'room'
+			}).
+			when('/edit_room/:room_id', {
+				templateUrl: function(params){ return 'room/edit_room/' + params.room_id; },
+				controller: 'room'
+			}).			
+			when('/admission_list', {
+				templateUrl: 'admission/admission_list',
+				controller: 'admission'
+			}).
+			when('/admission_list/:page', {
+				templateUrl: function(params){ return 'admission/admission_list/page' + params.page; },
+				controller: 'admission'
+			}).
+			when('/admission_list/:admission_no/:roll_no/:name/:from_date/:to_date/:financial_year_id/:course_id/:stream_id/:admitted_year/:semester/:lateral_entry/:tfw/:studentshift/:admission_status/:status/:page', {
+				templateUrl: function(params){ return 'admission/search_admission/' + params.admission_no + '/' + params.roll_no + '/' + params.name + '/'  + params.from_date + '/' + params.to_date + '/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.admitted_year + '/' + params.semester + '/' + params.lateral_entry + '/' + params.tfw + '/' + params.studentshift + '/' + params.admission_status + '/' + params.status + '/page' + params.page; },
+				controller: 'admission'
+			}).
+			/*when('/admission_list/:admission_no/:from_date/:to_date/:financial_year_id/:course_id/:stream_id/:admitted_year/:semester/:lateral_entry/:tfw/:studentshift/:admission_status/:status/:page', {
+				templateUrl: function(params){ return 'admission/search_admission/' + params.admission_no + '/' + params.from_date + '/' + params.to_date + '/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.admitted_year + '/' + params.semester + '/' + params.lateral_entry + '/' + params.tfw + '/' + params.studentshift + '/' + params.admission_status + '/' + params.status + '/page' + params.page; },
+				controller: 'admission'
+			}).*/
+			when('/add_admission', {
+				templateUrl: 'admission/add_admission',
+				controller: 'admission'
+			}).
+			when('/edit_admission/:admission_id', {
+				templateUrl: function(params){ return 'admission/edit_admission/' + params.admission_id; },
+				controller: 'admission'
+			}).
+			when('/view_admission/:admission_id', {
+				templateUrl: function(params){ return 'admission/view_admission/' + params.admission_id; },
+				controller: 'admission'
+			}).
+			when('/edit_admission', {
+				templateUrl: function(params){ return 'admission/edit_admission'; },
+				controller: 'admission'
+			}).
+			when('/view_admission', {
+				templateUrl: function(params){ return 'admission/view_admission'; },
+				controller: 'admission'
+			}).		
+			when('/adhaar_page', {
+				templateUrl: function(params){ return 'admission/adhaar_page'; },
+				controller: 'admission'
+			}).
+			when('/student_registration', {
+				templateUrl: 'admission/student_registration',
+				controller: 'admission'
+			}).	
+			when('/student_registration/:financial_year_id/:course_id/:stream_id/:admitted_year/:semester/:section/:admission_no/:rstatus/:page', {
+				templateUrl: function(params){ return 'admission/student_registration/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.admitted_year + '/' + params.semester + '/' + params.section + '/' + params.admission_no+ '/' + params.rstatus+ '/page' + params.page ; },
+				controller: 'admission'
+			}).					
+			when('/student_registration_report', {
+				templateUrl: 'admission/student_registration_report',
+				controller: 'admission'
+			}).	
+			/*when('/branch_setting', {
+				templateUrl: 'admission/branch_setting',
+				controller: 'admission'
+			}).
+			when('/branch_setting/:page', {
+				templateUrl: function(params){ return 'admission/branch_setting/page' + params.page; },
+				controller: 'admission'
+			}).
+			when('/branch_setting/:admission_no/:roll_no/:name/:financial_year_id/:course_id/:stream_id/:admitted_year/:semester/:lateral_entry/:admission_status/:page', {
+				templateUrl: function(params){ return 'admission/search_branch_setting/' + params.admission_no + '/' + params.roll_no + '/' + params.name + '/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.admitted_year + '/' + params.semester + '/' + params.lateral_entry + '/' + params.admission_status + '/page' + params.page; },
+				controller: 'admission'
+			}).	*/		
+			when('/scheduler', {
+				templateUrl: 'schedule/scheduler',
+				controller: 'schedule'
+			}).
+			when('/scheduler/:financial_year_id/:course_id/:stream_id/:year/:section', {
+				 templateUrl: function(params){ return 'schedule/scheduler/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section; },
+				controller: 'schedule'
+			}).
+			when('/scheduler/:financial_year_id/:course_id/:stream_id/:year/:section/:start', {
+				 templateUrl: function(params){ return 'schedule/scheduler/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section + '/' + params.start; },
+				controller: 'schedule'
+			}).
+			when('/scheduler/:financial_year_id/:course_id/:stream_id/:year/:section/:start/:referal', {
+				 templateUrl: function(params){ return 'schedule/scheduler/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section + '/' + params.start + '/' + params.referal; },
+				controller: 'schedule'
+			}).
+			when('/attendance/:schedule_id', {
+				templateUrl: function(params){ return 'schedule/attendance/' + params.schedule_id; },
+				controller: 'schedule'
+			}).
+			when('/attendance/:schedule_id/:period', {
+				templateUrl: function(params){ return 'schedule/attendance/' + params.schedule_id + '/'+ params.period; },
+				controller: 'schedule'
+			}).
+			when('/subject_wise_attendence', {
+				templateUrl: 'schedule/subject_wise_attendence',
+				controller: 'schedule'
+			}).
+			when('/subject_wise_attendence/:financial_year_id/:course_id/:stream_id/:year/:subject_id/:section', {
+				templateUrl: function(params){ return 'schedule/subject_wise_attendence/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.subject_id + '/' + params.section; },
+				controller: 'schedule'
+			}).
+			when('/schedule_wise_attendence', {
+				templateUrl: 'schedule/schedule_wise_attendence',
+				controller: 'schedule'
+			}).
+			when('/schedule_wise_attendence/:financial_year_id/:course_id/:stream_id/:year/:subject_id/:section/:schedule_id', {
+				templateUrl: function(params){ return 'schedule/schedule_wise_attendence/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.subject_id + '/' + params.section + '/' + params.schedule_id; },
+				controller: 'schedule'
+			}).
+			when('/admitCard', {
+				templateUrl: 'schedule/admitCard',
+				controller: 'schedule'
+			}).
+			when('/admitCard/:page', {
+				templateUrl: function(params){ return 'schedule/admitCard/page' + params.page; },
+				controller: 'schedule'
+			}).			
+			when('/admitCard/:course_id/:stream_id/:year/:section/:sessional/:admission_no/:page', {
+				templateUrl: function(params){ return 'schedule/admitCard/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section+ '/' + params.sessional+ '/' + params.admission_no+ '/page' + params.page; },
+				controller: 'schedule'
+			}).
+			when('/section_wise_attendence', {
+				templateUrl: 'schedule/section_wise_attendence',
+				controller: 'schedule'
+			}).
+			when('/section_wise_attendence/:financial_year_id/:course_id/:stream_id/:year/:section/:scholer', {
+				templateUrl: function(params){ return 'schedule/section_wise_attendence/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section+ '/' + params.scholer; },
+				controller: 'schedule'
+			}).
+			when('/subject_wise_student_attendence/:admission_id/:subject_id', {
+				templateUrl: function(params){ return 'schedule/subject_wise_student_attendence/' + params.admission_id + '/' + params.subject_id; },
+				controller: 'schedule'
+			}).
+			
+			when('/attendence_letterReport', {
+				templateUrl: 'schedule/attendence_letterReport',
+				controller: 'schedule'
+			}).
+			when('/attendence_letterReport/:financial_year_id/:course_id/:stream_id/:year/:section/:from_date/:to_date', {
+				templateUrl: function(params){ return 'schedule/attendence_letterReport/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year  + '/' + params.section + '/' + params.from_date+ '/' + params.to_date; },
+				controller: 'schedule'
+			}).
+			when('/attendence_letter', {
+				templateUrl: 'schedule/attendence_letter',
+				controller: 'schedule'
+			}).
+			when('/attendence_letter/:financial_year_id/:course_id/:stream_id/:year/:section/:from_date/:to_date', {
+				templateUrl: function(params){ return 'schedule/attendence_letter/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year  + '/' + params.section + '/' + params.from_date+ '/' + params.to_date; },
+				controller: 'schedule'
+			}).
+						when('/attendence_edr', {
+				templateUrl: 'schedule/attendence_edr',
+				controller: 'schedule'
+			}).
+					when('/executiveSummary', {
+				templateUrl: 'schedule/executiveSummary',
+				controller: 'schedule'
+			}).
+					when('/executiveSummary/:start_date/:end_date', {
+				templateUrl: function(params){ return 'schedule/executiveSummary/' + params.start_date + '/' + params.end_date; },
+				controller: 'schedule'
+			}).
+					when('/scheduleSummary', {
+				templateUrl: 'schedule/scheduleSummary',
+				controller: 'schedule'
+			}).
+					when('/scheduleSummary/:start_date/:end_date/:course_id/:stream_id/:year', {
+				templateUrl: function(params){ return 'schedule/scheduleSummary/' + params.start_date + '/' + params.end_date+ '/' + params.course_id+ '/' + params.stream_id+ '/' + params.year; },
+				controller: 'schedule'
+			}).
+			when('/attendence_edr/:financial_year_id/:course_id/:stream_id', {
+				templateUrl: function(params){ return 'schedule/attendence_edr/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id ; },
+				controller: 'schedule'
+			}).
+			when('/attendence_edr/:financial_year_id/:course_id/:stream_id/:date', {
+				templateUrl: function(params){ return 'schedule/attendence_edr/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.date; },
+				controller: 'schedule'
+			}).
+			when('/attendence_agpr', {
+				templateUrl: 'schedule/attendence_agpr',
+				controller: 'schedule'
+			}).
+			when('/attendence_agpr/:financial_year_id/:start_date/:end_date/:gc', {
+				templateUrl: function(params){ return 'schedule/attendence_agpr/' + params.financial_year_id + '/' + params.start_date + '/' + params.end_date+ '/' + params.gc; },
+				controller: 'schedule'
+			}).
+			
+			when('/short_attendence', {
+				templateUrl: 'schedule/short_attendence',
+				controller: 'schedule'
+			}).
+			when('/short_attendence/:financial_year_id/:course_id/:stream_id/:year/:section/:attendance_less_than/:start_time/:end_time', {
+				templateUrl: function(params){ return 'schedule/short_attendence/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year  + '/' + params.section + '/' + params.attendance_less_than+ '/' + params.start_time+ '/' + params.end_time; },
+				controller: 'schedule'
+			}).
+			when('/hostel_short_attendence', {
+				templateUrl: 'schedule/hostel_short_attendence',
+				controller: 'schedule'
+			}).
+			when('/hostel_short_attendence/:financial_year_id/:course_id/:stream_id/:year/:section/:attendance_less_than', {
+				templateUrl: function(params){ return 'schedule/hostel_short_attendence/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year  + '/' + params.section + '/' + params.attendance_less_than; },
+				controller: 'schedule'
+			}).
+			
+			
+			when('/daily_attendence', {
+				templateUrl: 'schedule/daily_attendence',
+				controller: 'schedule'
+			}).
+			when('/daily_attendence/:financial_year_id/:course_id', {
+				templateUrl: function(params){ return 'schedule/daily_attendence/' + params.financial_year_id + '/' + params.course_id; },
+				controller: 'schedule'
+			}).
+			when('/daily_attendence/:financial_year_id/:course_id/:date', {
+				templateUrl: function(params){ return 'schedule/daily_attendence/' + params.financial_year_id + '/' + params.course_id + '/' + params.date; },
+				controller: 'schedule'
+			}).			
+			when('/student_list', {
+				templateUrl: 'schedule/student_list',
+				controller: 'schedule'
+			}).
+			when('/student_list/:financial_year_id/:course_id/:stream_id/:year/:section', {
+				templateUrl: function(params){ return 'schedule/student_list/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section; },
+				controller: 'schedule'
+			}).			
+			when('/testmarks', {
+				templateUrl: 'testmarks/gettestmarks',
+				controller: 'testmarks'
+			}).
+			when('/testmarks/:financial_year_id/:course_id/:stream_id/:year/:subject_id/:section', {
+				templateUrl: function(params){ return 'testmarks/gettestmarks/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.subject_id + '/' + params.section; },
+				controller: 'testmarks'
+			}).
+			when('/results', {
+				templateUrl: 'gracemarks/results',
+				controller: 'gracemarks'
+			}).
+			when('/search_result/:financial_year_id/:course_id/:stream_id/:year/:section/:subject_id/:calculateAtt/:page', {
+				templateUrl: function(params){ return 'gracemarks/search_result/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section + '/' + params.subject_id+ '/' + params.calculateAtt + '/' + params.page; },
+				controller: 'gracemarks'
+			}).
+			when('/export_search_result/:financial_year_id/:course_id/:stream_id/:year/:section/:subject_id/:calculateAtt/:page', {
+				templateUrl: function(params){ return 'gracemarks/export_search_result/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.subject_id + '/' + params.calculateAtt + '/' + params.section; },
+				controller: 'gracemarks'
+			}).
+			when('/gracemarks', {
+				templateUrl: 'gracemarks/index',
+				controller: 'gracemarks'
+			}).
+			when('/gracemarks/:financial_year_id/:course_id/:stream_id/:year/:section', {
+				templateUrl: function(params){ return 'gracemarks/index/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section; },
+				controller: 'gracemarks'
+			}).
+			when('/finalmarks/:financial_year_id/:course_id/:stream_id/:year/:section/:subject_id/:grace_given', {
+				templateUrl: function(params){ return 'gracemarks/finalmarks/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section + '/' + params.subject_id + '/' + params.grace_given; },
+				controller: 'gracemarks'
+			}).
+			when('/feedback_criteria', {
+				templateUrl: 'schedule/feedback_criteria',
+				controller: 'schedule'
+			}).			
+			when('/enableAdmitcard', {
+				templateUrl: 'schedule/enableAdmitcard',
+				controller: 'schedule'
+			}).	
+			when('/enableAdmitcard/:semester', {
+				templateUrl: function(params){ return 'schedule/enableAdmitcard/' + params.semester; },
+				controller: 'schedule'
+			}).	
+			when('/enableAdmitcard/:semester/:fyi', {
+				templateUrl: function(params){ return 'schedule/enableAdmitcard/' + params.semester+ '/' + params.fyi; },
+				controller: 'schedule'
+			}).
+			when('/feedback', {
+				templateUrl: 'schedule/feedback',
+				controller: 'schedule'
+			}).			
+			when('/feedback/:semester', {
+				templateUrl: function(params){ return 'schedule/feedback/' + params.semester; },
+				controller: 'schedule'
+			}).	
+			when('/feedback/:semester/:fyi', {
+				templateUrl: function(params){ return 'schedule/feedback/' + params.semester+ '/' + params.fyi; },
+				controller: 'schedule'
+			}).
+			when('/feedback_grade', {
+				templateUrl: 'schedule/feedback_grade',
+				controller: 'schedule'
+			}).
+			/*when('/export_grade_result/:from_date/:to_date', {
+				templateUrl: function(params){ return 'schedule/export_grade_result/' + params.from_date + '/' + params.to_date; },
+				controller: 'schedule'
+			}).
+			when('/feedback_grade/:from_date/:to_date', {
+				templateUrl: function(params){ return 'schedule/feedback_grade/' + params.from_date + '/' + params.to_date; },
+				controller: 'schedule'
+			}).*/
+			when('/export_grade_result/:from_date/:to_date/:course_id/:stream_id', {
+				templateUrl: function(params){ return 'schedule/export_grade_result/' + params.from_date + '/' + params.to_date+'/' + params.course_id + '/' + params.stream_id; },
+				controller: 'schedule'
+			}).
+			when('/feedback_grade/:from_date/:to_date/:course_id/:stream_id', {
+				templateUrl: function(params){ return 'schedule/feedback_grade/' + params.from_date + '/' + params.to_date + '/' + params.course_id + '/' + params.stream_id; },
+				controller: 'schedule'
+			}).
+			when('/feedback_all', {
+				templateUrl: 'schedule/feedback_all',
+				controller: 'schedule'
+			}).
+			when('/feedback_all/:from_date/:to_date', {
+				templateUrl: function(params){ return 'schedule/feedback_all/' + params.from_date + '/' + params.to_date; },
+				controller: 'schedule'
+			}).
+			when('/feedback_all/:from_date/:to_date/:course_id/:stream_id/:faculty_id', {
+				templateUrl: function(params){ return 'schedule/feedback_all/' + params.from_date + '/' + params.to_date+ '/' + params.course_id + '/' + params.stream_id+ '/' + params.faculty_id; },
+				controller: 'schedule'
+			}).
+			when('/view_feedback/:feedback_id', {
+				templateUrl: function(params){ return 'schedule/view_feedback/' + params.feedback_id; },
+				controller: 'schedule'
+			}).
+			when('/view_low_to_high_feedback/:feedback_id', {
+				templateUrl: function(params){ return 'schedule/view_low_to_high_feedback/' + params.feedback_id; },
+				controller: 'schedule'
+			}).
+			when('/view_feedback/:feedback_id/:financial_year_id/:course_id/:stream_id/:year/:section', {
+				templateUrl: function(params){ return 'schedule/view_feedback/' + params.feedback_id + '/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section; },
+				controller: 'schedule'
+			}).
+			when('/complaint_list', {
+				templateUrl: 'complaint/complaint_list',
+				controller: 'complaint'
+			}).
+			when('/complaint_list/:page', {
+				templateUrl: function(params){ return 'complaint/complaint_list/' + params.page; },
+				controller: 'complaint'
+			}).			
+			when('/complaint_list/:name/:admission_no/:roll_no/:financial_year_id/:complaint_type_id/:complaint_status/:from_date/:to_date/:hostel_id/:page', {
+				templateUrl: function(params){ return 'complaint/search_complaint/' + params.name + '/' + params.admission_no + '/' + params.roll_no + '/' + params.financial_year_id + '/' + params.complaint_type_id + '/' + params.complaint_status + '/' + params.from_date + '/' + params.to_date + '/' + params.hostel_id  + '/page' + params.page; },
+				controller: 'complaint'
+			}).
+			when('/complaint_list/:name/:admission_no/:roll_no/:financial_year_id/:complaint_type_id/:complaint_status/:from_date/:to_date/:hostel_id/:is_complaint/:email/:department_id/:rank_id/:page', {
+				templateUrl: function(params){ return 'complaint/search_complaint/' + params.name + '/' + params.admission_no + '/' + params.roll_no + '/' + params.financial_year_id + '/' + params.complaint_type_id + '/' + params.complaint_status + '/' + params.from_date + '/' + params.to_date + '/' + params.hostel_id + '/' + params.is_complaint + '/' + params.email + '/' + params.department_id + '/' + params.rank_id  + '/page' + params.page; },
+				controller: 'complaint'
+			}).
+			when('/add_complaint_access_rights', {
+				templateUrl: 'complaint/add_complaint_access_rights',
+				controller: 'complaint'
+			}).
+			when('/add_student_complaint', {
+				templateUrl: 'complaint/add_student_complaint',
+				controller: 'complaint'
+			}).
+			when('/view_student_complaint/:complaint_id', {
+				templateUrl: function(params){ return 'complaint/view_student_complaint/' + params.complaint_id; },
+				controller: 'complaint'
+			}).
+			when('/view_employee_complaint/:complaint_id', {
+				templateUrl: function(params){ return 'complaint/view_employee_complaint/' + params.complaint_id; },
+				controller: 'complaint'
+			}).
+			when('/notice_list', {
+				templateUrl: 'notice/notice_list',
+				controller: 'notice'
+			}).
+			when('/notice_list/:page', {
+				templateUrl: function(params){ return 'notice/notice_list/' + params.page; },
+				controller: 'notice'
+			}).
+			when('/add_notice', {
+				templateUrl: 'notice/add_notice',
+				controller: 'notice'
+			}).
+			when('/edit_notice/:notice_id', {
+				templateUrl: function(params){ return 'notice/edit_notice/' + params.notice_id; },
+				controller: 'notice'
+			}).
+			when('/view_notice/:notice_id', {
+				templateUrl: function(params){ return 'notice/view_notice/' + params.notice_id; },
+				controller: 'notice'
+			}).
+			when('/birthday_list', {
+				templateUrl: 'admission/birthday_list',
+				controller: 'admission'
+			}).
+			when('/faculty_birthday_list', {
+				templateUrl: 'faculty/faculty_birthday_list',
+				controller: 'faculty'
+			}).
+			when('/rfid_request', {
+				templateUrl: 'admission/rfid_request',
+				controller: 'admission'
+			}).
+			when('/add_rfid_request', {
+				templateUrl: 'admission/add_rfid_request',
+				controller: 'admission'
+			}).
+			when('/view_rfid_request/:req_id', {
+				templateUrl: function(params){ return 'admission/view_rfid_request/' + params.req_id; },
+				controller: 'admission'
+			}).
+			when('/gp_marks_criteria', {
+				templateUrl: 'gracemarks/gp_marks_criteria',
+				controller: 'gracemarks'
+			}).
+			when('/attendance_marks_criteria', {
+				templateUrl: 'gracemarks/attendance_marks_criteria',
+				controller: 'gracemarks'
+			}).
+			when('/gp_marks', {
+				templateUrl: 'gracemarks/gp_marks',
+				controller: 'gracemarks'
+			}).
+			when('/gp_marks/:financial_year_id/:course_id/:stream_id/:year/:section', {
+				templateUrl: function(params){ return 'gracemarks/gp_marks/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section; },
+				controller: 'gracemarks'
+			}).
+			when('/assignment_list', {
+				templateUrl: 'assignment/assignment_list',
+				controller: 'assignment'
+			}).
+			when('/assignment_report', {
+				templateUrl: 'assignment/assignment_report',
+				controller: 'assignment'
+			}).
+			when('/elective_subject_setting', {
+				templateUrl: 'schedule/elective_subject_setting',
+				controller: 'schedule'
+			}).
+			when('/elective_subject_setting/:financial_year_id/:course_id/:stream_id/:year/:section', {
+				templateUrl: function(params){ return 'schedule/elective_subject_setting/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section; },
+				controller: 'schedule'
+			}).
+			when('/elective_subject_setting/:financial_year_id/:course_id/:stream_id/:year/:section/:subjectId', {
+				templateUrl: function(params){ return 'schedule/elective_subject_setting/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section+ '/' + params.subjectId; },
+				controller: 'schedule'
+			}).
+			when('/issue_certificate', {
+				templateUrl: 'certificate/issue_certificate',
+				controller: 'certificate'
+			}).			
+			when('/view_certificate_request', {
+				templateUrl: 'certificate/view_certificate_request',
+				controller: 'certificate'
+			}).
+			when('/edit_certificate/:certificate_id', {
+				templateUrl: function(params){ return 'certificate/edit_certificate/' + params.certificate_id; },
+				controller: 'certificate'
+			}).
+			when('/scholarship', {
+				templateUrl: 'scholarship/scholarship_list',
+				controller: 'scholarship'
+			}).				
+			when('/scholarship/:page', {
+				templateUrl: function(params){ return 'scholarship/scholarship_list/page' + params.page; },
+				controller: 'scholarship'
+			}).			
+			when('/scholarship/:admission_no/:from_date/:to_date/:name/:financial_year_id/:course_id/:admitted_year/:admission_status/:category_id/:page', {
+				templateUrl: function(params){ return 'scholarship/search_scholarship_list/' + params.admission_no + '/' + params.from_date + '/' + params.to_date + '/' + params.name + '/' + params.financial_year_id + '/' + params.course_id + '/' + params.admitted_year + '/' + params.admission_status + '/' + params.category_id + '/page' + params.page; },
+				controller: 'scholarship'
+			}).			
+			when('/apply_scholarship', {
+				templateUrl: 'scholarship/apply_scholarship',
+				controller: 'scholarship'
+			}).	
+			when('/edit_scholarship/:scholarship_id', {
+				templateUrl: function(params){ return 'scholarship/edit_scholarship/' + params.scholarship_id; },
+				controller: 'scholarship'
+			}).
+			
+			when('/hostel_request', {
+				templateUrl: 'hostel_warden/hostel_request',
+				controller: 'hostel_warden'
+			}).
+			when('/hostel_request_form', {
+				templateUrl: 'hostel_warden/hostel_request_form',
+				controller: 'hostel_warden'
+			}).			
+			when('/edit_hostel_request/:hostel_student_id', {
+				templateUrl: function(params){ return 'hostel_warden/edit_hostel_request/' + params.hostel_student_id; },
+				controller: 'hostel_warden'
+			}).	
+			when('/view_hostel_request/:hostel_student_id', {
+				templateUrl: function(params){ return 'hostel_warden/view_hostel_request/' + params.hostel_student_id; },
+				controller: 'hostel_warden'
+			}).				
+			when('/hostel_registration', {
+				templateUrl: 'hostel_warden/hostel_registration',
+				controller: 'hostel_warden'
+			}).
+			when('/hostel_registration_form', {
+				templateUrl: 'hostel_warden/hostel_registration_form',
+				controller: 'hostel_warden'
+			}).			
+			when('/edit_hostel_registration/:hostel_student_id', {
+				templateUrl: function(params){ return 'hostel_warden/edit_hostel_registration/' + params.hostel_student_id; },
+				controller: 'hostel_warden'
+			}).	
+			when('/view_hostel_registration/:hostel_student_id', {
+				templateUrl: function(params){ return 'hostel_warden/view_hostel_registration/' + params.hostel_student_id; },
+				controller: 'hostel_warden'
+			}).	/*End route for hostel registration*/				
+			when('/academic_payment', {
+				templateUrl: 'admission_fee/academic_payment',
+				controller: 'admission'
+			}).	
+			when('/payment_success/:order_no', {
+				 templateUrl: function(params){ return 'admission_fee/payment_success/' + params.order_no; },
+				controller: 'admission_fee'
+			}).
+			when('/payment_failure/:order_no', {
+				 templateUrl: function(params){ return 'admission_fee/payment_failure/' + params.order_no; },
+				controller: 'admission_fee'
+			}).						
+			when('/section_setting', {
+				templateUrl: 'admission/section_setting',
+				controller: 'admission'
+			}).
+			when('/section_setting/:page', {
+				templateUrl: function(params){ return 'admission/section_setting/page' + params.page; },
+				controller: 'admission'
+			}).
+			when('/section_setting/:admission_no/:roll_no/:name/:financial_year_id/:course_id/:stream_id/:admitted_year/:semester/:lateral_entry/:admission_status/:section_status/:page', {
+				templateUrl: function(params){ return 'admission/search_section_setting/' + params.admission_no + '/' + params.roll_no + '/' + params.name + '/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.admitted_year + '/' + params.semester + '/' + params.lateral_entry + '/' + params.admission_status + '/' + params.section_status + '/page' + params.page; },
+				controller: 'admission'
+			}).
+			when('/apply_gate_pass', {
+				templateUrl: 'gate_pass/apply_gate_pass',
+				controller: 'gate_pass'
+			}).
+			when('/edit_issue_gate_pass/:gate_pass_id', {
+				templateUrl: function(params){ return 'gate_pass/edit_issue_gate_pass/' + params.gate_pass_id; },
+				controller: 'gate_pass'
+			}).
+			when('/gate_pass_list', {
+				templateUrl: 'gate_pass/gate_pass_list',
+				controller: 'gate_pass'
+			}).
+			/*WORK DONE BY VINEET KRISHANPAL START*/
+			when('/edit_self_profile', {
+				templateUrl: 'admission/edit_self_profile',
+				controller: 'admission'
+			}).
+			when('/subject_faculty_setting', {
+				templateUrl: 'schedule/subject_faculty_setting',
+				controller: 'schedule'
+			}).
+			when('/subject_faculty_setting/:financial_year_id/:course_id/:stream_id/:year/:section', {
+				 templateUrl: function(params){ return 'schedule/subject_faculty_setting/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section; },
+				controller: 'schedule'
+			}).
+			/*WORK DONE BY VINEET KRISHANPAL END */			
+			when('/coordinator_list', {
+				templateUrl: 'hostel/coordinator_list',
+				controller: 'hostel'
+			}).	
+			when('/add_course_coordinators', {
+				templateUrl: 'hostel/add_course_coordinators',
+				controller: 'hostel'
+			}).
+			when('/edit_course_coordinator/:course_cordinator_id', {
+				templateUrl: function(params){ return 'hostel/edit_course_coordinator/' + params.course_cordinator_id; },
+				controller: 'hostel'
+			}).	
+			when('/course_coordinator_gate_pass', {
+				templateUrl: 'hostel/course_coordinator_gate_pass',
+				controller: 'hostel'
+			}).
+			when('/course_coordinator_gate_pass/:page', {
+				templateUrl: function(params){ return 'hostel/course_coordinator_gate_pass/page' + params.page; },
+				controller: 'hostel'
+			}).			
+			when('/course_coordinator_gate_pass/:section/:from_date/:to_date/:admission_no/:page', {
+				templateUrl: function(params){ return 'hostel/search_gatepass/' + params.section + '/' + params.from_date + '/' + params.to_date + '/' + params.admission_no +  '/page' + params.page; },
+				controller: 'hostel'
+			}).			
+			when('/remove_schedule', {
+				templateUrl: 'schedule/remove_schedule',
+				controller: 'schedule'
+			}).
+			when('/remove_schedule/:financial_year_id/:course_id/:stream_id/:year/:section/:from_date/:to_date', {
+				 templateUrl: function(params){ return 'schedule/remove_schedule/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section + '/' + params.from_date + '/' + params.to_date; },
+				controller: 'schedule'
+			}).			
+			when('/edit_aadhar_card', {
+				templateUrl: 'admission/edit_aadhar_card',
+				controller: 'admission'
+			}).
+			when('/wi_fi_services', {
+				templateUrl: 'wi_fi/wi_fi_services',
+				controller: 'wi_fi'
+			}).	
+			when('/add_wi_fi_services', {
+				templateUrl: 'wi_fi/add_wi_fi_services',
+				controller: 'wi_fi'
+			}).			
+			when('/edit_wi_fi_service/:wi_fi_id', {
+				templateUrl: function(params){ return 'wi_fi/edit_wi_fi_service/' + params.wi_fi_id; },
+				controller: 'wi_fi'
+			}).		
+			when('/view_wi_fi_service/:wi_fi_id', {
+				templateUrl: function(params){ return 'wi_fi/view_wi_fi_service/' + params.wi_fi_id; },
+				controller: 'wi_fi'
+			}).	
+			
+			when('/attendance_criteria_list', {
+				templateUrl: 'attendance_criteria/attendance_criteria_list',
+				controller: 'attendance_criteria'
+			}).
+			when('/add_attendance_criteria', {
+				templateUrl: 'attendance_criteria/add_attendance_criteria',
+				controller: 'attendance_criteria'
+			}).
+			when('/student_performance_report', {
+				templateUrl: 'testmarks/student_performance_report',
+				controller: 'testmarks'
+			}).				
+			when('/student_performance_report/:financial_year_id/:course_id/:stream_id/:year/:subject_id/:section', {
+				templateUrl: function(params){ return 'testmarks/student_performance_report/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.subject_id + '/' + params.section; },
+				controller: 'testmarks'
+			}).			
+			when('/cumulative_results', {
+				templateUrl: 'gracemarks/cumulative_results',
+				controller: 'gracemarks'
+			}).
+			when('/cumulative_results/:financial_year_id/:course_id/:stream_id/:year/:section/:subject_id/:type/:page', {
+				templateUrl: function(params){ return 'gracemarks/search_cumulative_results/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.year + '/' + params.section + '/' + params.subject_id + '/' + params.type + '/' + params.page; },
+				controller: 'gracemarks'
+			}).			
+			when('/bank_detail', {
+				templateUrl: 'admission/bank_detail',
+				controller: 'admission'
+			}).			
+			//***********************Academic Part Payment created by Vinay*************************
+			when('/academic_part_payment', {
+				templateUrl: 'admission_fee/academic_part_payment_list',
+				controller: 'admission_fee_due'
+			}).	
+			when('/academic_part_payment/:page', {
+				templateUrl: function(params){ return 'admission_fee/academic_part_payment_list/page' + params.page; },
+				controller: 'admission_fee_due'
+			}).
+			when('/academic_part_payment/:admission_no/:financial_year_id/:course_id/:stream_id/:admitted_year/:status/:from_date/:to_date/:page', {
+				templateUrl: function(params){ return 'admission_fee/search_academic_part_payment/' + params.admission_no + '/' + params.financial_year_id + '/' + params.course_id + '/' + params.stream_id + '/' + params.admitted_year + '/' + params.status + '/' + params.from_date + '/' + params.to_date + '/page' + params.page; },
+				controller: 'admission_fee_due'
+			}).
+			//**************************************************************************************						
+			when('/online_txn', {
+				templateUrl: 'admission_fee/online_txn',
+				controller: 'admission_fee_due'
+			}).	
+			when('/add_online_txn', {
+				templateUrl: 'admission_fee/add_online_txn',
+				controller: 'admission_fee_due'
+			}).	
+			when('/no_dues', {
+				templateUrl: 'nodues/no_dues',
+				controller: 'nodues'
+			}).	
+			when('/no_dues_list', {
+				templateUrl: 'nodues/no_dues_list',
+				controller: 'nodues'
+			}).	
+			when('/training_material_list', {
+				templateUrl: 'training_material/training_material_list',
+				controller: 'training_material'
+			}).	
+			
+			when('/no_dues_list/:page', {
+				templateUrl: function(params){ return 'nodues/no_dues_list/page' + params.page; },
+				controller: 'nodues'
+			}).	
+			when('/no_dues_list/:course_id/:stream_id/:admission_no/:name/:from_date/:to_date/:no_due_type/:due_status/:page', {
+				templateUrl: function(params){ return 'nodues/search_dues_list/' + params.course_id + '/' + params.stream_id + '/' + params.admission_no + '/' + params.name + '/' + params.from_date + '/' + params.to_date + '/' + params.no_due_type + '/' + params.due_status + '/page' + params.page; },
+				controller: 'nodues'
+			}).	
+			when('/student_event', {
+				templateUrl: 'committee/sport_culture_event',
+				controller: 'committee'
+			}).
+			when('/view_student_event/:student_event_id', {
+				templateUrl: function(params){ return 'committee/view_student_event/' + params.student_event_id; },
+				controller: 'committee'
+			}).
+			when('/library_book', {
+				templateUrl: 'library_fee/student_library_book',
+				controller: 'library_fee'
+			}).
+			otherwise({
+				redirectTo: '/scheduler'
+			});
+	}
+]);

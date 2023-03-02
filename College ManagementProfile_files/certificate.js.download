@@ -1,0 +1,100 @@
+angular.module("User").controller('certificate', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+	$scope.error = {};
+	$scope.certificate = {};
+	$scope.certificate_list = {};
+	$scope.admission = {};
+	$scope.admission_list = {};
+	$scope.no_record = false;
+	$scope.isClicked = false;
+	
+	$scope.search_admission_detail = function(certificate){	//console.log(certificate);
+		name = $.trim(certificate.name);
+		admission_id = $.trim(certificate.admission_id);
+		if(name != '' || admission_id != ''){
+			loading.start();
+			$http({
+				method: "post",
+				url: "certificate/search_admission_detail",
+				data: {'name':name, 'admission_id':admission_id}
+			}).success(function(response){		//console.log(response);
+				if(response[0] == 'success'){
+					$scope.admission = response[1];
+					$scope.admission_list = response[2];
+					$scope.no_record = false;
+				}else{
+					$scope.no_record = true;
+					$scope.admission = {};
+					$scope.admission_list = {};
+				}
+				loading.finish();
+			});	
+		}
+	}
+	
+	$scope.print_certificate = function(base_url, certificate_id, admission_id, type) { 
+		//console.log(certificate_id +' '+ admission_id+ ' '+ type);
+		if(certificate_id == 2){
+			if(type == undefined || type == ''){
+				alert('Please Choose Type.');	return false;
+			}
+		}
+		if(certificate_id && admission_id){ 
+			window.open(base_url + 'certificate/print_certificate/' + certificate_id + '/' + admission_id + '/' + type);
+		}else{
+			alert('Please Select details.');
+		}
+	}
+	
+	/*$scope.save = function(certificate) { 
+		if(!certificate.company_name || certificate.company_name == '') {
+			$scope.error.company_name = true; return false;
+		}else if(!certificate.contact_person || certificate.contact_person == '') {
+			$scope.error.contact_person = true; return false;
+		}else if(!certificate.contact_no || certificate.contact_no == '') {
+			$scope.error.contact_no = true; return false;
+		}else if(!certificate.contact_email || certificate.contact_email == '') {
+			$scope.error.contact_email = true; return false;
+		}else if(!$scope.validateEmail(certificate.contact_email)) {				
+				$scope.error.email_invalid = true;
+				$scope.currentTab = 1;
+				$error++;
+		}else if(!certificate.address || certificate.address == '') {
+			$scope.error.address = true; return false;
+		} else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "certificate/add_certificate",
+				data: certificate
+			}).success(function(response) { 
+				if(response == 'Some error occured. Please try again.') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}else{
+					$location.path("/certificate_list");
+				}
+				loading.finish();				
+			});
+		}
+	}	
+	
+	$scope.change_status = function(certificate_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "certificate/change_status",
+			data: {'certificate_id':certificate_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			if(response == '') {
+				$scope.certificate_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}*/
+	
+	
+	
+}]);

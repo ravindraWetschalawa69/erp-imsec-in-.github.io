@@ -1,0 +1,352 @@
+angular.module("User").controller('nodues', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+    $scope.admission_status = new Array();
+	$scope.admission = {};
+	$scope.access = {};
+	$scope.accessList = {};
+	$scope.due_headList = {};		
+	$scope.setting = {};		
+	$scope.dues_option = {};
+    $scope.error = {};
+	
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.isClicked = false;
+	/*Start NoDues Access*/
+	$scope.save_nodues_access = function(access) {
+		$scope.error = {};
+		$error  = 0;
+		
+		if(!access.no_due_type || access.no_due_type == '') {
+			$error++; 
+			$scope.error.no_due_type = true;
+		}
+		if(!access.head_name || access.head_name == '') {
+			$error++; 
+			$scope.error.head_name = true;
+		}else if(access.head_name == 'Department Head'){
+			if(!access.course_id || access.course_id == '') {
+				$error++; 
+				$scope.error.course_id = true;
+			}	
+			if(!access.stream_id || access.stream_id == '') {
+				$error++; 
+				$scope.error.stream_id = true;
+			}
+		}
+		if(!access.is_final_authorized || access.is_final_authorized == '') {
+			$error++; 
+			$scope.error.is_final_authorized = true;
+		} 
+		if(!access.faculty_id || access.faculty_id == '') {
+			$error++; 
+			$scope.error.faculty_id = true;
+		} 		
+		if($error > 0){
+			return false;	
+		}else { 
+			$scope.isClicked = true;
+			loading.start();
+			$http({
+				method: "post",
+				url: "nodues/add_nodues_access",
+				data: access
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				$scope.isClicked = false;
+				if(response[0] == 'success') {
+					alert(response[1]);	
+					$location.path("/nodues_access");
+				}else if(response[0] == 'error') {
+					alert(response[1]);
+				}
+			});
+		}
+	}
+	$scope.change_nodues_access_status = function(access_id, current_status, index) {
+		if(confirm('Are You Sure?')){
+			loading.start();
+			$http({
+				method: "post",
+				url: "nodues/change_nodues_access_status",
+				data: {'access_id':access_id, 'current_status': current_status}
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response == 1) {
+					$scope.accessList[index].status = current_status == '0' ? '1' : '0';	
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+	/////////////////////////////////////////////////////////////////
+	$scope.save_no_due = function(admission){ //console.log(admission);
+		var error = 0;
+		if((!admission.no_due_academic || admission.no_due_academic == '') && (!admission.no_due_hostel || admission.no_due_hostel == '')){
+			error++;
+		}else if(admission.is_edit_bank_detail == '0'){
+			if(!admission.benificiary_name || admission.benificiary_name == '' || !admission.bank_account_no || admission.bank_account_no == '' || !admission.ifsc_code || admission.ifsc_code == '' || !admission.bank_name || admission.bank_name == '' || !admission.bank_branch_name || admission.bank_branch_name == ''){	
+				error++;
+			}
+		}
+		if(error == 0){
+			if(confirm('Bank details can not be changed later. Are You sure to proceed?')){
+				$scope.isClicked = true;
+				loading.start();
+				$http({
+					method: "post",
+					url: "nodues/no_dues",
+					data : admission
+				}).success(function(response) { //console.log(response);
+					loading.finish();
+					if(response[0] == 1){
+						alert("Request created successfully");
+					}else if(response[0] == 0){
+						$scope.isClicked = false;
+						alert(response[1]);
+					}				
+				});
+			}
+		}else{
+			alert('Missing required field.');
+		}
+	}
+	
+	$scope.no_due_popup = false;
+	$scope.applyNoDues_popup = false;	
+	$scope.admission_no = '';
+		
+	$scope.showNoDuesPopup = function(no_dues_id, index, admission_no)
+	{		
+	
+	//alert('showNoDuesPopup');
+		loading.start();
+		$http({
+			method: "post",
+			url: "nodues/get_no_dues_detail",
+			data: {'no_dues_id':no_dues_id}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if($.trim(response))
+			{
+				$scope.error = {};	
+				$scope.admission_no = admission_no;
+				$scope.due_headList = response;
+				$scope.no_due_popup = true;
+				document.getElementById('no_due_popup').style.display = 'block';
+				document.getElementById('no_due_popup1').style.display = 'block';
+			}else{
+				alert('Invalid Access. Kindly Contact Administrator.');
+				$scope.due_headList = {};
+			}
+		});	
+	}	
+	$scope.hideNoDuesPopup = function(){
+		$scope.no_due_popup = false;
+		$scope.applyNoDues_popup = false;
+		
+		document.getElementById('no_due_popup').style.display = 'none';
+		document.getElementById('no_due_popup1').style.display = 'none';
+		document.getElementById('applyNoDues_popup').style.display = 'none';
+		$scope.due_headList = {};
+		$scope.setting = {};	
+		$scope.admission_no = '';
+	}
+	
+	$scope.call_ApplyDuesPopup = function(head_id, index){
+		alert('call_ApplyDuesPopup');
+		loading.start();
+		$http({
+			method: "post",
+			url: "nodues/call_ApplyDuesPopup",
+			data: {'head_id':head_id}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if($.trim(response[0]) > 0){
+				$scope.error = {};	
+				$scope.setting.head_id = response[1].head_id;
+				$scope.setting.due_amount = response[1].due_amount;
+				$scope.setting.remarks = response[1].remarks != '' ? response[1].remarks : 'NO DUES';
+				$scope.setting.index			= index;
+				$scope.message	=	'';		
+				$scope.applyNoDues_popup = true;
+				document.getElementById('applyNoDues_popup').style.display = 'block';
+			}else{
+				alert($.trim(response[1]));
+			}
+		});
+	}
+	$scope.hide_ApplyDuesPopup = function(){
+		$scope.applyNoDues_popup = false;
+		document.getElementById('applyNoDues_popup').style.display = 'none';
+		$scope.setting = {};
+		$scope.message	=	'';		
+	}
+	
+	$scope.save_no_dues = function(setting){
+		$scope.error = {};
+		$error  = 0;
+		if(setting.due_amount < 0) {
+			$error++; 
+			$scope.error.due_amount = true;
+		}
+		if(!setting.remarks || setting.remarks == '') {
+			$error++; 
+			$scope.error.remarks = true;
+		}
+		if(setting.due_amount > 0 && setting.remarks == 'NO DUES'){
+			$error++; 
+			$scope.error.invalid_remarks = true;			
+		}
+		if(!$error){
+			loading.start();
+			$http({
+				method: "post",
+				url: "nodues/save_no_dues",
+				data: setting
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if($.trim(response[0]) == 1){
+					$scope.error = {};	
+					$scope.due_headList[setting.index] = response[1];
+					$scope.hide_ApplyDuesPopup();
+					//$scope.hideNoDuesPopup();	//Close parent popup here
+				}else{
+					alert($.trim(response[1]));
+				}
+			});
+		}
+	}	
+	
+	$scope.selectAll = function(){
+		angular.forEach($scope.admission_status['current_status'], function(value, key) {
+			value.id = $scope.selectedAll;
+		});
+	}
+	
+	$scope.update_nodues = function(admission_status, head_name){  console.log(admission_status);
+		if(confirm('Are you sure to update all of them for "NO DUES"?')){
+			admission_status.head_name = head_name;
+			loading.start();
+			$http({
+				method: "post",
+				url: "nodues/update_multiple_no_dues",
+				data: admission_status
+			}).success(function(response){  //console.log(response);
+				loading.finish();
+				if($.trim(response[0])){
+					alert($.trim(response[1]));
+				}else{
+					alert($.trim(response[1]));
+				}		
+			});
+		}
+	}
+	///////////////////////////////////////////////////////////////////
+	
+	$scope.getCourse = function(financial_year_id) {		
+		if(financial_year_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_course",
+				data: {'financial_year_id':financial_year_id},
+			}).success(function(response) { 	
+				loading.finish();
+				$scope.course_list	=	response;
+				$scope.stream_list	=	{};
+			});	
+		}
+	}
+	
+	$scope.getStream = function(financial_year_id, course_id) {
+		if(financial_year_id != '' && course_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id},
+			}).success(function(response) { //console.log(response);
+				$scope.stream_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_list	=	{};
+		}
+	}
+	
+	$scope.search_nodues = function(dues_option){
+		financial_year_id = dues_option.financial_year_id ? dues_option.financial_year_id : '-';
+		admission_no = dues_option.admission_no ? dues_option.admission_no : '-';
+		//name = admission.name ? admission.name : '-';
+		from_date = dues_option.from_date ? dues_option.from_date : '-';
+		to_date = dues_option.to_date ? dues_option.to_date : '-';
+		course_id = dues_option.course_id ? dues_option.course_id : '-';
+		stream_id = dues_option.stream_id ? dues_option.stream_id : '-';
+		no_due_type = dues_option.no_due_type ? dues_option.no_due_type : '-';
+		head_name = dues_option.head_name ? dues_option.head_name : '-';
+		head_status = dues_option.head_status ? dues_option.head_status : '-';
+		status = dues_option.status ? dues_option.status : '-';
+		gender = dues_option.gender ? dues_option.gender : '-';
+		lateral_entry = dues_option.lateral_entry ? dues_option.lateral_entry : '-';
+				
+		$location.path("/no_dues_list/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admission_no + "/" + from_date + "/" + to_date + "/" + no_due_type + "/" + head_name + "/" + head_status + "/" + status + "/" + gender+ "/" + lateral_entry + "/page1");
+	}	
+	
+	$scope.export_nodues = function(base_url, dues_option){ //console.log(dues_option);
+		financial_year_id = dues_option.financial_year_id ? dues_option.financial_year_id : '-';
+		admission_no = dues_option.admission_no ? dues_option.admission_no : '-';
+		from_date = dues_option.from_date ? dues_option.from_date : '-';
+		to_date = dues_option.to_date ? dues_option.to_date : '-';
+		course_id = dues_option.course_id ? dues_option.course_id : '-';
+		stream_id = dues_option.stream_id ? dues_option.stream_id : '-';
+		no_due_type = dues_option.no_due_type ? dues_option.no_due_type : '-';
+		head_name = dues_option.head_name ? dues_option.head_name : '-';
+		head_status = dues_option.head_status ? dues_option.head_status : '-';
+		status = dues_option.status ? dues_option.status : '-';
+		gender = dues_option.gender ? dues_option.gender : '-';
+		
+		if(no_due_type == '-'){ alert('Kindly Select No Dues Type');  return; }		
+		window.open(base_url + 'nodues/export_nodues/' + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admission_no + "/" + from_date + "/" + to_date + "/" + no_due_type + "/" + head_name + "/" + head_status + "/" + status + "/" + gender);
+		
+	}
+	
+	$scope.no_d = {};
+	$scope.set_no_dues_date_popup = function(no_dues_date, id){ 
+		$scope.no_d.no_dues_date = no_dues_date;
+		$scope.no_d.id = id;
+		document.getElementById('popup-hop').style.display = 'block';
+		document.getElementById('popup-hop-bg').style.display = 'block';
+	}
+	$scope.hide_popup = function(p1, p2){ 
+		document.getElementById(p1).style.display = 'none';
+		document.getElementById(p2).style.display = 'none';
+	}
+	
+	$scope.set_no_dues_date = function(no_d){ 
+		if(!no_d.no_dues_date || no_d.no_dues_date == '') {
+			$scope.error.no_dues_date = true;
+			return false;
+		}
+		loading.start();
+		$http({
+			method: "post",
+			url: "nodues/set_no_dues_date",
+			data: no_d
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if(response[0] == 1)
+			{
+				alert(response[1]);
+				document.getElementById('popup-hop').style.display = 'none';
+				document.getElementById('popup-hop-bg').style.display = 'none';
+				window.loacation.reload();
+			}else
+			{
+				alert(response[1]);
+			}
+		});
+	}
+	
+}]);

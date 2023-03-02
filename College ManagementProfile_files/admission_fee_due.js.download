@@ -1,0 +1,428 @@
+angular.module("User").controller('admission_fee_due', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+	$scope.admission_fee = {};
+	$scope.admission = {};
+	$scope.hostel = {};
+	$scope.route = {};	
+	$scope.account_head_list = [];
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.admission_fee_list = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	$scope.admission_fee_due_list = {};
+	
+	$scope.getStream = function(financial_year_id, course_id) {		
+		if(financial_year_id != '' && course_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				$scope.stream_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_list	=	{};
+		}
+	}
+	$scope.getCourse = function(financial_year_id) {            // This function added by Vinay for get a course list behalf session ID(financial_year_id)
+		if(financial_year_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_course",
+				data: {'financial_year_id':financial_year_id},
+			}).success(function(response) { 	
+				loading.finish();
+				$scope.course_list	=	response;
+				$scope.stream_list	=	{};
+			});	
+		}
+	}
+	
+	$scope.search_admission_fee = function(admission_fee){
+		admission_no = admission_fee.admission_no ? admission_fee.admission_no : '-';
+		roll_no = admission_fee.roll_no ? admission_fee.roll_no : '-';
+		name = admission_fee.name ? admission_fee.name : '-';
+		gender = admission_fee.gender ? admission_fee.gender : '-';
+		from_date = admission_fee.from_date ? admission_fee.from_date : '-';
+		to_date = admission_fee.to_date ? admission_fee.to_date : '-';
+		financial_year_id = admission_fee.financial_year_id ? admission_fee.financial_year_id : '-';
+		course_id = admission_fee.course_id ? admission_fee.course_id : '-';
+		stream_id = admission_fee.stream_id ? admission_fee.stream_id : '-';
+		admitted_year = admission_fee.admitted_year ? admission_fee.admitted_year : '-';
+		semester = admission_fee.semester ? admission_fee.semester : '-';
+		account_head_id = admission_fee.account_head_id ? admission_fee.account_head_id : '-';
+		tfw = admission_fee.tfw ? admission_fee.tfw : '-';
+		dueValue = admission_fee.dueValue ? admission_fee.dueValue : '-';
+		//alert("/admission_fee_list/" + admission_no + "/" + roll_no + "/" + name + "/" + gender + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + account_head_id + "/" + tfw + "/" + dueValue + "/page1");
+		
+		$location.path("/admission_fee_list/" + admission_no + "/" + roll_no + "/" + name + "/" + gender + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + account_head_id + "/" + tfw + "/" + dueValue + "/page1");
+	}
+	
+	$scope.search_due_admission_fee = function(admission_fee){
+		admission_no = admission_fee.admission_no ? admission_fee.admission_no : '-';
+		roll_no = admission_fee.roll_no ? admission_fee.roll_no : '-';
+		name = admission_fee.name ? admission_fee.name : '-';
+		gender = admission_fee.gender ? admission_fee.gender : '-';
+		from_date = admission_fee.from_date ? admission_fee.from_date : '-';
+		to_date = admission_fee.to_date ? admission_fee.to_date : '-';
+		financial_year_id = admission_fee.financial_year_id ? admission_fee.financial_year_id : '-';
+		course_id = admission_fee.course_id ? admission_fee.course_id : '-';
+		stream_id = admission_fee.stream_id ? admission_fee.stream_id : '-';
+		admitted_year = admission_fee.admitted_year ? admission_fee.admitted_year : '-';
+		semester = admission_fee.semester ? admission_fee.semester : '-';
+		account_head_id = admission_fee.account_head_id ? admission_fee.account_head_id : '-';
+		tfw = admission_fee.tfw ? admission_fee.tfw : '-';
+		
+		$location.path("/admission_fee_due_list/" + admission_no + "/" + roll_no + "/" + name + "/" + gender + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + account_head_id + "/" + tfw + "/page1");
+	}
+	
+	$scope.exportReport = function(admission_fee, base_url, type) {
+		admission_no = admission_fee.admission_no ? admission_fee.admission_no : '-';
+		roll_no = admission_fee.roll_no ? admission_fee.roll_no : '-';
+		name = admission_fee.name ? admission_fee.name : '-';
+		gender = admission_fee.gender ? admission_fee.gender : '-';
+		from_date = admission_fee.from_date ? admission_fee.from_date : '-';
+		to_date = admission_fee.to_date ? admission_fee.to_date : '-';
+		financial_year_id = admission_fee.financial_year_id ? admission_fee.financial_year_id : '-';
+		course_id = admission_fee.course_id ? admission_fee.course_id : '-';
+		stream_id = admission_fee.stream_id ? admission_fee.stream_id : '-';
+		admitted_year = admission_fee.admitted_year ? admission_fee.admitted_year : '-';
+		semester = admission_fee.semester ? admission_fee.semester : '-';
+		account_head_id = admission_fee.account_head_id ? admission_fee.account_head_id : '-';
+		tfw = admission_fee.tfw ? admission_fee.tfw : '-';
+		
+		dueValue = admission_fee.dueValue ? admission_fee.dueValue : '-';
+		
+		if(type == 'headWise') {
+			if(financial_year_id == '-') {
+				alert('Session is required.');	
+				return;
+			}
+			if(course_id == '-') {
+				alert('Course is required.');	
+				return;
+			}
+			if(admitted_year == '-') {
+				alert('Year is required.');	
+				return;
+			}
+			if(account_head_id == '-') {
+				alert('Payment For is required.');	
+				return;
+			}
+		}
+		window.open(base_url + 'admission_fee_due/' + type + "/" + admission_no + "/" + roll_no + "/" + name + "/" + gender + "/" + from_date + "/" + to_date + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + semester + "/" + account_head_id + "/" + tfw+ "/"+ dueValue);
+	}
+		
+	$scope.search_part_payment = function(admission){
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		status = admission.status ? admission.status : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		$location.path("/academic_part_payment/" + admission_no + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + status + "/" + from_date + "/" + to_date  + "/page1");
+	}
+		
+	$scope.export_part_payment = function(admission, base_url) {
+		admission_no = admission.admission_no ? admission.admission_no : '-';		
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		status = admission.status ? admission.status : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		
+		if(financial_year_id == '-') {
+			alert('Session is required.');	
+			return;
+		}
+		window.open(base_url + 'admission_fee/export_part_payment/' + admission_no + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + admitted_year + "/" + status + "/" + from_date + "/" + to_date);
+	}
+		
+	
+	$scope.partial_payment_popup = false;	
+	$scope.partial_payment_list 	= {};
+	$scope.partial_detail 	= {};
+	
+	$scope.hidePartial_payment_popup = function(){
+		$scope.error		= {};
+		$scope.partial_detail 	= {};
+		$scope.partial_payment_popup = false;
+	}
+	
+	$scope.showPartial_payment_popup = function(partial, status, current_index, date){
+		$scope.error		= {};
+		$scope.partial_detail.id 	= partial.id;
+		$scope.partial_detail.account_head_id 	= partial.account_head_id;
+		$scope.partial_detail.next_payment_date 	= partial.next_payment_date;
+		$scope.partial_detail.amount 	= partial.amount;
+		$scope.partial_detail.status 	= status;
+		$scope.partial_detail.current_index 	= current_index;
+		$scope.partial_detail.status_date 	= date;
+		$scope.partial_payment_popup = true;
+	}
+	
+	$scope.change_partial_status = function (partial_detail){
+		if(confirm("Are you sure?")){
+			partial_detail = angular.copy(partial_detail);
+			current_index = partial_detail.current_index;
+			loading.start();
+			$http
+			({
+				method: "post",
+				url: "admission_fee/change_partial_status",
+				data: partial_detail
+			}).
+			success(function(response){ 
+				if($.trim(response) == 'success'){
+					$scope.partial_payment_list[current_index].status_date = partial_detail.status_date;
+					$scope.partial_payment_list[current_index].next_payment_date = partial_detail.next_payment_date;
+					$scope.partial_payment_list[current_index].status = partial_detail.status;	
+				}else{
+					alert(response);	
+				}
+				$scope.hidePartial_payment_popup();
+				loading.finish();
+			});
+		}
+	}
+		
+	$scope.getStreamData = function(financial_year_id, course_id) {
+		if(financial_year_id != '' && course_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_stream",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				loading.finish();				
+				$scope.stream_list = response;
+			});	
+		} else {
+			$scope.stream_list = [];
+		}
+	}
+	
+	$scope.openForPrinting = function(base_url, id) {
+		window.open(base_url + 'admission_fee/print_part_payment_request/' + id);
+	}
+	
+/*	$scope.change_partial_status = function (id,status,current_index, date)
+	{
+		if(confirm("Are you sure?"))
+		{
+			loading.start();
+			$http
+			({
+				method: "post",
+				url: "admission_fee/change_partial_status",
+				data: {'id':id,'status':status}
+			}).
+			success(function(response)
+			{
+				if($.trim(response) == 'success'){
+				$scope.partial_payment_list[current_index].status_date = date;
+				$scope.partial_payment_list[current_index].status = status == 'Accepted' ? 'Rejected' : 'Accepted';	
+				}else{
+					alert(response);	
+				}
+				loading.finish();
+			});
+		}
+	}*/
+	
+	/**************************************************************************************************/
+	$scope.online_txn_list = {};
+	$scope.online_txn = {};
+	$scope.isClicked = false;
+	$scope.validate_scholarship = function() {
+		$scope.error = {};	$error = 0;
+		if(!$scope.online_txn.admission_id || $scope.online_txn.admission_id == '' || $scope.online_txn.admission_id == '0') {
+			$scope.error.admission_error = true;
+			$error++;
+		}
+		if(!$scope.online_txn.account_head_id || $scope.online_txn.account_head_id == '') {
+			$scope.error.account_head_id = true;
+			$error++;
+		}else if($scope.online_txn.account_head_id == '4') {		
+			if(!$scope.online_txn.other_payment_head_id || $scope.online_txn.other_payment_head_id == '') {
+				$scope.error.other_payment_head_id = true;
+				$error++;
+			}
+			if(!$scope.online_txn.other_payment_sub_head_id || $scope.online_txn.other_payment_sub_head_id == '') {
+				$scope.error.other_payment_sub_head_id = true;
+				$error++;
+			}
+		}
+		if(!$scope.online_txn.payment_mode || $scope.online_txn.payment_mode == '') {
+			$scope.error.payment_mode = true;
+			$error++;
+		}
+		if(!$scope.online_txn.payment_date || $scope.online_txn.payment_date == '') {
+			$scope.error.payment_date = true;
+			$error++;
+		}
+		if(!$scope.online_txn.amount || $scope.online_txn.amount == '') {
+			$scope.error.amount = true;
+			$error++;
+		}
+		if(!$scope.online_txn.mobile_no || $scope.online_txn.mobile_no == '') {
+			$scope.error.mobile_no = true;
+			$error++;
+		}
+		if((!$scope.online_txn.txn_no || $scope.online_txn.txn_no == '') && (!$scope.online_txn.payee_account_no || $scope.online_txn.payee_account_no == '') && (!$scope.online_txn.document_path || $scope.online_txn.document_path == '' || $scope.online_txn.document_path == 'undefined') ) {
+			$scope.error.document_file = true;
+			$error++;
+		}		
+		if($error > 0) return false;
+		return true;
+	}
+	
+	$scope.save = function(online_txn) { 	//console.log($scope.online_txn);
+		if($scope.validate_scholarship()){		
+			$scope.isClicked = true;			
+			loading.start();		
+			$http({
+				method: "post",
+				url: "admission_fee/add_online_txn",
+				data: $scope.online_txn
+			}).success(function(response) {	//console.log(response);
+				loading.finish();
+				$scope.isClicked = false;
+				if(response[0] == 'success') {
+					alert(response[1]);	
+					$location.path("/online_txn");
+				}else if(response[0] == 'error') {
+					alert(response[1]);
+				}
+			});
+		}
+	}
+	
+	var document_file = $scope.document_file = new FileUploader({url: $scope.s3url});	
+	document_file.filters.push({
+		name: 'imageFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|gif|pdf|doc|docx|'.indexOf(type) !== -1;
+			if('|jpg|png|jpeg|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly JPG, PNG, JPEG is valid file type.');	
+				return false;
+			} 
+			if(item.size > 51200){
+				alert('Max Image Size Only 50 KB');	 $scope.isClicked = true;
+				return false;
+			}
+			$scope.isClicked = false;
+			return true;
+		}
+	});
+	document_file.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.online_txn.admission_id;
+		if(subbucket) {
+			subbucket = 'account/' + subbucket + '/';
+			var filename = fileItem.file.name.split(".");
+			filename = filename[filename.length - 1];
+			filename = 'txn_'+Math.round(new Date().getTime() / 1000) + '.' + filename; //Math.round(new Date().getTime() / 1000) + '.' + filename;
+			
+			//$scope.online_txn.payment_file = fileItem.file.name;
+			//console.log($scope.online_txn.payment_file);
+			fileItem.formData.push({'key':subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			alert('some error occured, Please try again!!!!!');	
+		}	
+	};
+	document_file.onProgressItem = function(fileItem, progress) {
+		$scope.isClicked = true;	
+		if(!$scope.validate_scholarship()){ fileItem.cancel();	 $scope.isClicked = false;	}
+	};
+	document_file.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.online_txn.payment_file = fileItem.formData[0].key;		
+		$scope.save($scope.online_txn);
+	};
+	
+	$scope.openAmazonFile = function(key) { 
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key};
+		s3.getSignedUrl('getObject', params, function (err, url) { 
+			if(err) alert('No such key exist!!!');
+			else window.open(url);
+		});
+	}
+	$scope.search_txn_online = function(admission_fee){
+		//alert('xzc');
+		admission_no = admission_fee.admission_no ? admission_fee.admission_no : '-';
+		from_date = admission_fee.from_date ? admission_fee.from_date : '-';
+		to_date = admission_fee.to_date ? admission_fee.to_date : '-';		
+		financial_year_id = admission_fee.financial_year_id ? admission_fee.financial_year_id : '-';
+		course_id = admission_fee.course_id ? admission_fee.course_id : '-';
+		stream_id = admission_fee.stream_id ? admission_fee.stream_id : '-';
+		name = admission_fee.name ? admission_fee.name : '-';
+		roll_no = admission_fee.roll_no ? admission_fee.roll_no : '-';
+		status = admission_fee.status ? admission_fee.status : '-';
+		$location.path("/online_txn_list/" + admission_no + "/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + name + "/" + roll_no + "/" + status + "/" + from_date + "/" + to_date  + "/page1");
+	}
+	
+	$scope.txn_popup = false;	
+	$scope.setting = {};	
+	$scope.showTxnPopup = function(id, current_status, index, remark){
+		$scope.txn_popup = true;
+		$scope.setting.id		 	= id;
+		$scope.setting.remark= remark;
+		$scope.setting.current_status	= current_status;
+		$scope.setting.index			= index;
+		$scope.message	=	'';		
+	}	
+	
+	$scope.hideTxnPopup = function(){
+		$scope.txn_popup = false;
+		$scope.setting = {};
+	}
+	
+	$scope.change_txn_status = function(setting) { //console.log(setting);
+		$scope.error		= {}; var error = 0;
+		$scope.message	=	'';
+		
+		if(!setting.remark || setting.remark == '') {
+			$scope.message = 'Remark is missing, Plz try again.';
+			error++;
+		}	
+		
+		if(error == 0){
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission_fee/change_txn_status",
+				data: setting
+			}).success(function(response) { //console.log(response);
+				loading.finish();
+				if(response[0] == 1) {
+					var index = setting.index;
+					$scope.online_txn_list[index].status = setting.current_status;
+					$scope.online_txn_list[index].remark = setting.remark;
+					$scope.online_txn_list[index].approve_reject_date = response[2];
+					
+					$scope.hideTxnPopup();	
+					alert(response[1]);
+				} else  if(response[0] == 0) {
+					$scope.error = true;
+					$scope.message = response[1];
+				}			
+				loading.finish();
+			});
+		}
+	}
+	/**************************************************************************************************/
+	
+}]);

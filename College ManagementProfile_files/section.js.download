@@ -1,0 +1,132 @@
+angular.module("User").controller('section', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+	$scope.section = {};
+	$scope.section_list = {};
+	$scope.stream_list = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";	
+	$scope.stream_name = '';
+	
+	$scope.save = function(section) { console.log(section);
+		var noOfErrors = 0;
+		if(!section.financial_year_id || section.financial_year_id == '') {
+			$scope.error.financial_year_id = true;
+			noOfErrors++;
+		}
+		if(!section.course_id || section.course_id == '') {
+			$scope.error.course_id = true;
+			noOfErrors++;
+		}
+		if(!section.stream_id || section.stream_id == '') {
+			$scope.error.stream_id = true;
+			noOfErrors++;
+		}
+		if(!section.year || section.year == '') {
+			$scope.error.year = true;
+			noOfErrors++;
+		}
+		if(!section.shift_type || section.shift_type == '') {
+			$scope.error.shift_type = true;
+			noOfErrors++;
+		}
+		if(!section.no_of_section || section.no_of_section == '') {
+			$scope.error.no_of_section = true;
+			noOfErrors++;
+		}
+		if(noOfErrors > 0) return false;
+		else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "section/add_section",
+				data: section
+			}).success(function(response) {
+				loading.finish();	
+				if(response == 'Some error occured. Please try again.') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+					alert(response);
+				}else{
+					$location.path("/section_list");									
+				}			
+			});
+		}
+	}	
+	
+	$scope.change_status = function(financial_year_id, course_id, stream_id, shift_type, year, current_status, index) {
+		
+		loading.start();
+		$http({
+			method: "post",
+			url: "section/change_status",
+			data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'shift_type':shift_type, 'year':year, 'current_status':current_status}
+		}).success(function(response) { //console.log(response);
+			loading.finish();
+			if($.trim(response) == '') {
+				$scope.section_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.getsection = function(financial_year_id) {		
+		if(financial_year_id != ''){
+			loading.start();
+			$http({
+				method: "post",
+				url: "section/get_section",
+				data: {'financial_year_id':financial_year_id},
+			}).success(function(response) { //console.log(response);
+				$scope.section_list	=	response;	
+				loading.finish();
+			});	
+		}
+	}
+	//get only those course list which not added in particual section
+	$scope.getCourse = function(financial_year_id) {		
+		loading.start();
+		$http({
+			method: "post",
+			url: "section/get_course",
+			data: {'financial_year_id':financial_year_id},
+		}).success(function(response) { //console.log(response);
+			$scope.course_list	=	response;	
+			$scope.stream_list	=	{};
+			loading.finish();
+		});	
+	}
+	//get only those stream list which not added in particual course for a section
+	$scope.getStream = function(financial_year_id, course_id) {		
+		if(course_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "section/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id},
+			}).success(function(response) { 
+				$scope.stream_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_list	=	{};
+		}
+	}
+	
+	$scope.getStreamName = function(stream_id) {		
+		if(stream_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "section/get_streamname",
+				data: {'stream_id': stream_id},
+			}).success(function(response) { console.log(response);
+				$scope.stream_name 	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_name = '';
+		}
+	}
+}]);

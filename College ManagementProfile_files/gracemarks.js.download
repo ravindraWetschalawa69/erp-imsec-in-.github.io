@@ -1,0 +1,416 @@
+angular.module("User").controller('gracemarks', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+	$scope.getStream = function(financial_year_id, course_id) {
+		if(financial_year_id != '' && course_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_stream",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				console.log(response);
+				loading.finish();				
+				$scope.stream_list = response;
+			});	
+		} else {
+			$scope.stream_list = [];
+			$scope.year_list = [];
+		}
+	}
+	
+	$scope.getScheduledYear = function(financial_year_id, course_id, stream_id) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_scheduled_year",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id},
+			}).success(function(response) {
+				console.log(response);
+				loading.finish();				
+				$scope.year_list = response;
+			});	
+		} else {
+			$scope.year_list = [];
+		}
+	}
+	
+	$scope.getSection = function(financial_year_id, course_id, stream_id, year) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year && year != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_section",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) {
+				loading.finish();								
+				$scope.section_list = response;
+			});	
+		} else {
+			$scope.section_list = [];
+		}
+	}
+	
+	$scope.getSectionAndSubject = function(financial_year_id, course_id, stream_id, year) {	
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year && year != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_section_and_subject",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) {
+				loading.finish();								
+				$scope.section_list = response[0];
+				$scope.subject_list = response[1];
+			});	
+		} else {
+			$scope.subject_list = [];
+			$scope.section_list = [];
+		}
+	}
+	
+	$scope.export_search_result = function(result)
+	{
+		//alert('88888export_ssearch_result');
+		financial_year_id = result.financial_year_id ? result.financial_year_id : '-';
+		course_id = result.course_id ? result.course_id : '-';
+		stream_id = result.stream_id ? result.stream_id : '-';
+		year = result.year ? result.year : '-';
+		section = result.section ? result.section : '-';
+		subject_id = result.subject_id ? result.subject_id : '-';
+		
+		//subject_id = '-';
+		
+		//if(financial_year_id != '-' && course_id != '-' && stream_id != '-' && year != '-' && section != '-' && subject_id != '-') {
+		if(financial_year_id != '-' && course_id != '-' && stream_id != '-' && year != '-' && section != '-') 
+		{	
+			alert("/export_ssearch_result/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + subject_id + "/page1");
+			$location.path("/export_search_result/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + subject_id + "/page1");
+		}/**/
+	}
+	
+	$scope.getCourse = function(financial_year_id) {		
+		if(financial_year_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_course",
+				data: {'financial_year_id':financial_year_id},
+			}).success(function(response) { 	
+				loading.finish();
+				$scope.course_list	=	response;
+				$scope.stream_list	=	{};
+			});	
+		}
+	}
+	$scope.search_result = function(result)
+	{
+		//alert('ffffff f f f f f f f f f f ');
+		financial_year_id = result.financial_year_id ? result.financial_year_id : '-';
+		//alert(financial_year_id);
+		course_id = result.course_id ? result.course_id : '-';
+		stream_id = result.stream_id ? result.stream_id : '-';
+		year = result.year ? result.year : '-';
+		section = result.section ? result.section : '-';
+		subject_id = result.subject_id ? result.subject_id : '-';
+		calculateAtt = result.calculateAtt ? result.calculateAtt : '-';
+		
+		
+		//subject_id = '-';
+		
+		//if(financial_year_id != '-' && course_id != '-' && stream_id != '-' && year != '-' && section != '-' && subject_id != '-') {
+		if(financial_year_id != '-' && course_id != '-' && stream_id != '-' && year != '-' && section != '-') {	
+			$location.path("/search_result/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + subject_id+ "/" + calculateAtt + "/page1");
+		}
+	}
+	
+	$scope.cumulative_results = function(result){
+		financial_year_id = result.financial_year_id ? result.financial_year_id : '-';
+		course_id = result.course_id ? result.course_id : '-';
+		stream_id = result.stream_id ? result.stream_id : '-';
+		year = result.year ? result.year : '-';
+		section = result.section ? result.section : '-';
+		subject_id = result.subject_id ? result.subject_id : '-';
+		type = result.type ? result.type : '-';
+		
+		if(financial_year_id != '-' && course_id != '-' && stream_id != '-' && year != '-' && section != '-') {	
+			$location.path("/cumulative_results/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section + "/" + subject_id + "/" + type +"/page1");
+		}
+	}
+	
+	$scope.grace_search_result = function(result){
+		financial_year_id = result.financial_year_id ? result.financial_year_id : '-';
+		course_id = result.course_id ? result.course_id : '-';
+		stream_id = result.stream_id ? result.stream_id : '-';
+		year = result.year ? result.year : '-';
+		section = result.section ? result.section : '-';
+		
+		if(financial_year_id != '-' && course_id != '-' && stream_id != '-' && year != '-' && section != '-') {	
+			$location.path("/gracemarks/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section);
+		}
+	}
+	
+	$scope.count_failed_students_after_grace = function(result, subject) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "gracemarks/count_failed_students_after_grace",
+			data: {'financial_year_id':result.financial_year_id, 'course_id':result.course_id, 'stream_id':result.stream_id, 'year':result.year, 'section':result.section, 'subject_id':subject.subject_id, 'grace_given':subject.grace_given},
+		}).success(function(response) {
+			loading.finish();			
+			$scope.subject_list.subjects[subject.subject_id].student_failed = response;
+		});
+	}
+	
+	$scope.generate_gradecard = function(result, subject) {
+		$location.path("/finalmarks/" + result.financial_year_id + "/" + result.course_id + "/" + result.stream_id + "/" + result.year + "/" + result.section + "/" + subject.subject_id + "/" + subject.grace_given);
+	}
+	
+	$scope.getGPMarks = function(financial_year_id, course_id, stream_id, year, section) {
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '' && section != '') {
+			$location.path("/gp_marks/" + financial_year_id + "/" + course_id + "/" + stream_id + "/" + year + "/" + section);
+		}
+	}
+	
+	$scope.save_gp_marks_criteria = function(gp_marks_criteria) {
+		$scope.error = {};
+		
+		var error = 0;
+		var total_marks = 0;
+		if(!gp_marks_criteria.criteria[0].gp_marks_title || gp_marks_criteria.criteria[0].gp_marks_title == '') {
+			$scope.error.gp_marks_title0 = true;
+			error++;
+		}
+		if(!gp_marks_criteria.criteria[0].gp_max_marks || gp_marks_criteria.criteria[0].gp_max_marks == '') {
+			$scope.error.gp_max_marks0 = true;
+			error++;
+		} else {
+			total_marks += parseInt(gp_marks_criteria.criteria[0].gp_max_marks);
+		}
+		if(!gp_marks_criteria.criteria[1].gp_marks_title || gp_marks_criteria.criteria[1].gp_marks_title == '') {
+			$scope.error.gp_marks_title1 = true;
+			error++;
+		}
+		if(!gp_marks_criteria.criteria[1].gp_max_marks || gp_marks_criteria.criteria[1].gp_max_marks == '') {
+			$scope.error.gp_max_marks1 = true;
+			error++;
+		} else {
+			total_marks += parseInt(gp_marks_criteria.criteria[1].gp_max_marks);
+		}
+		if(!gp_marks_criteria.criteria[2].gp_marks_title || gp_marks_criteria.criteria[2].gp_marks_title == '') {
+			$scope.error.gp_marks_title2 = true;
+			error++;
+		}
+		if(!gp_marks_criteria.criteria[2].gp_max_marks || gp_marks_criteria.criteria[2].gp_max_marks == '') {
+			$scope.error.gp_max_marks2 = true;
+			error++;
+		} else {
+			total_marks += parseInt(gp_marks_criteria.criteria[2].gp_max_marks);
+		}
+		
+		if(error == 0) {
+			if(total_marks != 50) {
+				alert('Total marks should be 50!!!');
+			} else {
+				loading.start();
+				$http({
+					method: "post",
+					url: "gracemarks/gp_marks_criteria",
+					data: gp_marks_criteria,
+				}).success(function(response) {	
+					loading.finish();
+					response = $.trim(response);
+					
+					if(response == '0') {
+						alert('Criteria Updated Successfully!!!');
+					} else {
+						alert('Some error occured. Please try again!!!');
+					}
+				});
+			}
+		}
+	}
+	
+	$scope.maxAttendanceMarksCriteriaLimit = 0;	
+	$scope.addAttendanceMarksCriteriaLimit = function() {
+		$scope.maxAttendanceMarksCriteriaLimit++;
+	}
+	
+	$scope.getAttendanceMarksCriteria = function(financial_year_id, course_id, year) {	
+		if(financial_year_id && financial_year_id != '' && course_id && course_id != '' && year && year != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "gracemarks/get_attendance_marks_criteria",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'year':year}
+			}).success(function(response) {
+				loading.finish();
+				
+				if(response[0] == '0') {
+					alert("All fields are required!!!");
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+				} else {
+					$scope.attendance_marks_criteria.criteria = response[1];
+					$scope.maxAttendanceMarksCriteriaLimit = response[1].length;
+				}
+			});
+		}
+	}
+	
+	$scope.attendance_max_marks = 0;
+	$scope.dis_beh = 0;
+	$scope.event_marks = 0;
+	$scope.save_attendance_marks_criteria = function(attendance_marks_criteria) {
+		if(!attendance_marks_criteria.financial_year_id || attendance_marks_criteria.financial_year_id == '') {
+			alert('Financial Year is required');
+		} else if(!attendance_marks_criteria.course_id || attendance_marks_criteria.course_id == '') {
+			alert('Course is required');
+		} else if(!attendance_marks_criteria.year || attendance_marks_criteria.year == '') {
+			alert('Year is required');
+		} else if(!attendance_marks_criteria.criteria[0]) {
+			alert('Criteria is required');
+		} else if(!attendance_marks_criteria.criteria[0].attendance_criteria || attendance_marks_criteria.criteria[0].attendance_criteria == '') {
+			alert('Attendance Criteria is required');
+		} else if(!attendance_marks_criteria.criteria[0].attendance_marks || attendance_marks_criteria.criteria[0].attendance_marks == '') {
+			alert('Attendance Marks is required');
+		} else if(parseFloat(attendance_marks_criteria.criteria[0].attendance_criteria) < 0 || parseFloat(attendance_marks_criteria.criteria[0].attendance_criteria) > 100) {
+			alert('Attendance Criteria should be between 0 to 100');
+		} else if(parseFloat(attendance_marks_criteria.criteria[0].attendance_marks) < 0 || parseFloat(attendance_marks_criteria.criteria[0].attendance_marks) > $scope.attendance_max_marks) {
+			alert('Attendance Max Marks should be between 0 to ' + $scope.attendance_max_marks);
+		} else {
+			var count = attendance_marks_criteria.criteria.length;
+			var error = 0;
+			
+			if(count > 1) {
+				for(var i = 1; i < count; i++) {
+					if((attendance_marks_criteria.criteria[i].attendance_criteria && attendance_marks_criteria.criteria[i].attendance_criteria != '') && (!attendance_marks_criteria.criteria[i].attendance_marks || attendance_marks_criteria.criteria[i].attendance_marks == '')) {
+						error++;
+						alert('Attendance Marks is required');
+						break;
+					} else if((!attendance_marks_criteria.criteria[i].attendance_criteria || attendance_marks_criteria.criteria[i].attendance_criteria == '') && (attendance_marks_criteria.criteria[i].attendance_marks && attendance_marks_criteria.criteria[i].attendance_marks != '')) {
+						error++;
+						alert('Attendance Criteria is required');
+						break;
+					} else if(parseFloat(attendance_marks_criteria.criteria[i].attendance_criteria) < 0 || parseFloat(attendance_marks_criteria.criteria[i].attendance_criteria) > 100) {
+						error++;
+						alert('Attendance Criteria should be between 0 to 100');
+						break;
+					} else if(parseFloat(attendance_marks_criteria.criteria[i].attendance_marks) < 0 || parseFloat(attendance_marks_criteria.criteria[i].attendance_marks) > $scope.attendance_max_marks) {
+						error++;
+						alert('Attendance Max Marks should be between 0 to ' + $scope.attendance_max_marks);
+						break;
+					}
+				}
+			}
+			
+			if(error == 0) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "gracemarks/attendance_marks_criteria",
+					data: attendance_marks_criteria,
+				}).success(function(response) {
+					loading.finish();
+					response = $.trim(response);
+						
+					if(response == '0') {
+						alert('Criteria Updated Successfully!!!');
+					} else {
+						alert('Some error occured. Please try again!!!');
+					}
+				});
+			}
+		}
+	}
+	
+	$scope.calculate = function(admission_id) {
+		var attendence_marks = $scope.gp_marks.marks[admission_id].attendence_marks;
+		if(!attendence_marks || attendence_marks == '') attendence_marks = 0;
+		else attendence_marks = parseFloat(attendence_marks);
+		
+		if(attendence_marks < 0 || attendence_marks > $scope.attendance_max_marks) {
+			alert('Attendance Marks should be between 0 to ' + $scope.attendance_max_marks);
+		}
+					
+		var dis_beh = $scope.gp_marks.marks[admission_id].dis_beh;
+		if(!dis_beh || dis_beh == '') dis_beh = 0;
+		else dis_beh = parseFloat(dis_beh);
+		
+		if(dis_beh < -50 || dis_beh > $scope.dis_beh) {
+			alert('Marks For Class Dicipline / Behaviour should be less than ' + $scope.dis_beh);
+		}
+		
+		var event_marks = $scope.gp_marks.marks[admission_id].event_marks;
+		if(!event_marks || event_marks == '') event_marks = 0;
+		else event_marks = parseFloat(event_marks);
+		
+		if(event_marks < 0 || event_marks > $scope.event_marks) {
+			alert('Event Marks should be between 0 to ' + $scope.event_marks);
+		}
+		
+		var final_marks = attendence_marks + dis_beh + event_marks;
+		final_marks = final_marks < 0 ? 0 : final_marks;
+		$scope.gp_marks.marks[admission_id].final_marks = final_marks;
+	}
+	
+	$scope.save_gp_marks = function(gp_marks) {
+		if(!gp_marks.financial_year_id || gp_marks.financial_year_id == '') {
+			alert('Financial Year is required');
+		} else if(!gp_marks.course_id || gp_marks.course_id == '') {
+			alert('Course is required');
+		} else if(!gp_marks.stream_id || gp_marks.stream_id == '') {
+			alert('Stream is required');
+		} else if(!gp_marks.year || gp_marks.year == '') {
+			alert('Year is required');
+		} else if(!gp_marks.section || gp_marks.section == '') {
+			alert('Section is required');
+		} else {
+			var error = 0;
+			for(var i in gp_marks.marks) {
+				var obj = gp_marks.marks[i];
+				
+				if(obj.attendence_marks && obj.attendence_marks != '') {
+					if(parseFloat(obj.attendence_marks) < 0 || parseFloat(obj.attendence_marks) > $scope.attendance_max_marks) {
+						error++;
+						alert('Attendance Marks should be between 0 to ' + $scope.attendance_max_marks);
+						break;
+					}
+				}
+				if(obj.dis_beh && obj.dis_beh != '') {
+					if(parseFloat(obj.dis_beh) < -50 || parseFloat(obj.dis_beh) > $scope.dis_beh) {
+						error++;
+						alert('Marks For Class Dicipline / Behaviour should be less than ' + $scope.dis_beh);
+						break;
+					}
+				}
+				if(obj.event_marks && obj.event_marks != '') {
+					if(parseFloat(obj.event_marks) < 0 || parseFloat(obj.event_marks) > $scope.event_marks) {
+						error++;
+						alert('Event Marks should be between 0 to ' + $scope.event_marks);
+						break;
+					}
+				}
+			}
+			if(error == 0) {
+				loading.start();
+				$http({
+					method: "post",
+					url: "gracemarks/save_gp_marks",
+					data: gp_marks,
+				}).success(function(response) {
+					loading.finish();
+					console.log(response);
+					response = $.trim(response);
+						
+					if(response == '0') {
+						alert('GP Marks Updated Successfully!!!');
+					} else {
+						alert('Some error occured. Please try again!!!');
+					}
+				});
+			}
+		}
+	
+		console.log(gp_marks);
+	}
+}]);

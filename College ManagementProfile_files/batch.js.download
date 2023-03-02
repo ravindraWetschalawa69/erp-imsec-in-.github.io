@@ -1,0 +1,99 @@
+angular.module("User").controller('batch', ['$scope', '$http', 'loading', '$location', function($scope, $http, loading, $location){
+	$scope.batch = {};
+	$scope.batch_list = {};
+	$scope.stream_list = {};
+	$scope.error = {};
+	$scope.flashMessageType = "success";
+	$scope.flashMessage = "";
+	
+	$scope.save = function(batch) { 
+		var noOfErrors = 0;
+		if(!batch.financial_year_id || batch.financial_year_id == '') {
+			$scope.error.financial_year_id = true;
+			noOfErrors++;
+		}
+		if(!batch.course_id || batch.course_id == '') {
+			$scope.error.course_id = true;
+			noOfErrors++;
+		}
+		if(noOfErrors > 0) return false;
+		else {
+			loading.start();
+			$http({
+				method: "post",
+				url: "batch/add_batch",
+				data: batch
+			}).success(function(response) {console.log(response);
+				if(response != '') {
+					//alert(response);	
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}else{
+					$location.path("/batch_list");									
+				}
+				loading.finish();				
+			});
+		}
+	}	
+	
+	$scope.change_status = function(batch_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "batch/change_status",
+			data: {'batch_id':batch_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();
+			
+			if(response == '') {
+				$scope.batch_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	$scope.getBatch = function(financial_year_id) {		
+		if(financial_year_id != ''){
+			loading.start();
+			$http({
+				method: "post",
+				url: "batch/get_batch",
+				data: {'financial_year_id':financial_year_id},
+			}).success(function(response) { //console.log(response);
+				$scope.batch_list	=	response;	
+				loading.finish();
+			});	
+		}
+	}
+	//get only those course list which not added in particual batch
+	$scope.getCourse = function(financial_year_id) {		
+		loading.start();
+		$http({
+			method: "post",
+			url: "batch/get_course",
+			data: {'financial_year_id':financial_year_id},
+		}).success(function(response) { console.log(response);
+			$scope.course_list	=	response;	
+			$scope.stream_list	=	{};
+			loading.finish();
+		});	
+	}
+	//get only those stream list which not added in particual course for a batch
+	$scope.getStream = function(financial_year_id, course_id) {		
+		if(course_id != '') {
+			loading.start();
+			$http({
+				method: "post",
+				url: "batch/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id},
+			}).success(function(response) { 
+				$scope.stream_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_list	=	{};
+		}
+	}	
+}]);

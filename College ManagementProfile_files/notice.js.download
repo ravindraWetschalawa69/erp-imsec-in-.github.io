@@ -1,0 +1,439 @@
+angular.module("User").controller('notice', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+    $scope.notice = {};
+	$scope.notice_image_list = {};
+	$scope.admission_list = [];
+    $scope.error = {};
+	//$scope.fd = new FormData();
+    $scope.flashMessageType = "success";
+    $scope.flashMessage = "";
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.isClicked = false;
+
+	$scope.save = function (notice,admission_list){
+		//console.log(notice);
+		//console.log(admission_list);
+		//console.log('eee'+admission_list);
+		if($scope.isvalid_notice(admission_list)){
+			loading.start();
+			$http({
+				method: "post",
+				url: "notice/add_notice",
+				data: notice
+			}).success(function(response) { 
+				loading.finish();
+				response = $.trim(response);
+				
+				if(response == 'Some error occured. Please try again.') {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;
+				} else {
+					$location.path("view_notice/" + response);
+				}			
+			});
+		}/**/
+	}
+
+	$scope.isvalid_notice = function (admission_list)
+	{
+		noOfErrors = 0;
+		$scope.error = {};
+		//alert('in valid');console.log($scope.notice.intended_to+'  -------  '+$scope.notice.select_type );
+		
+		
+		if(!$scope.notice.notice_formated_date || $scope.notice.notice_formated_date == '') 
+		{
+			$scope.error.notice_date = true;
+			noOfErrors++;
+		}else if(!$scope.notice.title || $scope.notice.title == '') 
+		{
+           		$scope.error.title = true;
+			noOfErrors++;
+        	}
+		else if(!$scope.notice.intended_to || $scope.notice.intended_to == '') 
+		{
+           		$scope.error.intended_to = true;
+			noOfErrors++;
+        	}
+		else if($scope.notice.intended_to == 'Student' && $scope.notice.select_type == 'onetoone' && $scope.notice.selected_id.length == 0)
+		{
+			//alert($scope.notice.selected_id.length);
+			//console.log($scope.notice.selected_id.length);
+			$scope.error.select_type = true;
+			noOfErrors++;/**/
+		}
+		
+		if(noOfErrors > 0)return false;
+		else return true;
+	}
+	
+	$scope.getSubbucket = function(){
+		return 'web/notice/';
+	}
+	
+	$scope.openAmazonFile = function(key) {
+		console.log(key);
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key};
+		s3.getSignedUrl('getObject', params, function (err, url) {
+			if(err) alert('No such key exist!!!');
+			else window.open(url);
+		});
+	}
+	
+	// CALLBACKS
+	var file = $scope.file = new FileUploader({url: $scope.s3url});	
+	
+	// FILTERS
+	file.filters.push({
+		name: 'fileFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
+			var res = '|doc|docx|pdf|xls|xlsx|ppt|pptx|jpg|png|jpeg|gif|'.indexOf(type);		
+			if('|pdf|vnd.ms-excel|vnd.openxmlformats-officedocument.spreadsheetml.sheet|vnd.openxmlformats-officedocument.wordprocessingml.document|msword|vnd.openxmlformats-officedocument.presentationml.presentation|vnd.ms-powerpoint|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly WORD, EXCEL, PPT, IMAGES(.JPEG, .JPG, .PNG, .GIF) are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	
+	file.onWhenAddingFileFailed = function(item /*{File|FileLikeObject}*/, filter, options) {
+		//console.info('onWhenAddingFileFailed', item, filter, options);
+	};
+	
+	file.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.getSubbucket();
+		if(subbucket) {
+			var filename = fileItem.file.name.split(".");
+			extension = filename[filename.length - 1];
+			
+			var currentdate = new Date();
+			filename = currentdate.getDate() + '' +(currentdate.getMonth()+1) + '' + currentdate.getFullYear() + "_" + currentdate.getHours() + '' + currentdate.getMinutes();				
+			filename += '.' + extension;
+			
+			$scope.notice.subbucket = subbucket;
+			$scope.notice.name =	fileItem.file.name;
+			$scope.notice.file_name =	filename;
+			
+			fileItem.formData.push({'key': subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			//$scope.uploader_index++;
+		} else {
+			//alert('some error occured!!!!!');	
+		} 
+	};
+	
+	file.onAfterAddingAll = function(addedFileItems) {
+		//console.info('onAfterAddingAll', addedFileItems);
+	};
+	
+	file.onBeforeUploadItem = function(item) {
+		//console.info('onBeforeUploadItem', item);
+	};
+	
+	file.onProgressItem = function(fileItem, progress) {
+		//console.info('onProgressItem', fileItem, progress);
+	};
+	
+	file.onProgressAll = function(progress) {
+		//console.info('onProgressAll', progress);
+	};
+	
+	file.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.save($scope.notice);
+		//console.info('onSuccessItem', fileItem, response, status, headers);		
+		//$scope.assignment.file_name = fileItem.formData[0].key;		
+	};
+	
+	file.onErrorItem = function(fileItem, response, status, headers) {
+		//console.info('onErrorItem', fileItem, response, status, headers);
+	};
+	
+	file.onCancelItem = function(fileItem, response, status, headers) {
+		//console.info('onCancelItem', fileItem, response, status, headers);		
+	};
+	
+	file.onCompleteItem = function(fileItem, response, status, headers) {
+		//console.info('onCompleteItem', fileItem, response, status, headers);
+	};
+	
+	file.onCompleteAll = function() {
+		//console.info('onCompleteAll');
+		//console.log($scope.assignment);		
+	};
+	
+	$scope.delete_notice_file = function(notice_id, file_path) {
+		if(confirm('Are You Sure?')) {
+			loading.start();
+			$http({
+				method: "post",
+				url: "notice/delete_notice_file",
+				data: {'notice_id':notice_id, 'file_path':file_path}
+			}).success(function(response) { 
+				loading.finish();
+				
+				if(response != 'Some error occured. Please try again.') {
+					$scope.notice.file_name = '';
+					$scope.activity_log.unshift(response);
+				} else {
+					$scope.flashMessageType = "error";
+					$scope.flashMessage = response;	
+				}
+			});
+		}
+	}
+	
+	$scope.change_status = function(notice_id, current_status, index) {
+		loading.start();
+		$http({
+			method: "post",
+			url: "notice/change_status",
+			data: {'notice_id':notice_id, 'current_status':current_status}
+		}).success(function(response) {
+			loading.finish();		
+
+			if(response == '') {
+				$scope.notice_list[index].status = current_status == '1' ? '0' : '1';
+			} else {
+				$scope.flashMessageType = "error";
+				$scope.flashMessage = response;	
+			}
+		});
+	}
+	
+	// CALLBACKS
+	var images = $scope.images = new FileUploader({url: $scope.s3url});	
+	
+	// FILTERS
+	images.filters.push({
+		name: 'fileFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) {
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
+			var res = '|doc|docx|pdf|xls|xlsx|ppt|pptx|jpg|png|jpeg|gif|'.indexOf(type);		
+			if('|pdf|vnd.ms-excel|vnd.openxmlformats-officedocument.spreadsheetml.sheet|vnd.openxmlformats-officedocument.wordprocessingml.document|msword|vnd.openxmlformats-officedocument.presentationml.presentation|vnd.ms-powerpoint|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly WORD, EXCEL, PPT, IMAGES(.JPEG, .JPG, .PNG, .GIF) are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	
+	images.onWhenAddingFileFailed = function(item /*{File|FileLikeObject}*/, filter, options) {
+		//console.info('onWhenAddingFileFailed', item, filter, options);
+	};
+	
+	images.onAfterAddingFile = function(fileItem) {
+		var subbucket = $scope.getSubbucket();
+		if(subbucket) {
+			var filename = fileItem.file.name.split(".");
+			extension = filename[filename.length - 1];
+			
+			var currentdate = new Date();
+			filename = currentdate.getDate() + '' +(currentdate.getMonth()+1) + '' + currentdate.getFullYear() + "_" + currentdate.getHours() + '' + currentdate.getMinutes();				
+			filename += extension;
+			console.log(subbucket+filename);
+			
+			$scope.notice.subbucket = subbucket;
+			$scope.notice.name =	fileItem.file.name;
+			$scope.notice.file_name =	filename;
+			
+			fileItem.formData.push({'key': subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+		} else {
+			//alert('some error occured!!!!!');	
+		} 
+	};
+	
+	images.onAfterAddingAll = function(addedFileItems) {
+		//console.info('onAfterAddingAll', addedFileItems);
+	};
+	
+	images.onBeforeUploadItem = function(item) {
+		//console.info('onBeforeUploadItem', item);
+	};
+	
+	images.onProgressItem = function(fileItem, progress) {
+		//console.info('onProgressItem', fileItem, progress);
+	};
+	
+	images.onProgressAll = function(progress) {
+		//console.info('onProgressAll', progress);
+	};
+	
+	images.onSuccessItem = function(fileItem, response, status, headers) {
+		fileItem.remove();
+		$scope.save($scope.assignment);
+		//console.info('onSuccessItem', fileItem, response, status, headers);		
+		//$scope.assignment.file_name = fileItem.formData[0].key;		
+	};
+	
+	images.onErrorItem = function(fileItem, response, status, headers) {
+		//console.info('onErrorItem', fileItem, response, status, headers);
+	};
+	
+	images.onCancelItem = function(fileItem, response, status, headers) {
+		//console.info('onCancelItem', fileItem, response, status, headers);		
+	};
+	
+	images.onCompleteItem = function(fileItem, response, status, headers) {
+		//console.info('onCompleteItem', fileItem, response, status, headers);
+	};
+	
+	images.onCompleteAll = function() {
+		//console.info('onCompleteAll');
+		//console.log($scope.assignment);		
+	};
+	
+	$scope.getStream = function(financial_year_id, course_id) {
+		
+		
+		if(financial_year_id != '' && course_id != '') {
+		
+		$scope.admission_list 			= {};
+		$scope.section_list 			= {};
+		
+		$scope.admission.admitted_year 	= '';
+		$scope.admission.section 		= '';
+		$scope.admission.stream_id		='';
+		
+	/**/	
+			
+			loading.start();
+			$http({
+				method: "post",
+				url: "admission/get_stream",
+				data: {'financial_year_id': financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				$scope.stream_list	=	response;	
+				loading.finish();
+			});	
+		} else {
+			$scope.stream_list	=	{};
+		}
+	}
+	
+	$scope.getSection = function(financial_year_id, course_id, stream_id, year) {	
+	//alert(financial_year_id+' ' +course_id+' ' +stream_id+' ' +year);
+		if(financial_year_id != '' && course_id != '' && stream_id != '' && year != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_section",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id, 'year':year},
+			}).success(function(response) {
+				loading.finish();								
+				$scope.section_list = response;
+			});	
+		} else {
+			$scope.section_list = [];
+		}
+		
+		$scope.admission.section = "";
+		$scope.admission.schedule_id = "";
+	}
+	
+	$scope.search_admission = function(admission,type){
+		
+		//alert('in kalap');
+		
+		$scope.admission_list = {};
+		$scope.notice.select_type = '';
+		admission_no = admission.admission_no ? admission.admission_no : '-';
+		roll_no = admission.roll_no ? admission.roll_no : '-';
+		name = admission.name ? admission.name : '-';
+		from_date = admission.from_date ? admission.from_date : '-';
+		to_date = admission.to_date ? admission.to_date : '-';
+		financial_year_id = admission.financial_year_id ? admission.financial_year_id : '-';
+		course_id = admission.course_id ? admission.course_id : '-';
+		stream_id = admission.stream_id ? admission.stream_id : '-';
+		admitted_year = admission.admitted_year ? admission.admitted_year : '-';
+		semester = admission.semester ? admission.semester : '-';
+		lateral_entry = admission.lateral_entry ? admission.lateral_entry : '-';
+		tfw = admission.tfw != '0' ? admission.tfw : '-';
+		studentshift = admission.studentshift ? admission.studentshift : '-';
+		admission_status = admission.admission_status ? admission.admission_status : '-';
+		status = admission.status ? admission.status : '-';
+		section = admission.section ? admission.section : '-';
+		notice_for = admission.notice_for ? admission.notice_for : '-';
+		
+		loading.start();
+			$http({
+				method: "post",
+				url: "notice/get_student_list",
+				data: {'admission_no':admission_no, 'roll_no':roll_no, 'name':name, 'from_date':from_date,
+				'to_date':to_date, 'financial_year_id':financial_year_id, 'course_id':course_id, 'stream_id':stream_id,
+				'admitted_year':admitted_year, 'semester':semester, 'lateral_entry':lateral_entry, 'tfw':tfw,
+				'studentshift':studentshift, 'admission_status':admission_status, 'status':status, 'section':section, 'notice_for':notice_for},
+			}).success(function(response) {
+				loading.finish();	
+				//alert('dd');
+				console.log(response);
+				$scope.admission_list = response;
+		});	
+		
+		
+				
+		
+	}
+	
+	$scope.select_type = function(type)
+	{
+		$scope.admission.course_id = '';
+		$scope.notice.select_type = '';
+		$scope.admission_list = [];
+		$scope.stream_list = {};
+		$scope.section_list = {};
+		$scope.admission.intended_to = type;
+		$scope.admission.admitted_year = '';
+		$scope.admission.section = '';
+		$scope.notice.selected_id = [];
+		/*alert('ddd');*/
+		
+	}
+	
+	$scope.refresh_year_section = function()
+	{
+		$scope.admission.admitted_year = '';
+		$scope.admission.section = '';		
+	}
+	
+	$scope.select_unselect = function(id)
+	{
+		console.log($scope.notice);
+		//alert(id);		
+		if(($scope.notice.selected_id.indexOf(id) < 0))
+		{
+			$scope.notice.selected_id.push(id);
+		}
+		else
+		{
+			var index = $scope.notice.selected_id.indexOf(id);
+			//alert(index);
+			if (index > -1) 
+			{
+				$scope.notice.selected_id.splice(index, 1);
+			}
+		}
+		console.log($scope.notice.selected_id);
+	}
+	
+	$scope.set_select_type = function(select_type,admission_list)
+	{
+		$scope.notice.selected_id = [];
+		
+		if(select_type == 'all')
+		{
+			for(var vi = 0 ; vi < admission_list.length ; vi++)
+				{
+					//console.log(admission_list[vi].admission_id);
+					$scope.notice.selected_id.push(admission_list[vi].admission_id);
+				}
+		}
+		console.log($scope.notice.selected_id);
+				
+	}
+	
+}]);

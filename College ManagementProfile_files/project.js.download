@@ -1,0 +1,737 @@
+angular.module("User").controller('project', ['$scope', '$http', 'loading', '$location', 'FileUploader', function($scope, $http, loading, $location, FileUploader){
+
+	$scope.notice_image_list = {};
+	$scope.s3url = '//s3-ap-southeast-1.amazonaws.com/imsecerp/';
+	$scope.aws = {};
+	$scope.project = {};
+
+	$scope.project_list = {};
+
+	$scope.error = {};
+
+	$scope.flashMessageType = "success";
+
+	$scope.flashMessage = "";
+	
+	$scope.memberlist = {};
+	$scope.project.selectedMember 	= [];
+	$scope.project.selectedMemberId = [];
+
+	$scope.getProjectList = function(project) 
+	{
+		//alert('getProjectList');
+		console.log(project);
+		var course_id = project.course_id ? project.course_id : '-';
+		var stream_id = project.stream_id ? project.stream_id : '-';
+		var session_id = project.session_id ? project.session_id : '-';
+		if(project.session_id != '' ) 
+		{
+			$location.path("/project_list/" + session_id + "/" + course_id+ "/" + stream_id + "/page1");
+		}
+	}
+	
+	
+	$scope.getStreamforProject = function(financial_year_id, course_id) {
+		if(financial_year_id != '' && course_id != '') {				
+			loading.start();
+			$http({
+				method: "post",
+				url: "assignment/get_stream",
+				data: {'financial_year_id':financial_year_id, 'course_id':course_id},
+			}).success(function(response) {
+				loading.finish();				
+				$scope.stream_list = response;
+			});	
+		} else {
+			$scope.stream_list = [];
+		}
+		
+		$scope.project.stream_id = "";
+		
+	}
+	
+	
+	$scope.getMemberReport = function(base_url)
+	{
+		//alert(projectId+'< == >'+semester);
+		if (confirm("Are you sure ? ") == true) 
+		{
+			//alert(base_url+'project/getReport/' + projectId +'/' + semester);
+			window.open(base_url+'project/getMemberReport');
+			/*
+		loading.start();
+		$http({
+
+			method: "post",
+
+			url: "project/getReport",
+
+			data: {'id':projectId,'semester':semester}
+
+		}).success(function(response) 
+		{
+			loading.finish();			
+
+			if(response[0] == '0') 
+				{	
+					alert(response[1]);					
+				} 
+				else 
+				{	
+					alert(response[1]);	
+				}
+		});
+		
+		*/
+		}
+			
+	}
+	$scope.getReport = function(projectId,semester,base_url)
+	{
+		//alert(projectId+'< == >'+semester);
+		if (confirm("Are you sure ? ") == true) 
+		{
+			//alert(base_url+'project/getReport/' + projectId +'/' + semester);
+			window.open(base_url+'project/getReport/' + projectId +'/' + semester);
+			/*
+		loading.start();
+		$http({
+
+			method: "post",
+
+			url: "project/getReport",
+
+			data: {'id':projectId,'semester':semester}
+
+		}).success(function(response) 
+		{
+			loading.finish();			
+
+			if(response[0] == '0') 
+				{	
+					alert(response[1]);					
+				} 
+				else 
+				{	
+					alert(response[1]);	
+				}
+		});
+		
+		*/
+		}
+			
+	}
+
+	$scope.approveReview = function(project) 
+	{
+		console.log(project);
+		project = angular.copy(project);
+		if (confirm("Are you sure ? ") == true) 
+		{
+		loading.start();
+		$http({
+
+			method: "post",
+
+			url: "project/approveReview",
+
+			data: project
+
+		}).success(function(response) {
+
+			loading.finish();			
+
+			if(response[0] == '0') 
+				{
+	
+					alert(response[1]);
+					
+				} 
+				else 
+				{
+	
+					alert(response[1]);
+	
+				}
+
+		});
+		
+		}/**/
+
+	}
+	
+	$scope.saveReview = function(project)
+	{
+		console.log(project);
+		//alert(project.selectedMember.length);
+		project = angular.copy(project);
+		if(!project.reviewRate || project.reviewRate.length == 0)
+		{
+			alert('Please fill all valuse !!');
+			return false;
+		}
+		var keepGoing = true;
+		angular.forEach(project.reviewRate, function(stdId,srate) 
+		{			//console.log(srate);				
+			angular.forEach(stdId, function(sId) 
+			{		
+				angular.forEach(sId, function(id,rate) 
+				{
+					console.log(Object.keys(id).length);
+					//alert(Object.keys(id).length+' == '+project.questionCount);
+					if(Object.keys(id).length != project.questionCount && keepGoing )
+						{
+							alert('Please fill all valuse !!');
+							
+							keepGoing = false;
+						}					
+				});
+				
+			});		
+		  	
+		});
+		if(!project.commentSuggestion || project.commentSuggestion == '')
+		{
+			alert('Please fill Comments/Suggestions !!');
+			return false;
+		}
+		if(!project.submissionDate || project.submissionDate == '')
+		{
+			alert('Please Select submission Date !!');
+			return false;
+		}
+		
+		if(keepGoing  !== false )
+		{
+			//alert('ffff');
+		loading.start();
+			$http({
+				method: "post",
+				url: "project/add_review",
+				data: {project},
+			}).success(function(response) { //console.log(response);
+				
+				loading.finish();			
+	
+				if(response[0] == '0') 
+				{
+	
+					alert(response[1]);
+					$location.path("/review_project/"+response[2]);	
+				} 
+				else 
+				{
+	
+					alert('11 Some error occurred !!');
+	
+				}
+			});/**/
+		}
+		
+		
+		
+
+	
+	}
+	
+	//   =======================================file upload
+	//file upload
+	$scope.getSubbucket = function()
+	{
+		return 'web/project/';
+	}
+	
+	$scope.openAmazonFile = function(key) {
+		console.log(key);
+		AWS.config.update({accessKeyId: $scope.aws.AWSAccessKeyId, secretAccessKey: $scope.aws.AWSSecretKeyId});
+		var s3 = new AWS.S3();
+		var params = {Bucket: $scope.aws.bucket, Key: key};
+		s3.getSignedUrl('getObject', params, function (err, url) {
+			if(err) alert('No such key exist!!!');
+			else window.open(url);
+		});
+	}
+	
+	// CALLBACKS
+	var file = $scope.file = new FileUploader({url: $scope.s3url});	
+	
+	// FILTERS
+	file.filters.push({
+		name: 'fileFilter',
+		fn: function(item /*{File|FileLikeObject}*/, options) 
+		{
+			var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+			//return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
+			var res = '|doc|docx|pdf|xls|xlsx|ppt|pptx|jpg|png|jpeg|gif|'.indexOf(type);		
+			if('|pdf|vnd.ms-excel|vnd.openxmlformats-officedocument.spreadsheetml.sheet|vnd.openxmlformats-officedocument.wordprocessingml.document|msword|vnd.openxmlformats-officedocument.presentationml.presentation|vnd.ms-powerpoint|jpg|png|jpeg|gif|'.indexOf(type) === -1){
+				alert('Invalid File Type.\nOnly WORD, EXCEL, PPT, IMAGES(.JPEG, .JPG, .PNG, .GIF) are valied file type.');	
+				return false;
+			}	
+			return true;
+		}
+	});
+	
+	file.onWhenAddingFileFailed = function(item /*{File|FileLikeObject}*/, filter, options) {
+		//console.info('onWhenAddingFileFailed', item, filter, options);
+	};
+	
+	file.onAfterAddingFile = function(fileItem) 
+	{
+		
+		var subbucket = 'project/';
+		if(subbucket) {
+			var filename = fileItem.file.name.split(".");
+			extension = filename[filename.length - 1];
+			
+			var currentdate = new Date();
+			filename = currentdate.getDate() + '' +(currentdate.getMonth()+1) + '' + currentdate.getFullYear() + "_" + currentdate.getHours() + '' + currentdate.getMinutes();				
+			filename += '.' + extension;
+			
+			$scope.project.subbucket = subbucket;
+			$scope.project.name =	fileItem.file.name;
+			$scope.project.file_name =	filename;
+			$scope.project.file_path =	$scope.s3url+subbucket+filename;
+			console.log(fileItem.file.name);
+			console.log($scope.s3url+subbucket+filename);
+			
+			
+			
+			fileItem.formData.push({'key': subbucket + filename, 'AWSAccessKeyId':$scope.aws.AWSAccessKeyId, 'acl':$scope.aws.acl, 'success_action_status':$scope.aws.success_action_status, 'policy':$scope.aws.policy, 'signature':$scope.aws.signature});
+			//$scope.uploader_index++;
+		} else {
+			//alert('some error occured!!!!!');	
+		} 
+	};
+	
+	file.onSuccessItem = function(fileItem, response, status, headers) {
+		//alert($scope.s3url+fileItem.formData[0].key);
+		fileItem.remove();
+		$scope.save($scope.project);
+		console.info('onSuccessItem', fileItem, response, status, headers);		
+		//$scope.assignment.file_name = fileItem.formData[0].key;		
+	};
+	
+	//   =======================================file upload
+
+	$scope.getCourse = function(financial_year_id)
+	{		
+		if(financial_year_id != ''){
+			loading.start();
+			$http({
+				method: "post",
+				url: "account_head/get_course",
+				data: {'financial_year_id':financial_year_id},
+			}).success(function(response) { //console.log(response);
+				$scope.course_list	=	response;	
+				loading.finish();
+			});	
+		}
+	}
+	
+	$scope.approveProject = function(project_id) 
+	{
+		if (confirm("Are you sure ? ") == true) 
+		{
+		loading.start();
+		$http({
+
+			method: "post",
+
+			url: "project/approveProject",
+
+			data: {'project_id':project_id}
+
+		}).success(function(response) {
+
+			loading.finish();			
+
+			if(response[0] == '0') 
+				{
+	
+					alert(response[1]);
+					
+				} 
+				else 
+				{
+	
+					alert(response[1]);
+	
+				}
+
+		});
+		
+		}
+
+	}
+	
+	$scope.reSubmit = function(project_id) 
+	{
+		if (confirm("Are you sure ? ") == true) 
+		{
+
+//alert(project_id);
+		loading.start();
+		$http({
+
+			method: "post",
+
+			url: "project/reSubmitClrt",
+
+			data: {'project_id':project_id}
+
+		}).success(function(response) {
+
+			loading.finish();			
+
+			if(response[0] == '0') 
+				{
+	
+					alert(response[1]);
+					
+				} 
+				else 
+				{
+	
+					alert(response[1]);
+	
+				}
+
+		});
+		
+		}
+
+	}
+
+	$scope.rejectProject = function(project_id, reject_remarks) 
+	{
+		reject_remarks = angular.copy(reject_remarks);
+				
+		
+		if(!reject_remarks || reject_remarks == '') {
+
+			$scope.error.reject_remarks = true;
+
+		}
+		else 
+		{	loading.start();
+			$http({
+	
+				method: "post",
+	
+				url: "project/rejectProject",
+	
+				data: {'project_id':project_id, 'reject_remarks':reject_remarks}
+	
+			}).success(function(response) 
+			{
+	
+				loading.finish();			
+	
+				if(response[0] == '0') 
+				{
+	
+					alert(response[1]);
+					$('.canelBg, .canelBody').fadeOut();	
+				} 
+				else 
+				{
+	
+					alert('Some error occurred !!');
+	
+				}
+	
+			});
+		
+		}
+
+	}
+	
+	$scope.get_student = function(stext)
+	{
+		if(stext.length > 3)
+		{	
+			//alert(stext);
+			{
+
+			loading.start();
+
+			$http({
+
+				method: "post",
+
+				url: "project/get_member",
+
+				data: {'stext' : stext}
+
+			}).success(function(response) {
+
+				loading.finish();
+				console.log(response);
+
+				$scope.memberlist = response;
+				/*if(response != '') {
+
+					$scope.flashMessageType = "error";
+
+					$scope.flashMessage = response;	
+
+					alert(response);
+
+				} 
+*/
+			});
+
+		}
+		
+		}
+	}
+	
+	
+	$scope.selectMember = function(meme)
+	{
+		//alert('selectMember');
+		console.log(meme);
+		if(!$scope.project.selectedMemberId.includes(meme.admission_id))
+		{
+			$scope.project.selectedMemberId.push(meme.admission_id);
+			$scope.project.selectedMember.push(meme); 
+			$scope.project.searchText = '';
+			$scope.memberlist = {};
+		}
+		else
+		{
+			alert('Already selected !!');
+			return false;
+		}		
+	}
+	
+	$scope.removeSelected = function(index)
+	{
+		//alert('removeSelected');
+		console.log(index);
+		$scope.project.selectedMember.splice(index, 1);
+		$scope.project.selectedMemberId.splice(index, 1);
+		
+	}
+
+	$scope.save = function(project) {
+
+		//alert(project.selectedMember.length);
+		project = angular.copy(project);
+		if(!project.session_id || project.session_id == '') {
+
+			$scope.error.session_id = true;
+
+		}else if(!project.course_id || project.course_id == '') {
+
+			$scope.error.course_id = true;
+
+		}else if(!project.stream_id || project.stream_id == '') {
+
+			$scope.error.stream_id = true;
+
+		}else if(!project.title || project.title == '') {
+
+			$scope.error.title = true;
+
+		}else if(!project.technologies || project.technologies == '') {
+
+			$scope.error.technologies = true;
+
+		}else if(!project.guide_id || project.guide_id == '') {
+
+			$scope.error.guide_id = true;
+
+		}else if(!project.type || project.type == '') {
+
+			$scope.error.type = true;
+
+		}else if(!project.selectedMember || project.selectedMember.length < 2) {
+
+			$scope.error.selectedMember = true;
+
+		}
+		else 
+		{
+
+			//alert('ok');
+			/*return false;*/
+			
+			loading.start();
+
+			$http({
+
+				method: "post",
+
+				url: "project/add_project",
+
+				data: project
+
+			}).success(function(response) {
+
+				loading.finish();
+
+				if(response != '') {
+
+					$scope.flashMessageType = "error";
+
+					$scope.flashMessage = response;	
+
+					alert(response);
+
+				} else {
+
+					$location.path("/project_list");
+
+				}
+
+			});
+
+		}/**/
+
+	}
+	
+	$scope.addTechnologies = function(tech)
+	{
+		//alert('addTechnologies');
+		tech = angular.copy(tech);
+		if(!tech || tech == ''){
+
+			$scope.error.tech = true;
+
+		}
+		else 
+		{
+			
+			loading.start();
+
+			$http({
+
+				method: "post",
+
+				url: "project/add_master",
+
+				data: {'tech':tech,'table': 'project_technologies'}
+
+			}).success(function(response) 
+			{
+
+				loading.finish();
+				
+				console.log(response);
+
+				if(response[0] == '1') 
+				{
+					alert(response[1]);
+				} 
+				else if(response[0] == '0')
+				{		
+					
+					{
+						$scope.project_technologies = response[2];
+						$scope.project.otherTech = '0';
+						$scope.project.otherTechnologies = '';
+					}
+					
+					alert(response[1]);
+
+				}
+
+			});
+
+		}/**/
+
+	
+		}
+		
+	$scope.addtype = function(tech)
+	{
+		//alert('addTechnologies');
+		tech = angular.copy(tech);
+		if(!tech || tech == ''){
+
+			$scope.error.tech = true;
+
+		}
+		else 
+		{
+			
+			loading.start();
+
+			$http({
+
+				method: "post",
+
+				url: "project/add_master",
+
+				data: {'tech':tech,'table': 'project_type'}
+
+			}).success(function(response) 
+			{
+
+				loading.finish();
+				
+				console.log(response);
+
+				if(response[0] == '1') 
+				{
+					alert(response[1]);
+				} 
+				else if(response[0] == '0')
+				{		
+					
+					{
+						$scope.project_type = response[2];
+						$scope.project.otherType = '0';
+						$scope.project.otherProjectAType = '';
+					}
+					
+					alert(response[1]);
+
+				}
+
+			});
+
+		}/**/
+
+	
+		}
+
+	
+
+	$scope.change_status = function(project_id, current_status, index) 
+	{
+
+		loading.start();
+
+		$http({
+
+			method: "post",
+
+			url: "project/change_status",
+
+			data: {'project_id':project_id, 'current_status':current_status}
+
+		}).success(function(response) {
+
+			loading.finish();
+
+			
+
+			if(response == '') {
+
+				$scope.project_list[index].status = current_status == '1' ? '0' : '1';
+
+			} else {
+
+				$scope.flashMessageType = "error";
+
+				$scope.flashMessage = response;	
+
+			}
+
+		});
+
+	}
+
+}]);
